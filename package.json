@@ -52,7 +52,8 @@
     "inspect:vsix": "node scripts/inspect-vsix.cjs",
     "build:types": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "rulesets:check": "node scripts/ruleset-governance.cjs"
+    "rulesets:check": "node scripts/ruleset-governance.cjs",
+    "test:vsix": "npm run package && node test/vsix-e2e/run.js"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
