@@ -1,44 +1,61 @@
-# Manual-only publishing via Visual Studio Marketplace Trusted Publishing (OIDC).
-# The matching Marketplace policy must be Drako01 / indizivo / publish.yml / marketplace.
-# No push, tag, or PR can trigger publication.
-name: Indizivo / Publish Marketplace
+# Keep the same successful release pattern used by Probato PR, adapted to Indizivo/npm.
+# PRs are verified in verify.yml. A merge to main publishes only when package.json
+# increases its version. The same verified VSIX is sent to Marketplace and Open VSX.
+name: Indizivo / Publish Registries
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       confirm_publication:
-        description: Explicitly authorize publishing the current version from main
+        description: Publish the current main version (requires explicit confirmation)
         type: boolean
-        required: true
         default: false
+      open_vsx_sync:
+        description: Synchronize the latest GitHub release to Open VSX only
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 6 * * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: indizivo-marketplace-release
+  group: indizivo-publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  authorize:
-    name: Require manual release approval
+  plan:
+    name: Release plan
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.open_vsx_sync))
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+      version: ${{ steps.decide.outputs.version }}
     steps:
-      - name: Double gate - protected branch and release variable
-        shell: bash
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Decide based on version increase, not merge count
+        id: decide
         env:
-          CONFIRM: ${{ inputs.confirm_publication }}
-          ENABLED: ${{ vars.INDIZIVO_RELEASE_ENABLED }}
-        run: |
-          set -euo pipefail
-          test "$GITHUB_REF" = "refs/heads/main" || { echo "Releases must run from main" >&2; exit 1; }
-          test "$CONFIRM" = "true" || { echo "confirm_publication must be approved" >&2; exit 1; }
-          test "$ENABLED" = "true" || { echo "INDIZIVO_RELEASE_ENABLED must be true" >&2; exit 1; }
+          RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_BEFORE: ${{ github.event.before }}
+          RELEASE_CONFIRMED: ${{ inputs.confirm_publication }}
+        run: node scripts/release-plan.cjs >> "$GITHUB_OUTPUT"
 
   verify:
-    name: Verify / ${{ matrix.os }}
-    needs: authorize
+    name: Release quality / ${{ matrix.os }}
+    if: needs.plan.outputs.publish == 'true'
+    needs: plan
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -58,8 +75,9 @@ jobs:
       - run: npm audit --omit=dev
 
   vscode-e2e:
-    name: Official VS Code Extension Host / Linux
-    needs: authorize
+    name: Real VS Code Extension Host / Linux
+    if: needs.plan.outputs.publish == 'true'
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -74,8 +92,9 @@ jobs:
       - run: xvfb-run -a npm run test:e2e
 
   package:
-    name: Package and smoke-test exact VSIX
-    needs: [authorize, verify, vscode-e2e]
+    name: Package and test installed VSIX
+    needs: [plan, verify, vscode-e2e]
+    if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -89,31 +108,32 @@ jobs:
       - run: npm ci
       - run: npm run package
       - run: xvfb-run -a npm run smoke:vsix
-      - name: Check distributable inventory
-        run: npm run inspect:vsix
-      - name: Identify release artifact and compute checksum
+      - run: npm run inspect:vsix
+      - name: Verify extension identity and record the exact VSIX checksum
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          test "$(node -p "require('./package.json').publisher")" = "armotusitio"
-          test "$(node -p "require('./package.json').name")" = "indizivo"
-          version="$(node -p "require('./package.json').version")"
-          test -f "indizivo-$version.vsix"
-          sha256sum "indizivo-$version.vsix" > indizivo.vsix.sha256
-          cat indizivo.vsix.sha256 >> "$GITHUB_STEP_SUMMARY"
+          test "$(node -p "require('./package.json').publisher")" = armotusitio
+          test "$(node -p "require('./package.json').name")" = indizivo
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          test -f "indizivo-$VERSION.vsix"
+          sha256sum "indizivo-$VERSION.vsix" | tee indizivo.vsix.sha256
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: indizivo-release-vsix
+          name: indizivo-vsix
           path: |
             indizivo-*.vsix
             indizivo.vsix.sha256
           if-no-files-found: error
 
-  marketplace:
-    name: Publish VSIX through OIDC
-    needs: [authorize, verify, vscode-e2e, package]
+  publish-marketplace:
+    name: Publish Visual Studio Marketplace / OIDC
+    needs: [plan, package]
+    if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     environment: marketplace
     permissions:
       contents: read
@@ -127,13 +147,141 @@ jobs:
           node-version: 24
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: indizivo-release-vsix
-      - name: Verify original checksum and publish without PAT
+          name: indizivo-vsix
+      - name: Publish exact tested package without long-lived tokens
+        shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          sha256sum --check indizivo.vsix.sha256
+          test -f "indizivo-$VERSION.vsix"
+          unset VSCE_PAT AZURE_DEVOPS_EXT_PAT
+          npm exec --yes --package=@vscode/vsce@4.0.2 -- vsce publish --oidc --packagePath "indizivo-$VERSION.vsix" --skip-duplicate
+      - name: Wait for the published version to become visible
+        shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          query='{"filters":[{"criteria":[{"filterType":7,"value":"armotusitio.indizivo"}]}],"flags":1}'
+          for attempt in $(seq 1 60); do
+            versions=$(curl -fsS -X POST https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery \
+              -H 'Content-Type: application/json' -H 'Accept: application/json;api-version=3.0-preview.1' -d "$query" \
+              | node -e "let s=''; process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).results[0].extensions[0].versions.map(v=>v.version).join(' '))}catch{console.log('')}})" || true)
+            case " $versions " in
+              *" $VERSION "*) echo "Version $VERSION is live in Marketplace"; exit 0 ;;
+            esac
+            echo "Waiting for Marketplace $VERSION (attempt $attempt / 60)"
+            sleep 15
+          done
+          echo '::error title=Marketplace::Version not visible after 15 minutes'
+          exit 1
+
+  publish-open-vsx:
+    name: Publish same artifact to Open VSX / OIDC
+    needs: [plan, package]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # This matches the Open VSX Trusted Publisher policy registered for Indizivo.
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: indizivo-vsix
+      - name: Retry transient errors; report registry inactivity without blocking Marketplace
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
           sha256sum --check indizivo.vsix.sha256
-          version="$(node -p "require('./package.json').version")"
-          test -f "indizivo-$version.vsix"
-          unset VSCE_PAT AZURE_DEVOPS_EXT_PAT
-          npm exec --yes --package=@vscode/vsce@4.0.2 -- vsce publish --oidc --packagePath "indizivo-$version.vsix" --skip-duplicate
+          test -f "indizivo-$VERSION.vsix"
+          node scripts/open-vsx-publish.mjs "indizivo-$VERSION.vsix" --trusted-publishing --version "$VERSION"
+
+  release:
+    name: GitHub release after Marketplace is live
+    needs: [plan, publish-marketplace]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: indizivo-vsix
+      - name: Publish release and attach the exact VSIX
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          sha256sum --check indizivo.vsix.sha256
+          tag="v$VERSION"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; not overwriting it"
+            exit 0
+          fi
+          gh release create "$tag" "indizivo-$VERSION.vsix" indizivo.vsix.sha256 \
+            --target "$GITHUB_SHA" --title "Indizivo $VERSION" --generate-notes
+
+  sync-open-vsx:
+    name: Daily or manual Open VSX reconciliation
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.open_vsx_sync))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Find latest GitHub release
+        id: latest
+        shell: bash
+        run: |
+          tag=$(gh release view --json tagName --jq .tagName 2>/dev/null || true)
+          if [ -z "$tag" ]; then
+            echo 'No GitHub release exists yet; nothing to synchronize'
+            exit 0
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+      - name: Check whether the release is active in Open VSX
+        id: check
+        if: steps.latest.outputs.tag != ''
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: echo "active=$(node scripts/open-vsx-publish.mjs --check "$VERSION")" >> "$GITHUB_OUTPUT"
+      - name: Re-publish the immutable release asset if needed
+        if: steps.latest.outputs.tag != '' && steps.check.outputs.active != 'true'
+        env:
+          TAG: ${{ steps.latest.outputs.tag }}
+          VERSION: ${{ steps.latest.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --pattern "indizivo-$VERSION.vsix" --dir "$RUNNER_TEMP"
+          node scripts/open-vsx-publish.mjs "$RUNNER_TEMP/indizivo-$VERSION.vsix" --trusted-publishing --version "$VERSION"
