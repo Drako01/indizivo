@@ -1,8 +1,11 @@
 # Enterprise AAA acceptance gates — Indizivo
 
+**Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
+
+
 > **Latest state / handoff (2026-11-05):** Current work is on `feat/enterprise-aaa-full-typescript-i18n` (last implementation commit `ab6cec321710`); not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
 
-**Updated acceptance state:** TS migration **PARTIAL** (host still JS, other typed modules unverified); EN/ES **AUTHORED/PARTIAL** (dynamic content unverified); Windows regression for new branch **NOT EXECUTED**; Linux/macOS/a11y **NOT EXECUTED**; rulesets **ACTIVE**; release **NO-GO**.
+**Updated acceptance state:** TS migration **AUTHORED, NOT VERIFIED** (host moved to `src/typed/extension.ts`, CommonJS bootstrap remains); EN/ES **AUTHORED/PARTIAL** (dynamic content unverified); Windows regression for new branch **NOT EXECUTED**; Linux/macOS/a11y **NOT EXECUTED**; rulesets **ACTIVE**; release **NO-GO**.
 
 
 This is the engineering acceptance contract. It is NOT a certification and does not supersede actual test results. Never present unexecuted checks as PASS.
@@ -11,7 +14,7 @@ This is the engineering acceptance contract. It is NOT a certification and does 
 
 | Gate | Acceptance | Current evidence |
 |---|---|---|
-| A1 Architecture | Strict TypeScript contracts across extension host, diagnostics, UI messages, storage and reports; typecheck clean | **PARTIAL — authored**; strict TypeScript for message contracts, comparisons and versions; host and probes remain JavaScript, exact-branch checks pending |
+| A1 Architecture | Strict TypeScript contracts across extension host, diagnostics, UI messages, storage and reports; typecheck clean | **PARTIAL — authored**; host, probes, Webview, messages, comparisons and versions have typed source; exact-branch compiler and runtime checks pending |
 | A2 Clean code | KISS, DRY, SOLID used pragmatically; no circular dependencies or monolithic control layer | **PARTIAL** |
 | A3 Quality automation | Lint, typecheck, complete node tests, deterministic coverage budget, no hidden skipped tests | **PARTIAL — authored**; tsc typecheck, typed AST lint, runtime security lint and coverage report added; final-branch execution and coverage threshold pending |
 | A4 Reproducible installs | npm ci from committed package-lock.json succeeds | **PASS on Windows prior commit**; re-run after changes |
