@@ -404,7 +404,7 @@ export function localizeFinding<F extends Finding>(finding:F,locale:string|undef
    detail:field('detail',finding.detail),suggestion:field('suggestion',finding.suggestion||''),
    evidence:finding.evidence?.map(e=>({...e,fact:field('evidence',e.fact)}))} as F;
 }
-export interface Session {checks?:Finding[];serviceChecks?:Finding[];comparison?:{note:string;observations?:unknown[]};[key:string]:unknown}
+export interface Session {checks?:Finding[];serviceChecks?:Finding[];comparison?:{note:string;observations?:unknown[]}|null}
 export function localizeSession<S extends Session>(session:S|null|undefined,locale:string|undefined):S|null {
  if(!session)return null;
  const result={...session,
