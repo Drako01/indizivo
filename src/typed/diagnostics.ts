@@ -295,7 +295,11 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
             msg('diag.portOwners',{owners:owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')}):
             msg('diag.portNoOwner'):''}),
         suggestion:msg('diag.portNext'),
-        evidence:msg('diag.portEvidence',{status,ownership:owner?.i18nDetail||
+        evidence:msg('diag.portEvidence',{status:msg(status==='listening'?'diag.portStateListening':
+          status==='not-listening'?'diag.portStateNotListening':
+          status==='timeout'?'diag.portStateTimeout':
+          status==='cancelled'?'diag.portStateCancelled':'diag.portStateInconclusive'),
+          ownership:owner?.i18nDetail||
           (owner?.detail||msg('diag.portOwnerNA'))})
       }));
   }
