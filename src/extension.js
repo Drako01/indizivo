@@ -4,6 +4,7 @@ const fs = require('node:fs/promises');
 const crypto = require('node:crypto');
 const { diagnose, verifyServices, validateService } = require('./diagnostics');
 const { html } = require('./ui');
+const { compareSessions } = require('./comparison');
 
 class ControlCenter {
   constructor(context) {
@@ -109,6 +110,7 @@ class ControlCenter {
   async runDiagnosis() {
     this.ensureReady();
     this.error='';
+    const previousCompleted = this.data.session?.state==='completed' ? this.data.session : null;
     this.data.session=null;
     this.running=true;
     this.pendingApproval=null;
@@ -125,6 +127,7 @@ class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error('Diagnosis cancelled');
+      session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;
       this.data.history.unshift({ project:session.project, completedAt:session.completedAt,
         checks:session.checks.map(x=>({id:x.id,status:x.status})) });
