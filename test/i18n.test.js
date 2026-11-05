@@ -68,7 +68,7 @@ test('Spanish port evidence and status are localized without mutating canonical 
  };
  const translated=localizeFinding(raw,'es');
  assert.equal(translated.category,'Puertos');
- assert.match(translated.detail,/127\\.0\\.0\\.1:3000/);
+ assert.ok(translated.detail.includes('127.0.0.1:3000'));
  assert.match(translated.evidence[0].fact,/en escucha/);
  assert.match(translated.suggestion,/Revisá los logs/);
  assert.equal(raw.evidence[0].fact,'TCP loopback result: listening.');
