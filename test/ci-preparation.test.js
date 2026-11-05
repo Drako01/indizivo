@@ -15,6 +15,7 @@ test('quality gates run for PR/main on Linux, Windows and macOS', () => {
  assert.match(ci,/os: \[ubuntu-latest, windows-latest, macos-latest\]/);
  assert.match(ci,/npm run verify/);
  assert.match(ci,/npm audit --omit=dev/);
+ assert.match(ci,/npm exec --yes --package=@vscode\/vsce@4\.0\.0 -- vsce --version/);
  assert.match(ci,/xvfb-run -a npm run test:e2e/);
  assert.doesNotMatch(ci,/id-token: write|vsce publish|ovsx publish/);
 });
@@ -42,6 +43,8 @@ test('both registries publish an identical checked VSIX using scoped OIDC', () =
  assert.match(ci,/name: indizivo-vsix/g);
  assert.match(ci,/name: Publish Visual Studio Marketplace \/ OIDC/);
  assert.match(ci,/--oidc --packagePath/);
+ assert.match(ci,/npm exec --yes --package=@vscode\/vsce@4\.0\.0 -- vsce publish --oidc/);
+ assert.doesNotMatch(ci,/@vscode\/vsce@4\.0\.2/);
  assert.match(ci,/name: Publish same artifact to Open VSX \/ OIDC/);
  assert.match(ci,/node scripts\/open-vsx-publish\.mjs/);
  assert.match(ci,/id-token: write/g);
