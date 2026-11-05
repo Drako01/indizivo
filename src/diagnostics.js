@@ -29,8 +29,17 @@ function parsePorts(scripts) {
   return [...result].sort((a, b) => a-b).slice(0, 12);
 }
 function parseKeys(data) {
-  return [...new Set((data || '').split(/\r?\n/).map(line =>
-    /^\s*(?:export\s+)?([A-Za-z_]\w*)\s*=/.exec(line)?.[1]).filter(Boolean))];
+  const names=new Set();
+  for(const line of (data||'').split(/\r?\n/)) {
+    const key=/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]{0,79})\s*=/.exec(line)?.[1];
+    if(key)names.add(key);
+    if(names.size>=100)break;
+  }
+  return [...names];
+}
+function safeVersionRequirement(input) {
+  const value=String(input||'').trim().slice(0,80);
+  return /^[0-9v.^~<>=*xX\s,-]{1,80}$/.test(value)?value:'';
 }
 async function readBounded(root, name) {
   let handle;
@@ -76,7 +85,7 @@ async function discover(root) {
   const goMod = await readBounded(root, 'go.mod');
   const example = await readBounded(root, '.env.example');
   const env = await readBounded(root, '.env');
-  const nvm = (await readBounded(root, '.nvmrc')).trim();
+  const nvm = safeVersionRequirement(await readBounded(root, '.nvmrc'));
   let pkg;
   try { pkg = packageText ? JSON.parse(packageText) : null; } catch { pkg = null; }
   const scripts = pkg && typeof pkg.scripts === 'object' ? pkg.scripts : {};
@@ -88,7 +97,7 @@ async function discover(root) {
   const provided = new Set(parseKeys(env));
   return { project: path.basename(root), node: Boolean(packageText), go: Boolean(goMod),
     malformedPackage: Boolean(packageText && !pkg),
-    nodeRequirement: nvm || String(pkg?.engines?.node || '').slice(0, 60),
+    nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
     ports, requiredEnv: required, missingEnv: required.filter(key => !provided.has(key)),
     hasEnvExample: !!example, hasEnvFile: !!env };
