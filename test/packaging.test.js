@@ -49,7 +49,7 @@ test('build inventory excludes development-only scripts and private CI material'
 });
 
 test('runtime adapters use generated strict TypeScript modules',()=>{
- const src=['messages','versions','comparison','port-owners','i18n'];
+ const src=['messages','versions','comparison','port-owners','i18n','diagnostics','ui','extension'];
  for(const unit of src) {
   const code=read('src/'+unit+'.js').toString('utf8');
   assert.match(code,new RegExp('dist/typed/'+unit));
@@ -58,6 +58,12 @@ test('runtime adapters use generated strict TypeScript modules',()=>{
  }
 });
 
+test('VS Code Extension Host is compiled from the strict TypeScript source',()=>{
+ const src=read('src/extension.js').toString('utf8');
+ assert.match(src,/dist\/typed\/extension/);
+ assert.ok(fs.existsSync(path.join(root,'dist/typed/extension.js')));
+ assert.ok(fs.statSync(path.join(root,'src/typed/extension.ts')).size>0);
+});
 test('internal governance rulesets cannot enter VSIX',()=>{
  const ignore=read('.vscodeignore').toString('utf8');
  assert.ok(ignore.includes('governance/**'));
