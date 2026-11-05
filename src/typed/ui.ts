@@ -98,11 +98,12 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
       tr('start'));
     const comparison=clear('comparison');
     comparison.hidden=true;
-    const trends=state.session?.comparison?.observations || [];
-    if (trends.length) {
+    const comparisonState=state.session?.comparison;
+    const trends=comparisonState?.observations || [];
+    if (comparisonState && trends.length) {
       comparison.hidden=false;
       comparison.append(el('h3',null,tr('changes')));
-      comparison.append(el('p','muted',state.session.comparison.note));
+      comparison.append(el('p','muted',comparisonState.note));
       for (const trend of trends.filter(x=>x.trend!=='unchanged').slice(0,12))
         comparison.append(el('div','history-row',trend.id+' · '+tr('trend.'+trend.trend)+
           (trend.before?' ('+tr('status.'+trend.before)+' → '+(trend.after?tr('status.'+trend.after):tr('ui.notChecked'))+')':'')));
