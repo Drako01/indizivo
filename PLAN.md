@@ -5,7 +5,7 @@
 **Copyright holder:** ArmoTuSitio (armotusitio.com.ar)
 **License:** MIT
 **Date:** 2026-11-05
-**Current release decision:** NO-GO — extension source is present, but real Extension Host E2E and clean VSIX install have not been verified.
+**Current release decision:** NO-GO for an Enterprise AAA public release. Development-extension E2E (VS Code 1.145.0) and VSIX packaging passed on Windows on 2026-11-05; clean packaged-VSIX installation, full UI/OS/security qualification and branding clearance are pending.
 
 ### 1. Product objective
 
@@ -44,10 +44,10 @@ Planned hardening: strict TypeScript migration, schema validation for UI message
 - [x] Evidence, limitations, safe guidance, history, report export and evidence copy through UI authored.
 - [x] Compare consecutive completed sessions without claiming resolution.
 - [x] MIT copyright, brand logo, README and user credit authored.
-- [ ] Build/test code against exact released commit.
+- [x] Run Node syntax checks and 27/27 unit/integration tests on the tested Windows source (2026-11-05). Re-run after further code changes.
 - [x] Author official @vscode/test-electron Extension Host suite for activation, diagnosis, service approval and UI panel opening.
-- [ ] Execute the suite in official VS Code against the final commit and validate full UI interactions.
-- [ ] Create and test installable VSIX.
+- [x] Run the authored Extension Host suite in official VS Code 1.145.0: exit 0, no Webview disposed exception (2026-11-05).\n- [ ] Test complete UI interactions in the actual installed VSIX (including keyboard, focus, accessibility, and history).
+- [x] Package VSIX successfully: 21 files, 29.7 KB, without logs.log.\n- [ ] Install the generated VSIX in a clean VS Code profile and execute smoke/E2E on the installed package.
 - [ ] Finish EN/ES localization and accessibility validation.
 - [x] Implement common Node.js/Go version requirement evaluations (limited-expression support; unrecognized requirements are inconclusive).
 - [ ] Validate all version range semantics and edge cases on real runtimes.
@@ -153,3 +153,7 @@ Enterprise AAA means observed quality in a real installed product, not merely a 
 - JavaScript source syntax was parsed using V8 Function constructor after changes.
 - These are **unit-like scripted checks**, not a clean Node test runner, browser accessibility, shipped VSIX or actual VS Code E2E.
 - The mandatory release verdict therefore stays **NO-GO** until tests and package validation are run and failures corrected.
+
+### Windows verified quality-gate rerun — 2026-11-05
+
+User-supplied PowerShell log records: `npm ci` completed; `npm run release:check` exit code 0; 27/27 tests passed twice; VS Code 1.145.0 development Extension Host E2E passed without the prior Webview-disposal error; `indizivo-0.1.0.vsix` built with 21 files / 29.7 KB, without local logs; `npm audit --omit=dev` reported 0 vulnerabilities. The full dependency audit still reports 3 moderate development-tree advisories, requiring evaluation. This **does not** cover clean VSIX install, full interactive browser UI, Windows/Linux/macOS compatibility, accessibility, security adversarial QA or trademark release approval. Keep production Enterprise AAA verdict NO-GO.
