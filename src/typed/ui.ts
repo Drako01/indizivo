@@ -55,6 +55,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     item.append(top,el('div','muted',c.detail));
     const copy=el('button','quiet',tr('copy'));
     copy.setAttribute('type','button');
+    copy.setAttribute('aria-label',tr('copy')+': '+c.label);
     copy.addEventListener('click',()=>fire('copyEvidence',{id:c.id}));
     item.append(copy);
     if (c.suggestion) item.append(el('div','suggestion',tr('next')+' '+c.suggestion));
@@ -117,6 +118,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
       row.append(el('div','service-name',s.name+' · '+s.url));
       const remove = el('button','quiet',tr('remove'));
       remove.disabled=!!state.running;
+      remove.setAttribute('aria-label',tr('remove')+': '+s.name);
       remove.addEventListener('click',()=>fire('removeService',{url:s.url}));
       row.append(remove);
       services.append(row);
@@ -136,6 +138,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
         ' · '+(s.checks?.length||0)+' '+tr('checks').toLowerCase()));
       const open=el('button','quiet',s.snapshot?tr('selectHistory'):tr('unavailableHistory'));
       open.disabled=!!state.running || !s.snapshot;
+      open.setAttribute('aria-label',(s.snapshot?tr('selectHistory'):tr('unavailableHistory'))+': '+s.project+' · '+s.completedAt);
       open.dataset.historyIndex=String(index);
       open.setAttribute('aria-pressed',String(state.selectedHistoryIndex===index));
       open.addEventListener('click',()=>fire('selectHistory',{index}));
@@ -251,7 +254,8 @@ const STYLE = [
 '.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 20px}.metric{background:var(--vscode-sideBar-background);border:1px solid var(--vscode-panel-border);border-radius:10px;padding:14px}.metric strong{display:block;font-size:27px;margin-top:4px}.muted{opacity:.76;line-height:1.5}.empty{opacity:.8;padding:30px;text-align:center;border:1px dashed var(--vscode-panel-border)}',
 '.check{border:1px solid var(--vscode-panel-border);border-radius:9px;padding:14px;margin:0 0 10px;background:var(--vscode-sideBar-background)}.check-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.check-label{font-weight:700}.status{padding:3px 8px;border-radius:10px;background:var(--vscode-badge-background);color:var(--vscode-badge-foreground);text-transform:uppercase;font-size:10px;letter-spacing:.07em}.status-warn{border:1px solid var(--vscode-editorWarning-foreground)}.status-pass{border:1px solid var(--vscode-testing-iconPassed)}.suggestion{margin-top:9px;line-height:1.5}.evidence{margin-top:12px;border-top:1px solid var(--vscode-panel-border);padding-top:10px}.evidence summary{cursor:pointer}.evidence p{white-space:pre-wrap;overflow-wrap:anywhere}',
 '.panel{border:1px solid var(--vscode-panel-border);border-radius:10px;padding:15px;margin:10px 0 18px}.panel h3{margin:0 0 12px;font-size:16px}.fields{display:grid;gap:12px}.fields label{display:grid;gap:6px;font-weight:600}.fields input{min-width:0;width:100%;padding:9px 10px;border:1px solid var(--vscode-input-border);border-radius:5px;background:var(--vscode-input-background);color:var(--vscode-input-foreground);font:inherit}.service-row,.history-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--vscode-panel-border)}.service-name{overflow-wrap:anywhere}.callout{padding:12px;border-left:3px solid var(--vscode-editorWarning-foreground);background:var(--vscode-sideBar-background);margin:10px 0}.approval{border-color:var(--vscode-focusBorder)}pre{white-space:pre-wrap;overflow-wrap:anywhere}.privacy{font-size:11px;opacity:.75;margin-top:18px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--vscode-focusBorder);outline-offset:2px}',
-'@media(max-width:500px){.shell{padding:14px}.metrics{grid-template-columns:1fr}.brand img{width:42px;height:42px}.brand h1{font-size:23px}.hero{padding:14px}}@media(prefers-reduced-motion:no-preference){button{transition:background .12s ease}}'
+'@media(max-width:500px){.shell{padding:14px}.metrics{grid-template-columns:1fr}.brand img{width:42px;height:42px}.brand h1{font-size:23px}.hero{padding:14px}}@media(prefers-reduced-motion:no-preference){button{transition:background .12s ease}}',
+ '@media(max-width:620px){.service-row,.history-row{align-items:flex-start;flex-wrap:wrap}}@media(forced-colors:active){.tab.active,.status-warn,.status-pass,.callout{border:2px solid CanvasText}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid Highlight;outline-offset:2px}}'
 ].join('');
 export function html(webview:vscode.Webview,extensionUri:vscode.Uri,vscodeApi:typeof vscode):string {
   const nonce=crypto.randomBytes(16).toString('base64');
