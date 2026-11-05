@@ -16,7 +16,7 @@ test('discovery constrains untrusted version text and does not echo possible sec
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 test('env parser caps name count and length',()=>{
- const entries=Array.from({length:250},(_,i)=>'ENV_KEY_'+i+'=value').join('\\n');
+ const entries=Array.from({length:250},(_,i)=>'ENV_KEY_'+i+'=value').join('\n');
  assert.equal(parseKeys(entries).length,100);
  assert.deepEqual(parseKeys('A'.repeat(500)+'=secret'),[]);
 });
