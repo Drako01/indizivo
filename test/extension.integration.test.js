@@ -1,0 +1,96 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const os=require('node:os');
+const http=require('node:http');
+const Module=require('node:module');
+function fixture(root,trusted=true) {
+  const uri={scheme:'file',fsPath:root,toString:()=>root};
+  const folder={name:path.basename(root),uri};
+  const state=new Map();
+  const commands=new Map();
+  const vscode={
+    Uri:{joinPath:(base,...parts)=>({scheme:'file',fsPath:path.join(base.fsPath||root,...parts),toString:()=>path.join(base.fsPath||root,...parts)})},
+    ViewColumn:{One:1},
+    workspace:{
+      workspaceFolders:[folder],isTrusted:trusted,
+      getWorkspaceFolder:()=>folder,
+      onDidChangeWorkspaceFolders:()=>({dispose(){}}),
+      onDidGrantWorkspaceTrust:()=>({dispose(){}})
+    },
+    window:{
+      registerWebviewViewProvider:()=>({dispose(){}}),
+      showSaveDialog:async()=>null,
+      showWarningMessage:async()=>undefined,
+      showInformationMessage:()=>undefined,
+      showErrorMessage:()=>undefined,
+      createWebviewPanel:()=>({webview:{asWebviewUri:x=>x.fsPath,postMessage:()=>{},onDidReceiveMessage:()=>({dispose(){}})},reveal(){},onDidDispose:()=>({dispose(){}})})
+    },
+    commands:{registerCommand:(name,fn)=>{commands.set(name,fn);return{dispose(){}};}}
+  };
+  const context={extensionUri:uri,subscriptions:[],workspaceState:{
+    get:(key,def)=>state.get(key)||def,
+    update:async(key,value)=>{state.set(key,value);}
+  }};
+  return {vscode,context,commands,state};
+}
+function loadExtension(vscode) {
+  const orig=Module._load;
+  Module._load=function(name,parent,isMain) {
+    if(name==='vscode')return vscode;
+    return orig.call(this,name,parent,isMain);
+  };
+  try {
+    delete require.cache[require.resolve('../src/extension')];
+    return require('../src/extension');
+  } finally {
+    Module._load=orig;
+  }
+}
+test('extension activates with commands and runs a real Node probe in a trusted local workspace',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({scripts:{dev:'next dev --port 3103'},engines:{node:'>=20'}}));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  assert.ok(app.commands.has('indizivo.diagnose'));
+  await controller.runDiagnosis();
+  assert.equal(controller.data.session.state,'completed');
+  assert.ok(controller.data.session.checks.some(x=>x.id==='node'));
+  assert.ok(controller.data.session.checks.some(x=>x.id==='port-3103'));
+  assert.equal(controller.data.history.length,1);
+  assert.ok([...app.state.keys()].some(k=>k.startsWith('indizivo:v1:')));
+ } finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('untrusted workspaces cannot run active diagnostics',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  const app=fixture(root,false);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await assert.rejects(()=>controller.runDiagnosis(),/Trust/);
+  assert.equal(controller.data.session,null);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('active service probe only executes after explicit plan approval',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ const server=http.createServer((req,res)=>{res.writeHead(200);res.end('ok');});
+ try {
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  const url='http://127.0.0.1:'+server.address().port+'/health';
+  await controller.addService({name:'health',url});
+  assert.equal(controller.data.session.serviceChecks.length,0);
+  await controller.prepareServices();
+  assert.equal(controller.pendingApproval.length,1);
+  await controller.confirmServices();
+  assert.equal(controller.data.session.serviceChecks.length,1);
+  assert.equal(controller.data.session.serviceChecks[0].status,'pass');
+ } finally {
+  await new Promise(resolve=>server.close(resolve));
+  await fs.rm(root,{recursive:true,force:true});
+ }
+});
