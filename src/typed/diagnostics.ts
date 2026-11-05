@@ -24,7 +24,7 @@ export interface Discovery {
 export interface Evidence {id:string;fact:string;observedAt:string}
 export interface DiagnosticCheck {
  id:string;category:string;label:string;status:CheckStatus;
- detail:string;suggestion:string;evidence:Evidence[];i18n?:FindingTranslation|undefined;
+ detail:string;suggestion:string;evidence:Evidence[];i18n?:FindingTranslation;
 }
 export interface DiagnosticSession {
  id:string;project:string;startedAt:string;completedAt:string;
@@ -49,7 +49,8 @@ const msg=(key:Descriptor['key'],values?:Descriptor['values']):Descriptor=>
   values?{key,values}:{key};
 function createCheck(id:string,category:string,label:string,status:CheckStatus,
  detail:string,suggestion='',fact='',i18n?:FindingTranslation):DiagnosticCheck {
-  return { id, category, label, status, detail, suggestion: suggestion || '', i18n,
+  return { id, category, label, status, detail, suggestion: suggestion || '',
+    ...(i18n ? {i18n} : {}),
     evidence: [{ id: crypto.randomBytes(6).toString('hex'), fact: String(fact || detail),
       observedAt: new Date().toISOString() }] };
 }
@@ -339,7 +340,7 @@ export async function verifyServices(services:ServiceTarget[],timeout:number,sig
           result.detail==='Connection unavailable'?'diag.connectionUnavailable':
           result.detail.startsWith('HTTP ')?'diag.http':'diag.blockedTarget',
           result.detail.startsWith('HTTP ')?{status:result.detail.slice(5)}:{}),
-        suggestion:result.ok?undefined:msg('diag.serviceNext'),
+        ...(result.ok ? {} : {suggestion:msg('diag.serviceNext')}),
         evidence:msg('diag.serviceEvidence',{url:svc.url,
           detail:result.detail==='Cancelled'?msg('diag.cancelled'):
           result.detail==='Connection unavailable'?msg('diag.connectionUnavailable'):
