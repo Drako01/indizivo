@@ -89,7 +89,12 @@ test('Marketplace-facing metadata and README do not link to the private GitHub r
  assert.equal(pkg.repository,undefined,'Private source URL must not be advertised as public');
  assert.equal(pkg.bugs.url,'https://armotusitio.com.ar/soporte/');
  assert.ok(readme.includes('https://armotusitio.com.ar/soporte/'));
- assert.doesNotMatch(readme,/github\.com\/Drako01\/indizivo/);
+ assert.match(readme,/<img src="https:\/\/raw\.githubusercontent\.com\/Drako01\/indizivo\/main\/media\/readme-logo\.png"/,
+   'README must display the full-color brand logo');
+ assert.doesNotMatch(readme,/https:\/\/github\.com\/Drako01\/indizivo\/issues\b/,
+   'Support link must resolve to the public support channel');
+ assert.match(readme,/SCREENSHOT 1: Save the approved screenshot as media\/indizivo-diagnostics\.png/);
+ assert.match(readme,/SCREENSHOT 2: Save the approved screenshot as media\/indizivo-services\.png/);
  assert.doesNotMatch(readme,/\]\((?:\.\.?\/)?[A-Za-z_][\w/.-]*\.md\)/);
  assert.doesNotMatch(readme,/href="(?:LICENSE|\.\.?\/)/);
 });
