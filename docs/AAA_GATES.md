@@ -1,0 +1,67 @@
+# Enterprise AAA acceptance gates — Indizivo
+
+This is the engineering acceptance contract. It is NOT a certification and does not supersede actual test results. Never present unexecuted checks as PASS.
+
+## A. Engineering quality
+
+| Gate | Acceptance | Current evidence |
+|---|---|---|
+| A1 Architecture | Strict TypeScript contracts across extension host, diagnostics, UI messages, storage and reports; typecheck clean | **BLOCKED / NOT IMPLEMENTED**; runtime schema validation now added, but code is JavaScript |
+| A2 Clean code | KISS, DRY, SOLID used pragmatically; no circular dependencies or monolithic control layer | **PARTIAL** |
+| A3 Quality automation | Lint, typecheck, complete node tests, deterministic coverage budget, no hidden skipped tests | **PARTIAL**; Node tests exist, lint/typecheck/coverage not yet configured |
+| A4 Reproducible installs | npm ci from committed package-lock.json succeeds | **PASS on Windows prior commit**; re-run after changes |
+
+## B. Security and privacy
+
+| Gate | Acceptance | Current evidence |
+|---|---|---|
+| B1 Workspace Trust | No active diagnostics on untrusted workspace, including command palette and Webview | **PREVIOUS TEST PASS**, final-commit rerun pending |
+| B2 Webview request validation | Allowlisted commands and payload sizes, no executable dynamic dispatch | **IMPLEMENTED, NOT TESTED on final commit**; src/messages.js and tests |
+| B3 Read-only defaults | No unexpected downloads, executable repo scripts, process kill, write or off-device HTTP | **IMPLEMENTED BASELINE**, adversarial regression pending |
+| B4 Secret safety | Synthetic credentials never persisted/exported; log and VSIX redaction verified | **PARTIAL**, dedicated corpus pending |
+| B5 Cancellation | No hanging subprocesses or orphan process tree on Windows/Linux/macOS | **NOT VERIFIED** |
+| B6 Dependencies | No critical/high production vulnerability; moderate development advisories reviewed and documented | **PROD AUDIT PASS**, 3 moderate full-tree advisories remain |
+| B7 Adversarial probes | SSRF, DNS rebinding, redirects, path races, malicious symlinks, Webview payloads tested | **PARTIAL** |
+
+## C. Reliability and user experience
+
+| Gate | Acceptance | Current evidence |
+|---|---|---|
+| C1 Clean install | Install final VSIX in empty VS Code profile, open Activity Bar, diagnose, approve, export, uninstall | **NOT EXECUTED** |
+| C2 OS compatibility | Windows, Linux, macOS validated with real owning process, runtime and HTTP scenarios | **NOT VERIFIED** |
+| C3 Remote topology | Explicitly distinguish local/WSL/SSH/devcontainer host & service namespaces | **NOT IMPLEMENTED**; should not claim support |
+| C4 Accessibility | Keyboard, 200% zoom, high contrast, screen reader and focus restoration across 4 tabs | **NOT VERIFIED** |
+| C5 Internationalization | EN/ES translations complete with no UI hard-coded leftovers | **NOT IMPLEMENTED** |
+| C6 Evidence integrity | Each observed failure backed by reproducible check; no causal claim from mere port occupancy | **PARTIAL; unit coverage exists** |
+| C7 Performance | Measured startup, worst-case cancellation, peak memory, p95 latency on 3 fixture sizes | **NOT MEASURED** |
+| C8 UX evaluation | At least 15 external developers test prepared diagnosis scenarios | **NOT EXECUTED** |
+
+## D. Packaging and release
+
+| Gate | Acceptance | Current evidence |
+|---|---|---|
+| D1 Content inventory | No logs, .env, PLAN.md, development tools, tests or secrets inside VSIX | **NEW SCRIPT IMPLEMENTED; final-run required** |
+| D2 Package fingerprint | SHA-256 recorded for immutable release artifact | **FUTURE CI PREPARED** |
+| D3 Multi-OS CI | PR checks on Windows/Linux/macOS; Linux VS Code Extension Host integration | **DISABLED / NOT EXECUTED** |
+| D4 Trusted publishing | Marketplace and Open VSX use short-lived OIDC tokens, permission-scoped roles, protected environments | **DISABLED TEMPLATES PREPARED** |
+| D5 Legal | Brand/trademark clearance, copyright and license, clear privacy and support policies | **PARTIAL** |
+| D6 Owner approval | Explicit GO decision before activating CI/public repository/publishing | **REQUIRED; NOT GRANTED** |
+
+## Current release verdict
+
+**Development build:** available for local testing, after current checkout and tools verified.
+
+**Enterprise AAA 10/10:** **NO**. Achieving that score requires passing all mandatory security, UX, compatibility and packaged E2E gates with actual evidence. CI templates stored in .github/workflows-disabled do not count as CI runs.
+
+## Next implementation sequence
+
+1. Run the final-code Node tests and VSIX inventory on Windows; resolve failures without weakening tests.
+2. Move the core to TypeScript strict in small additive changes, keeping runtime behavior and VS Code commands compatible.
+3. Add ESLint, deterministic coverage threshold and reproducible local test harness.
+4. Address cancel/timeout process ownership and OS-specific host namespaces.
+5. Implement complete EN/ES UI and a keyboard-accessible history/evidence workflow.
+6. Build an actual packaged-VSIX E2E harness and test independently of development source activation.
+7. Cross-platform security and performance validation plus external usability study.
+8. Only with authorized GO: enable verify workflow, later enable protected publication with OIDC.
+
+Do not compress these steps into an untested all-in-one change. The initial successful 27/27 tests from November 5 predate the new packaging, schema and CI checks.
