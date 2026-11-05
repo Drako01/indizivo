@@ -182,6 +182,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
   });
   const STATIC={
     '.eyebrow':'brand','.subtitle':'title','.hero p':'welcome',
+    '#control-center-label':'ui.controlCenter',
     '[data-action="diagnose"]':'diagnose','[data-action="recheck"]':'recheck',
     '[data-action="selectProject"]':'choose','[data-action="openHome"]':'full',
     '[data-action="cancel"]':'cancel','#warning':'trust','#progress':'loading',
@@ -263,7 +264,7 @@ export function html(webview:vscode.Webview,extensionUri:vscode.Uri,vscodeApi:ty
     '<meta http-equiv="Content-Security-Policy" content="'+csp+'">'+
     '<style nonce="'+nonce+'">'+STYLE+'</style></head><body><main class="shell">'+
     '<header class="brand"><img alt="Indizivo logo" src="'+logo+'"><div><div class="eyebrow">Developer Environment Diagnostics</div><h1>INDIZIVO</h1><p class="subtitle">Find the cause. Fix with confidence.</p></div></header>'+
-    '<div class="hero"><div class="eyebrow">CONTROL CENTER · <span id="state-label">Ready</span></div><h2 id="project-name">No project selected</h2><div class="muted" id="host">Extension host</div><p>Diagnose a project without modifying its files or terminating any processes. Every finding includes observations and limitations.</p>'+
+    '<div class="hero"><div class="eyebrow"><span id="control-center-label">CONTROL CENTER</span> · <span id="state-label">Ready</span></div><h2 id="project-name">No project selected</h2><div class="muted" id="host">Extension host</div><p>Diagnose a project without modifying its files or terminating any processes. Every finding includes observations and limitations.</p>'+
     '<div class="toolbar"><button id="diagnose" data-action="diagnose">Diagnose project</button><button class="quiet" id="recheck" data-action="recheck">Recheck</button><button class="quiet" id="select-project" data-action="selectProject">Choose project</button><button class="quiet" data-action="openHome">Full view</button><button class="quiet" id="cancel" data-action="cancel" disabled>Cancel</button></div></div>'+
     '<div id="warning" class="callout" role="alert" hidden>This workspace is not trusted. Diagnostics are disabled until you trust it in VS Code.</div><div id="progress" class="callout" role="status" hidden>Diagnosis running…</div><div id="error" class="callout" role="alert" hidden></div>'+
     '<nav class="tabs" role="tablist" aria-label="Control center sections"><button class="tab active" role="tab" id="tab-diagnostics" aria-controls="section-diagnostics" aria-selected="true" data-action="tab" data-tab="diagnostics">Diagnostics</button><button class="tab" role="tab" id="tab-services" aria-controls="section-services" aria-selected="false" tabindex="-1" data-action="tab" data-tab="services">Services</button><button class="tab" role="tab" id="tab-history" aria-controls="section-history" aria-selected="false" tabindex="-1" data-action="tab" data-tab="history">History & Reports</button><button class="tab" role="tab" id="tab-settings" aria-controls="section-settings" aria-selected="false" tabindex="-1" data-action="tab" data-tab="settings">Settings</button></nav>'+
