@@ -46,3 +46,8 @@ NO-GO: If any mandatory test is failed/skipped/not executed, legal clearance unf
 ## Source visibility
 
 Before switching repository public, move the internal PLAN.md and private audit notes to a separate private repository. Removing README links does not erase Git history.
+
+
+## Additional gates (staged; not running)
+
+The future package step additionally performs an isolated **installed VSIX** Extension Host smoke using `xvfb-run -a npm run smoke:vsix`. This prevents equating source E2E with actual shipped-package E2E. All CI workflows remain in `.github/workflows-disabled` and cannot run until owner action. Repository CODEOWNERS and ruleset JSON are also only staged; see `docs/RULESETS.md`. Do not enable required check rules before the matching CI statuses exist.

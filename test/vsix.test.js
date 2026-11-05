@@ -37,13 +37,15 @@ test('VSIX inventory denies logs, local test state, node_modules and internal pl
  '[Content_Types].xml','extension.vsixmanifest','extension/package.json',
  'extension/src/extension.js','extension/src/diagnostics.js','extension/src/ui.js',
  'extension/src/versions.js','extension/src/port-owners.js','extension/src/comparison.js','extension/src/messages.js',
+   'extension/dist/typed/messages.js','extension/dist/typed/versions.js','extension/dist/typed/comparison.js',
  'extension/media/indizivo-icon-128.png','extension/readme.md',
  'extension/LICENSE.txt','extension/PRIVACY.md'
  ];
  assert.equal(validateInventory(listZipEntries(centralZip(allowed))).files,allowed.length);
  for(const path of ['extension/logs.log','extension/PLAN.md','extension/.env',
    'extension/node_modules/cache/index.js','extension/test/foo.js',
-   'extension/docs/SECURITY.md','extension/package-lock.json']){
+   'extension/docs/SECURITY.md','extension/governance/rulesets/protect-main.json',
+   'extension/package-lock.json']){
    assert.throws(()=>validateInventory(listZipEntries(centralZip([...allowed,path]))),/forbidden/);
  }
  assert.throws(()=>validateInventory(listZipEntries(centralZip(allowed.slice(1)))),/Missing/);

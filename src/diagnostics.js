@@ -7,6 +7,13 @@ const crypto = require('node:crypto');
 const { evaluateVersion } = require('./versions');
 const { inspectOwner } = require('./port-owners');
 
+function assertActive(signal) {
+  if(signal?.aborted) {
+    const err=new Error('Diagnosis cancelled');
+    err.code='ABORT_ERR';
+    throw err;
+  }
+}
 function createCheck(id, category, label, status, detail, suggestion, fact) {
   return { id, category, label, status, detail, suggestion: suggestion || '',
     evidence: [{ id: crypto.randomBytes(6).toString('hex'), fact: String(fact || detail),
@@ -22,17 +29,45 @@ function parsePorts(scripts) {
   return [...result].sort((a, b) => a-b).slice(0, 12);
 }
 function parseKeys(data) {
-  return [...new Set((data || '').split(/\r?\n/).map(line =>
-    /^\s*(?:export\s+)?([A-Za-z_]\w*)\s*=/.exec(line)?.[1]).filter(Boolean))];
+  const names=new Set();
+  for(const line of (data||'').split(/\r?\n/)) {
+    const key=/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]{0,79})\s*=/.exec(line)?.[1];
+    if(key)names.add(key);
+    if(names.size>=100)break;
+  }
+  return [...names];
+}
+function safeVersionRequirement(input) {
+  const value=String(input||'').trim().slice(0,80);
+  return /^[0-9v.^~<>=*xX\s,-]{1,80}$/.test(value)?value:'';
 }
 async function readBounded(root, name) {
+  let handle;
   try {
-    const full = path.resolve(root, name);
-    if (!full.startsWith(path.resolve(root) + path.sep)) return '';
-    const stat = await fs.lstat(full);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 262144) return '';
-    return await fs.readFile(full, 'utf8');
+    const base=await fs.realpath(root);
+    const full=path.resolve(root,name);
+    if(!full.startsWith(path.resolve(root)+path.sep))return '';
+    const stat=await fs.lstat(full);
+    if(!stat.isFile() || stat.isSymbolicLink() || stat.size>262144)return '';
+    const real=await fs.realpath(full);
+    if(!real.startsWith(base+path.sep))return '';
+    // No shell, no traversal and no following a replaced final symlink.
+    const flags=require('node:fs').constants;
+    handle=await fs.open(full,flags.O_RDONLY|(flags.O_NOFOLLOW||0));
+    const fileStat=await handle.stat();
+    if(!fileStat.isFile() || fileStat.size>262144)return '';
+    const limit=262145;
+    const buffer=Buffer.alloc(limit);
+    let total=0;
+    while(total<limit) {
+      const chunk=await handle.read(buffer,total,limit-total,total);
+      if(!chunk.bytesRead)break;
+      total+=chunk.bytesRead;
+    }
+    if(total>262144)return '';
+    return buffer.subarray(0,total).toString('utf8');
   } catch { return ''; }
+  finally { if(handle)await handle.close(); }
 }
 function validateService(input) {
   if (!input || typeof input.name !== 'string' || typeof input.url !== 'string') return null;
@@ -50,7 +85,7 @@ async function discover(root) {
   const goMod = await readBounded(root, 'go.mod');
   const example = await readBounded(root, '.env.example');
   const env = await readBounded(root, '.env');
-  const nvm = (await readBounded(root, '.nvmrc')).trim();
+  const nvm = safeVersionRequirement(await readBounded(root, '.nvmrc'));
   let pkg;
   try { pkg = packageText ? JSON.parse(packageText) : null; } catch { pkg = null; }
   const scripts = pkg && typeof pkg.scripts === 'object' ? pkg.scripts : {};
@@ -62,7 +97,7 @@ async function discover(root) {
   const provided = new Set(parseKeys(env));
   return { project: path.basename(root), node: Boolean(packageText), go: Boolean(goMod),
     malformedPackage: Boolean(packageText && !pkg),
-    nodeRequirement: nvm || String(pkg?.engines?.node || '').slice(0, 60),
+    nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
     ports, requiredEnv: required, missingEnv: required.filter(key => !provided.has(key)),
     hasEnvExample: !!example, hasEnvFile: !!env };
@@ -114,7 +149,9 @@ function inspectService(service, timeout, signal) {
     const req = http.get(valid.url, { timeout, agent: false,
       lookup: (_host, _options, callback) => callback(null, '127.0.0.1', 4),
       headers: { 'user-agent': 'Indizivo/0.1' } }, res => {
-      res.resume(); finish(res.statusCode >= 200 && res.statusCode < 300, 'HTTP ' + res.statusCode);
+      // Headers are sufficient evidence. Never download or buffer service bodies.
+      finish(res.statusCode >= 200 && res.statusCode < 300, 'HTTP ' + res.statusCode);
+      res.destroy();
     });
     const cancel = () => req.destroy(new Error('cancelled'));
     signal?.addEventListener('abort', cancel, { once: true });
@@ -124,7 +161,9 @@ function inspectService(service, timeout, signal) {
 }
 async function diagnose(root, timeout = 2500, signal, progress) {
   const start = new Date().toISOString();
+  assertActive(signal);
   const d = await discover(root);
+  assertActive(signal);
   const checks = [];
   const push = c => { checks.push(c); progress?.([...checks]); };
   const t = Math.min(10000, Math.max(400, Number(timeout) || 2500));
@@ -133,18 +172,22 @@ async function diagnose(root, timeout = 2500, signal, progress) {
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('node',['--version'], t, signal);
+    assertActive(signal);
     const verdict = result.ok ? evaluateVersion(result.value.replace(/^v/,''),d.nodeRequirement,'node') : null;
     const nodeStatus = !result.ok || verdict?.status==='incompatible'?'warn':
       verdict?.status==='compatible'?'pass':'info';
     push(createCheck('node','Runtime','Node.js',nodeStatus,
       result.value + (d.nodeRequirement ? ' — declared requirement: ' + d.nodeRequirement : '') +
       (verdict ? '. '+verdict.detail : ''),
-      nodeStatus==='warn'?'Check the configured Node.js runtime version.':'Only validated constraints are considered compatible.',
+      nodeStatus==='warn'?'Check the configured Node.js runtime version.':
+      !d.nodeRequirement?'Declare engines.node in package.json or add .nvmrc to enable compatibility checks.':
+      'The declared requirement was evaluated when supported.',
       'Runtime output: '+result.value));
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('go',['version'],t,signal);
+    assertActive(signal);
     const actual = /^go version go([\d.]+)/.exec(result.value)?.[1];
     const verdict = actual ? evaluateVersion(actual,d.goRequirement,'go') : null;
     const goStatus = !result.ok || verdict?.status==='incompatible'?'warn':
@@ -166,7 +209,9 @@ async function diagnose(root, timeout = 2500, signal, progress) {
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
     const status = await inspectPort(port,t,signal);
+    assertActive(signal);
     const owner = status==='listening' ? await inspectOwner(port,t,signal) : null;
+    assertActive(signal);
     const ownerDetail=owner?.owners?.length ?
       ' Listening owner(s): '+owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')+'.' :
       status==='listening' ? ' Process owner not established (tool, permission or namespace limitation).' : '';
@@ -179,6 +224,7 @@ async function diagnose(root, timeout = 2500, signal, progress) {
       'Inspect service startup logs and host bindings; do not terminate processes blindly.',
       'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.')));
   }
+  assertActive(signal);
   if (!checks.length) push(createCheck('none','Discovery','No applicable checks','info',
     'No supported Node.js/Go configuration or ports found. Add a local service to investigate.'));
   return { id: crypto.randomBytes(8).toString('hex'), project: d.project,
@@ -192,6 +238,7 @@ async function verifyServices(services, timeout, signal, progress) {
     const svc = validateService(services[i]);
     if (!svc) continue;
     const result = await inspectService(svc, Math.max(400, Math.min(10000, timeout)), signal);
+    assertActive(signal);
     checks.push(createCheck('service-'+i,'Services',svc.name,
       result.ok?'pass':'warn',result.detail,
       result.ok?'':'Check the service, port and endpoint; no changes were made.',

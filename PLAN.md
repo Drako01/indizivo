@@ -183,3 +183,81 @@ CI state: **PREPARED / INACTIVE / NOT EXECUTED**. See docs/CI_RELEASE_PREPARATIO
 - No workflow files are present under .github/workflows/; only .github/workflows-disabled/verify.yml and publish.yml exist.
 - These checks are **NOT a replacement** for executing npm run release:check, VSIX inventory verification or a real installed VSIX smoke test.
 - See docs/AAA_GATES.md for hard requirements before claiming Enterprise AAA 10/10.
+
+
+## Enterprise AAA phases 1–4: isolated implementation branch
+
+Branch: \`feat/enterprise-aaa-phases-1-4\` (created from private main).
+**The following describes authored code, not a four-phase release certification.**
+
+### Phase 1 — Engineering / quality
+- [x] Strict TypeScript project with typed UI requests, findings, evidence, sessions, version checks and comparative results. Existing CommonJS API paths delegate to compiled modules.
+- [x] Deterministic tsc typecheck, TS AST lint (no explicit any, unsafe non-null or suppressions), runtime hygiene scanner and Node coverage reporting.
+- [x] npm install lock augmented with exact TypeScript 5.8.3 package metadata; \`npm ci\` on the final branch still requires verification.
+- [ ] Migrate the VS Code extension host, platform probes and Webview presentation fully to TypeScript. They remain JavaScript.
+- [ ] Set a measured coverage threshold after collecting a real baseline. Optional report exists, enforced threshold not established.
+- [ ] Decide whether ESLint is needed beyond the dependency-free and compiler AST lint. ESLint is NOT configured.
+
+### Phase 2 — Security / resilience
+- [x] Bounded file-descriptor reads (256 KiB maximum, no-follow where supported, workspace realpath), bounded environment key inventory and sanitized runtime declarations.
+- [x] Explicit abort checks after probes; cancellation cannot produce a COMPLETED diagnosis.
+- [x] HTTP checks read only status headers, never response bodies, reject redirects as success; loopback allowlist/consent retained.
+- [x] Adversarial fixtures for symlinks, cancellation, hostile Webview inputs and secret-like config text.
+- [ ] Process-tree cancellation tests across supported operating systems, to detect orphan children.
+- [ ] Full penetration/privacy review, fuzzing and OS-specific permissions matrix.
+
+### Phase 3 — UX/UI
+- [x] ES/EN interface selection persisted per project, with a reusable copy dictionary and native VS Code theme tokens.
+- [x] Store full capped session snapshots, navigate previous sessions, return to current, copy evidence and export the selected diagnosis.
+- [x] ARIA tab/panel association, keyboard arrow/Home/End navigation, live status announcements and focus restoration for history controls.
+- [ ] Translate remaining dynamic diagnostic engine text, error messages and status details in Spanish; UI localization is partial.
+- [ ] Validate keyboard-only, NVDA/VoiceOver, high contrast, focus and zoom on the packaged extension with real users.
+- [ ] Professional UX testing and verified screenshots on narrow/editor layouts.
+
+### Phase 4 — Reproducibility / release
+- [x] A separate, isolated official VS Code **packaged VSIX** smoke harness added (not just source-development E2E).
+- [x] Reusable p50/p95/max/RSS benchmark on synthetic local fixture; actual results must be measured.
+- [x] VSIX inventory hardening excludes internal governance JSON, tests, scripts, plans, logs and TS source, and requires compiled typed runtime files.
+- [x] Future release workflow has packaged artifact E2E gate. Verify/publish workflows remain outside GitHub Actions' active directory.
+- [ ] Run \`npm ci && npm run release:check\` on this exact branch, including packaged VSIX smoke.
+- [ ] Execute real Windows/Linux/macOS OS matrix and accessibility/security tests.
+- [ ] Record real benchmark measurements and external usability results.
+
+### Additional governance requirement — rulesets
+- [x] Compare two reference rulesets and capture equivalent main branch and version-tag policies for Indizivo.
+- [x] Add \`.github/CODEOWNERS\` for \`@Drako01\`; match one approval, CODEOWNER review, stale-review rules, squash-only and administrator bypass modes.
+- [x] Adapt CI status check names to the Indizivo workflow; stage rulesets with \`enforcement: disabled\`.
+- [x] Add read-only-by-default \`npm run rulesets:check\` and guarded administrative setup script.
+- [ ] Create rulesets in repository settings using authorized admin access (this connector exposes READ only); **not created in GitHub**.
+- [ ] Activate the rulesets only after their check contexts are produced by intentionally enabled CI, and a viable review path exists.
+
+### Execution commands for the branch
+
+PowerShell:
+
+    git fetch origin
+    git switch feat/enterprise-aaa-phases-1-4
+    npm ci
+    npm run rulesets:check
+    npm run verify
+    npm run release:check
+    npm run test:coverage
+    npm run benchmark
+    npm audit --omit=dev
+
+Review the log and mark exact-commit PASS/FAIL/WARN/SKIP/BLOCKED. A clean Windows VSIX installation using a previous build DOES NOT prove this branch is ready.
+
+**Release verdict: NO-GO for Enterprise AAA 10/10.** Main is intentionally unchanged; source changes are in an isolated branch.
+
+
+### Repository rulesets — staged, not applied (2026-11-05)
+
+- [x] Read real \`Drako01/probato-pr\` branch and tag rulesets.
+- [x] Compare against Indizivo (0 server-side rulesets at inspection).
+- [x] Add main, release-tag and future CI-check templates plus CODEOWNERS.
+- [x] Add read-only-by-default PowerShell application helper.
+- [ ] Apply and inspect server-side rulesets as administrator after owner approval; no API write capability available through the current GitHub connector.
+- [ ] Confirm private-repository enforcement and administrator bypass behavior.
+- [ ] After the CI is intentionally activated and real checks exist, add required status check names from successful runs.
+
+All workflows remain inactive under \`.github/workflows-disabled/\`; no store publication or repository visibility changes.

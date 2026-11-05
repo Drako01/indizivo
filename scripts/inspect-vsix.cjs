@@ -9,12 +9,14 @@ const MANDATORY=[
  '[Content_Types].xml','extension.vsixmanifest','extension/package.json',
  'extension/src/extension.js','extension/src/diagnostics.js',
  'extension/src/ui.js','extension/src/versions.js','extension/src/port-owners.js',
- 'extension/src/comparison.js','extension/src/messages.js','extension/media/indizivo-icon-128.png',
+ 'extension/src/comparison.js','extension/src/messages.js','extension/dist/typed/messages.js',
+ 'extension/dist/typed/versions.js','extension/dist/typed/comparison.js',
+ 'extension/media/indizivo-icon-128.png',
  'extension/readme.md','extension/LICENSE.txt','extension/PRIVACY.md'
 ];
 const FORBIDDEN=[
  /(?:^|\/)PLAN\.md$/i,/(?:^|\/)node_modules\//i,
- /(?:^|\/)(?:test|docs|coverage|\.github|\.git|\.vscode-test)\//i,
+ /(?:^|\/)(?:test|docs|governance|coverage|\.github|\.git|\.vscode-test)\//i,
  /(?:^|\/)package-lock\.json$/i,/(?:^|\/)[^/]*\.log$/i,
  /(?:^|\/)\.env(?:\.|$)/i
 ];

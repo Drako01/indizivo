@@ -47,3 +47,23 @@ test('build inventory excludes development-only scripts and private CI material'
  assert.match(ignore,/\.github\/\*\*/);
  assert.match(ignore,/PLAN\.md/);
 });
+
+test('runtime adapters use generated strict TypeScript modules',()=>{
+ const src=['messages','versions','comparison'];
+ for(const unit of src) {
+  const code=read('src/'+unit+'.js').toString('utf8');
+  assert.match(code,new RegExp('dist/typed/'+unit));
+  assert.ok(fs.existsSync(path.join(root,'dist/typed',unit+'.js')),
+    'TypeScript build output missing for '+unit);
+ }
+});
+
+test('internal governance rulesets cannot enter VSIX',()=>{
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.ok(ignore.includes('governance/**'));
+});
+
+test('governance files are excluded from distributed VSIX',()=>{
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.match(ignore,/config\/\*\*/);
+});

@@ -16,3 +16,5 @@ test-results/
 # Local system/editor artifacts
 .DS_Store
 Thumbs.db
+# Compiled TypeScript output
+dist/

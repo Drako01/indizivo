@@ -17,3 +17,12 @@ package-lock.json
 **/*.map
 # Development-only scripts must never ship in the extension package
 scripts/**
+# Ship compiled runtime, not TypeScript source or declaration files
+src/typed/**
+dist/**/*.d.ts
+tsconfig.json
+# Internal repository governance and review policy templates
+governance/**
+# Repository governance policies are maintainer-only and not runtime assets
+config/**
+.github/CODEOWNERS

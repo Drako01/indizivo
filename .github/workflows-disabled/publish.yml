@@ -92,6 +92,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run package
+      - name: Test installed VSIX in isolated VS Code profile
+        run: xvfb-run -a npm run smoke:vsix
       - name: Inventory check
         run: npm run inspect:vsix
       - name: Record original VSIX checksum

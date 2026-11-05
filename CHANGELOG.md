@@ -18,3 +18,11 @@
 - Added VSIX ZIP inventory verifier; prevent internal plans, logs, secrets, tests and development scripts entering the extension package.
 - Added allowlisted and bounded Webview message schema validation and malicious payload unit/integration cases.
 - New tests and package gate require an actual owner-machine run before claiming PASS.
+
+
+### Four-phase Enterprise AAA engineering branch (unreleased / testing pending)
+- Strict TypeScript contracts and typed adapters for version, comparison and UI request validation.
+- Security improvements to configuration reads, cancellation, HTTP-only headers and bounded inputs.
+- ES/EN Control Center selection, navigable full-evidence history and keyboard-oriented tabs.
+- Packaged-VSIX clean profile smoke harness and reproducible synthetic performance metrics.
+- Prepared branch/tag rulesets and CODEOWNERS; CI/CD, rulesets and publication remain inactive.

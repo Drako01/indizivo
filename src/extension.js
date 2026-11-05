@@ -16,6 +16,7 @@ class ControlCenter {
       vscode.workspace.workspaceFolders[0].uri : null;
     this.data = { session: null, services: [], history: [], timeoutMs: 2500 };
     this.pendingApproval = null;
+    this.selectedHistoryIndex = null;
     this.error = '';
     this.running = false;
     this.abort = null;
@@ -30,18 +31,27 @@ class ControlCenter {
       session: stored.session || null,
       services: (stored.services || []).map(validateService).filter(Boolean).slice(0, 20),
       history: (stored.history || []).slice(0, 10),
-      timeoutMs: Math.min(10000, Math.max(400, Number(stored.timeoutMs) || 2500))
+      timeoutMs: Math.min(10000, Math.max(400, Number(stored.timeoutMs) || 2500)),
+      locale: ['es','en'].includes(stored.locale) ? stored.locale :
+        (vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en')
     };
   }
   async save() {
     await this.context.workspaceState.update(this.scopeKey(), this.data);
   }
+  viewedSession() {
+    return this.selectedHistoryIndex===null ? this.data.session :
+      (this.data.history[this.selectedHistoryIndex]?.snapshot || null);
+  }
   snapshot() {
     return {
+      locale: this.data.locale,
+      reviewMode: this.selectedHistoryIndex!==null,
+      selectedHistoryIndex: this.selectedHistoryIndex,
       project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
       host: process.platform + ' · extension host',
       trusted: vscode.workspace.isTrusted,
-      session: this.data.session,
+      session: this.viewedSession(),
       services: this.data.services,
       history: this.data.history,
       timeoutMs: this.data.timeoutMs,
@@ -95,6 +105,7 @@ class ControlCenter {
       {placeHolder:'Choose the project to diagnose'});
     if (!selected) return;
     this.currentRoot = selected.folder ? selected.folder.uri : selected.uri;
+    this.selectedHistoryIndex=null;
     this.pendingApproval=null;
     this.error='';
     this.restore();
@@ -116,6 +127,7 @@ class ControlCenter {
   async runDiagnosis() {
     this.ensureReady();
     this.error='';
+    this.selectedHistoryIndex=null;
     const previousCompleted = this.data.session?.state==='completed' ? this.data.session : null;
     this.data.session=null;
     this.running=true;
@@ -136,7 +148,8 @@ class ControlCenter {
       session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;
       this.data.history.unshift({ project:session.project, completedAt:session.completedAt,
-        checks:session.checks.map(x=>({id:x.id,status:x.status})) });
+        checks:session.checks.map(x=>({id:x.id,status:x.status})),
+        snapshot:session });
       this.data.history=this.data.history.slice(0,10);
       await this.save();
     } catch(e) {
@@ -151,6 +164,7 @@ class ControlCenter {
   }
   async prepareServices() {
     this.ensureReady();
+    if (this.selectedHistoryIndex!==null) throw new Error('Return to the current session before checking services.');
     if (!this.data.session) throw new Error('Run a diagnosis before checking services.');
     if (!this.data.services.length) throw new Error('Add a loopback endpoint in Services first.');
     this.pendingApproval=this.data.services.map(s=>({...s}));
@@ -175,6 +189,8 @@ class ControlCenter {
       if (signal.aborted) throw new Error('Cancelled');
       this.data.session.serviceChecks=result;
       this.data.session.completedAt=new Date().toISOString();
+      if(this.data.history[0]?.snapshot?.id===this.data.session.id)
+        this.data.history[0].snapshot=structuredClone(this.data.session);
       await this.save();
     } catch(e) {
       this.error=signal.aborted?'Service check cancelled.':'Service check failed: '+(e?.message||'Unknown');
@@ -204,7 +220,8 @@ class ControlCenter {
   }
   async copyEvidence(id) {
     if (typeof id!=='string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new Error('Invalid finding identifier.');
-    const checks=[...(this.data.session?.checks||[]),...(this.data.session?.serviceChecks||[])];
+    const viewed=this.viewedSession();
+    const checks=[...(viewed?.checks||[]),...(viewed?.serviceChecks||[])];
     const finding=checks.find(check=>check.id===id);
     if (!finding) throw new Error('The requested finding is no longer available.');
     const lines=['Indizivo diagnostic evidence',finding.label,
@@ -214,6 +231,22 @@ class ControlCenter {
       lines.push('Evidence: '+record.fact+' · '+record.observedAt);
     await vscode.env.clipboard.writeText(lines.join('\n'));
     vscode.window.showInformationMessage('Indizivo: evidence copied to clipboard.');
+  }
+  async selectHistory(index) {
+    if(this.running)throw new Error('Wait for the active check to finish.');
+    if(index===-1) {this.selectedHistoryIndex=null;this.broadcast();return;}
+    const item=this.data.history[index];
+    if(!Number.isInteger(index)||!item?.snapshot)
+      throw new Error('This historical summary predates saved snapshots; rerun diagnosis to create one.');
+    this.selectedHistoryIndex=index;
+    this.pendingApproval=null;
+    this.broadcast();
+  }
+  async setLocale(locale) {
+    if(!['es','en'].includes(locale))throw new Error('Unsupported interface language.');
+    this.data.locale=locale;
+    await this.save();
+    this.broadcast();
   }
   async saveTimeout(value) {
     if (this.running) throw new Error('Wait for the active check to finish before editing timeout.');
@@ -230,13 +263,14 @@ class ControlCenter {
     if (result!=='Delete') return;
     this.data.history=[];
     this.data.session=null;
+    this.selectedHistoryIndex=null;
     await this.save();
     this.broadcast();
   }
   async export(format) {
     if (this.running) throw new Error('Wait for the active diagnosis to finish before exporting.');
-    if (!this.data.session || !['json','md'].includes(format)) return;
-    const session=this.data.session;
+    const session=this.viewedSession();
+    if (!session || !['json','md'].includes(format)) return;
     const name='indizivo-report.'+format;
     const uri=await vscode.window.showSaveDialog({
       defaultUri:vscode.Uri.joinPath(this.currentRoot || this.context.extensionUri,name),
@@ -275,6 +309,8 @@ class ControlCenter {
       case 'addService': await this.addService(request); break;
       case 'removeService': await this.removeService(request.url); break;
       case 'copyEvidence': await this.copyEvidence(request.id); break;
+      case 'selectHistory': await this.selectHistory(request.index); break;
+      case 'setLocale': await this.setLocale(request.locale); break;
       case 'saveTimeout': await this.saveTimeout(request.value); break;
       case 'clearHistory': await this.clearHistory(); break;
       case 'export': await this.export(request.format); break;
@@ -310,6 +346,7 @@ function activate(context) {
       controller.cancel();
       controller.currentRoot=folders.length===1 ? folders[0].uri : null;
       controller.restore();
+      controller.selectedHistoryIndex=null;
       controller.error='The previous project was closed; select the current workspace before diagnosing.';
     }
     controller.broadcast();
