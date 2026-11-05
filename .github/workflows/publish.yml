@@ -1,0 +1,139 @@
+# Manual-only publishing via Visual Studio Marketplace Trusted Publishing (OIDC).
+# The matching Marketplace policy must be Drako01 / indizivo / publish.yml / marketplace.
+# No push, tag, or PR can trigger publication.
+name: Indizivo / Publish Marketplace
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_publication:
+        description: Explicitly authorize publishing the current version from main
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indizivo-marketplace-release
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Require manual release approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Double gate - protected branch and release variable
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm_publication }}
+          ENABLED: ${{ vars.INDIZIVO_RELEASE_ENABLED }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main" || { echo "Releases must run from main" >&2; exit 1; }
+          test "$CONFIRM" = "true" || { echo "confirm_publication must be approved" >&2; exit 1; }
+          test "$ENABLED" = "true" || { echo "INDIZIVO_RELEASE_ENABLED must be true" >&2; exit 1; }
+
+  verify:
+    name: Verify / ${{ matrix.os }}
+    needs: authorize
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - run: npm audit --omit=dev
+
+  vscode-e2e:
+    name: Official VS Code Extension Host / Linux
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: xvfb-run -a npm run test:e2e
+
+  package:
+    name: Package and smoke-test exact VSIX
+    needs: [authorize, verify, vscode-e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+      - run: xvfb-run -a npm run smoke:vsix
+      - name: Check distributable inventory
+        run: npm run inspect:vsix
+      - name: Identify release artifact and compute checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./package.json').publisher")" = "armotusitio"
+          test "$(node -p "require('./package.json').name")" = "indizivo"
+          version="$(node -p "require('./package.json').version")"
+          test -f "indizivo-$version.vsix"
+          sha256sum "indizivo-$version.vsix" > indizivo.vsix.sha256
+          cat indizivo.vsix.sha256 >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: indizivo-release-vsix
+          path: |
+            indizivo-*.vsix
+            indizivo.vsix.sha256
+          if-no-files-found: error
+
+  marketplace:
+    name: Publish VSIX through OIDC
+    needs: [authorize, verify, vscode-e2e, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: indizivo-release-vsix
+      - name: Verify original checksum and publish without PAT
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum --check indizivo.vsix.sha256
+          version="$(node -p "require('./package.json').version")"
+          test -f "indizivo-$version.vsix"
+          unset VSCE_PAT AZURE_DEVOPS_EXT_PAT
+          npm exec --yes --package=@vscode/vsce@4.0.2 -- vsce publish --oidc --packagePath "indizivo-$version.vsix" --skip-duplicate
