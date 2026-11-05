@@ -45,3 +45,7 @@ All diagnostics are local-first with no telemetry or AI. Explicit loopback HTTP 
 Indizivo branding is provisional until trademark clearance. The project remains private until explicitly approved for public distribution.
 
 The product takes engineering and UX standards from Probato PR (https://github.com/Drako01/probato-pr) but is a separate extension with no runtime dependency on it.
+
+## Documentation and support
+
+[Security](SECURITY.md) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md) · [Roadmap](ROADMAP.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
