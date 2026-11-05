@@ -7,7 +7,8 @@ import {execFile} from 'node:child_process';
 import {evaluateVersion} from './versions';
 import {inspectOwner} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
-import type {CheckStatus} from './contracts';
+import type {CheckStatus,SessionStatus} from './contracts';
+import type {Comparison} from './comparison';
 export interface PackageManifest {
  scripts?:Record<string,string>;
  dependencies?:Record<string,string>;
@@ -27,9 +28,9 @@ export interface DiagnosticCheck {
 }
 export interface DiagnosticSession {
  id:string;project:string;startedAt:string;completedAt:string;
- host:string;state:string;checks:DiagnosticCheck[];discovery:Discovery;
+ host:string;state:SessionStatus;checks:DiagnosticCheck[];discovery:Discovery;
  serviceChecks:DiagnosticCheck[];
- comparison?:{previousAt:string;currentAt:string;observations:unknown[];note:string}|null;
+ comparison?:Comparison|null;
 }
 export interface ServiceTarget {name:string;url:string}
 type VersionResult={ok:boolean;value:string};
