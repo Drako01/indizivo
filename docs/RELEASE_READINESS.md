@@ -73,3 +73,9 @@ Source: owner-provided execution log for `git pull --ff-only origin main; npm ci
 - Package command now runs inventory inspection after VSIX creation. A failure blocks local packaging and any future pipeline.
 - No GitHub Actions execution, no store publication, no GitHub release or repository visibility change.
 - Production readiness remains **NO-GO for Enterprise AAA** until actual E2E, clean install, accessibility, TypeScript/typecheck, supported OS matrix and security testing pass.
+
+### Isolated verification after new changes
+
+- V8 syntax parse PASS for 9 modified JS/test files; 8/8 isolated request-schema test cases PASS.
+- GitHub tree contains 0 active workflow YAML files; two workflow templates exist only in the disabled directory.
+- New Node test suite and final VSIX packaging/clean installation: **RETEST REQUIRED**, not yet executed on the current commit.

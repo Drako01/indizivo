@@ -175,3 +175,11 @@ User-supplied PowerShell log records: `npm ci` completed; `npm run release:check
 - [ ] Obtain explicit publication approval; do not assume staging templates authorizes activation.
 
 CI state: **PREPARED / INACTIVE / NOT EXECUTED**. See docs/CI_RELEASE_PREPARATION.md. These templates are NOT under .github/workflows/.
+
+### Final-turn isolated safety check — 2026-11-05
+
+- JavaScript syntax of 9 recently modified core/test files parsed successfully in V8.
+- 8/8 isolated V8 checks of src/messages.js passed (valid commands, invalid commands, bound payloads, invalid export, evidence identifiers).
+- No workflow files are present under .github/workflows/; only .github/workflows-disabled/verify.yml and publish.yml exist.
+- These checks are **NOT a replacement** for executing npm run release:check, VSIX inventory verification or a real installed VSIX smoke test.
+- See docs/AAA_GATES.md for hard requirements before claiming Enterprise AAA 10/10.
