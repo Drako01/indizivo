@@ -5,7 +5,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const names=['extension.js','diagnostics.js','port-owners.js','ui.js','messages.js',
- 'versions.js','comparison.js'];
+ 'versions.js','comparison.js','i18n.js',
+ ...fs.readdirSync(path.join(root,'src/typed')).filter(f=>f.endsWith('.ts')).map(f=>'typed/'+f)];
 const forbidden=[
  {name:'eval()',pattern:/\beval\s*\(/},
  {name:'dynamic Function()',pattern:/\bnew\s+Function\s*\(/},
