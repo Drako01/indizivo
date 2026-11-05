@@ -46,6 +46,7 @@ function loadExtension(vscode) {
   };
   try {
     delete require.cache[require.resolve('../src/extension')];
+    delete require.cache[require.resolve('../dist/typed/extension')];
     return require('../src/extension');
   } finally {
     Module._load=orig;
