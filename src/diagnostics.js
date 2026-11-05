@@ -39,7 +39,7 @@ function validateService(input) {
   try {
     const url = new URL(input.url);
     if (url.protocol !== 'http:' || !['localhost','127.0.0.1','[::1]'].includes(url.hostname) ||
-      url.username || url.password || url.hash || url.href.length > 600) return null;
+      url.username || url.password || url.hash || url.search || url.href.length > 600) return null;
     return { name, url: url.href };
   } catch { return null; }
 }
@@ -75,8 +75,11 @@ function runVersion(command, args, timeout, signal) {
       if (finished) return;
       finished = true;
       signal?.removeEventListener('abort', cancel);
-      resolve({ ok: !err, value: err ? (err.code === 'ENOENT' ? 'Not installed / not on PATH' :
-        'Could not inspect runtime') : String(stdout || stderr).trim().slice(0, 180) });
+      const raw=String(stdout || stderr).trim();
+      const safeVersion = command === 'node' ? /^v\d+\.\d+\.\d+/.exec(raw)?.[0] :
+        /^go version go\d+\.\d+(?:\.\d+)?/.exec(raw)?.[0];
+      resolve({ ok: !err && !!safeVersion, value: err ? (err.code === 'ENOENT' ? 'Not installed / not on PATH' :
+        'Could not inspect runtime') : (safeVersion || 'Unrecognized runtime version output') });
     });
     function cancel() { try { child.kill(); } catch { /* ignore */ } }
     signal?.addEventListener('abort', cancel, { once: true });
@@ -108,7 +111,7 @@ function inspectService(service, timeout, signal) {
       signal?.removeEventListener('abort', cancel); resolve({ ok, detail }); }
     const req = http.get(valid.url, { timeout, agent: false,
       headers: { 'user-agent': 'Indizivo/0.1' } }, res => {
-      res.resume(); finish(res.statusCode < 400, 'HTTP ' + res.statusCode);
+      res.resume(); finish(res.statusCode >= 200 && res.statusCode < 300, 'HTTP ' + res.statusCode);
     });
     const cancel = () => req.destroy(new Error('cancelled'));
     signal?.addEventListener('abort', cancel, { once: true });

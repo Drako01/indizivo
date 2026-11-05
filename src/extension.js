@@ -109,6 +109,7 @@ class ControlCenter {
   async runDiagnosis() {
     this.ensureReady();
     this.error='';
+    this.data.session=null;
     this.running=true;
     this.pendingApproval=null;
     this.abort=new AbortController();
@@ -237,6 +238,7 @@ class ControlCenter {
     switch(m.type) {
       case 'ready': this.broadcast(); break;
       case 'selectProject': await this.selectProject(); break;
+      case 'openHome': await this.openHome(); break;
       case 'diagnose': await this.runDiagnosis(); break;
       case 'cancel': this.cancel(); this.broadcast(); break;
       case 'prepareServices': await this.prepareServices(); break;
