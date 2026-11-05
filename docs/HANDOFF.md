@@ -102,3 +102,15 @@ git pull --ff-only origin feat/enterprise-aaa-full-typescript-i18n
 - Review results against baseline and coverage; do not claim full AAA 10/10 without real UI accessibility, Linux/macOS, security and UX evidence.
 
 **Current verdict: TYPESCRIPT IMPLEMENTATION AUTHORED / NOT COMPILED OR REGRESSION-VALIDATED / NOT READY TO MERGE OR RELEASE.**
+
+## 8. November 5 continuation — source-authored checkpoint
+
+- **Draft review:** [PR #4](https://github.com/Drako01/indizivo/pull/4), base `main`, head `feat/enterprise-aaa-full-typescript-i18n`. Do not merge or release before gates.
+- Implemented `src/typed/extension.ts`; `src/extension.js` now only loads compiled host entry. All production modules have a typed implementation with thin CommonJS adapters.
+- Added `scripts/clean-types.cjs` and `prebuild:types` to remove stale compiled output before every build. This ensures tests cannot accidentally use deleted TypeScript modules from older compilations.
+- Added/updated integration, Webview accessibility, localization, packaging and strict-runtime-inventory assertions.
+- Native English/Spanish keys match (9/9); catalog keys match (195/195); root `package-lock.json` devDependency entries matched `package.json` in a read-only static inspection.
+- The original Activity Bar SVG is byte-identical to `main` by Git blob SHA `9f9390eeb1dcfabaf2ffe28e77bac6661e36371f`.
+- GitHub rulesets IDs 26636048/26636049 are **active**, and only `.github/workflows-disabled/` is present; nothing was published or activated.
+- Isolated JavaScript parse checks passed for inspected updated JS files. **No TypeScript compiler, `npm ci`, Node tests, VS Code Extension Host, packed VSIX, accessibility or OS matrix was executed against this branch in the remote editing session.**
+- If `tsc` or tests fail locally, treat them as **FAIL**, fix without weakening assertions and rerun the full script. Production Enterprise AAA status remains **NO-GO**.
