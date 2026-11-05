@@ -11,6 +11,7 @@ const MANDATORY=[
  'extension/src/ui.js','extension/src/versions.js','extension/src/port-owners.js',
  'extension/src/comparison.js','extension/src/messages.js','extension/dist/typed/messages.js',
  'extension/dist/typed/versions.js','extension/dist/typed/comparison.js','extension/dist/typed/i18n.js','extension/dist/typed/port-owners.js',
+ 'extension/dist/typed/diagnostics.js','extension/dist/typed/ui.js','extension/dist/typed/extension.js',
  'extension/media/indizivo-icon-128.png',
  'extension/readme.md','extension/LICENSE.txt','extension/PRIVACY.md'
 ];
