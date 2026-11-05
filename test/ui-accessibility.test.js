@@ -15,7 +15,7 @@ test('Control Center supports Spanish and English with consent controls intact',
  assert.match(source,/aria-live="polite"/);
 });
 test('history can select stored session and return to current while preserving evidence',()=>{
- assert.match(source,/fire\\('selectHistory',\\{index\\}\\)/);
- assert.match(source,/fire\\('selectHistory',\\{index:-1\\}\\)/);
- assert.match(source,/state\\.selectedHistoryIndex===index/);
+ assert.ok(source.includes("fire('selectHistory',{index})"));
+ assert.ok(source.includes("fire('selectHistory',{index:-1})"));
+ assert.ok(source.includes('state.selectedHistoryIndex===index'));
 });
