@@ -45,7 +45,7 @@
   "scripts": {
     "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/comparison.js && node --check src/ui.js && node --check src/messages.js && node --check src/extension.js && node --check scripts/inspect-vsix.cjs",
     "test": "npm run build:types && node --test test/*.test.js",
-    "verify": "npm run typecheck && npm run check && npm test",
+    "verify": "npm run typecheck && npm run check && npm run lint:security && npm test",
     "package": "npm run verify && npx --no-install @vscode/vsce package --no-dependencies && npm run inspect:vsix",
     "test:e2e": "npm run build:types && node test/e2e/run.js",
     "release:check": "npm run verify && npm run test:e2e && npm run package",
@@ -54,7 +54,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "rulesets:check": "node scripts/ruleset-governance.cjs",
     "test:vsix": "npm run package && node test/vsix-e2e/run.js",
-    "benchmark": "npm run build:types && node scripts/benchmark.cjs"
+    "benchmark": "npm run build:types && node scripts/benchmark.cjs",
+    "lint:security": "node scripts/quality-gate.cjs",
+    "test:coverage": "npm run build:types && node --experimental-test-coverage --test test/*.test.js"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
