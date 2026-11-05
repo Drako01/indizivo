@@ -50,3 +50,26 @@ test('Interpolation localizes nested descriptors without changing variable value
  assert.match(es.detail,/No se declaró una versión requerida/);
  assert.equal(input.detail,'v24','raw diagnostic data must remain canonical');
 });
+
+test('Spanish port evidence and status are localized without mutating canonical observations',()=>{
+ const {localizeFinding}=require('../dist/typed/i18n');
+ const raw={
+   id:'port-3000',category:'Ports',label:'Port 3000',status:'info',
+   detail:'A TCP listener responded.',suggestion:'Inspect startup logs.',
+   evidence:[{id:'port-evidence',observedAt:'2026-11-05T00:00:00Z',fact:'TCP loopback result: listening.'}],
+   i18n:{
+     category:{key:'diag.category.Ports'},
+     label:{key:'diag.label.port',values:{port:3000}},
+     detail:{key:'diag.portListening',values:{port:3000,owner:{key:'diag.portNoOwner'}}},
+     suggestion:{key:'diag.portNext'},
+     evidence:{key:'diag.portEvidence',values:{
+       status:{key:'diag.portStateListening'},ownership:{key:'diag.portOwnerNA'}}}
+   }
+ };
+ const translated=localizeFinding(raw,'es');
+ assert.equal(translated.category,'Puertos');
+ assert.match(translated.detail,/127\\.0\\.0\\.1:3000/);
+ assert.match(translated.evidence[0].fact,/en escucha/);
+ assert.match(translated.suggestion,/Revisá los logs/);
+ assert.equal(raw.evidence[0].fact,'TCP loopback result: listening.');
+});
