@@ -1,5 +1,19 @@
 # Indizivo — Technical handoff / current engineering state
 
+### Primera ejecución real en Windows — 2026-11-05 16:56:47 ART
+
+- Fuente validada: `5117941102fca927b696666962be61b43a0d3a6b` (árbol limpio, PowerShell en `F:\\indizivo`, Node 24.22.1, npm 11.6.2).
+- **18 comprobaciones:** 12 PASS, 5 FAIL, 1 WARN.
+- PASS: `npm ci`, lint tipado, higiene de seguridad, auditoría de dependencias de producción (0 vulnerabilidades), rulesets locales/remotos, Git y versiones de herramientas.
+- FAIL raíz: `npm run typecheck` por `TS2379`, `TS2345`, `TS2531` y `TS2339` (contratos opcionales `FindingTranslation`, estados de sesión y acceso nulo al proyecto).
+- FAIL dependientes (no E2E ejecutado): `npm test`, `release:check`, `test:coverage` y `benchmark` terminaron en la compilación y no califican como pruebas funcionales.
+- WARN: `npm audit` reportó 3 avisos moderados de dependencias de desarrollo transitivas de `@vscode/vsce` (`glob`, `minimatch`); el fix propuesto es una actualización mayor a `@vscode/vsce@4.1.0`. No se forzó el upgrade.
+- Correcciones posteriores **authoradas, aún NO ejecutadas**: omisión condicional de propiedades opcionales en `src/typed/diagnostics.ts`, normalización del contrato `DiagnosticCheck`, referencia estable a sesión/proyecto en `src/typed/extension.ts`, interpolación de claves i18n tipadas y regresión del historial EN/ES.
+- **Próximo requisito:** repetir `.\\verify-indizivo.ps1` desde el HEAD actual de `feat/enterprise-aaa-full-typescript-i18n`, enviar `logs.log`; no levantar bloqueantes sin evidencia de ejecución.
+
+**Release:** NO-GO. PR #4 se mantiene draft, `main` sin cambios y GitHub Actions deshabilitado.
+
+
 **Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
 
 
