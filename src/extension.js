@@ -199,6 +199,19 @@ class ControlCenter {
     await this.save();
     this.broadcast();
   }
+  async copyEvidence(id) {
+    if (typeof id!=='string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new Error('Invalid finding identifier.');
+    const checks=[...(this.data.session?.checks||[]),...(this.data.session?.serviceChecks||[])];
+    const finding=checks.find(check=>check.id===id);
+    if (!finding) throw new Error('The requested finding is no longer available.');
+    const lines=['Indizivo diagnostic evidence',finding.label,
+      'Status: '+finding.status,'Observation: '+finding.detail,
+      'Suggested next step: '+(finding.suggestion||'None')];
+    for(const record of finding.evidence||[])
+      lines.push('Evidence: '+record.fact+' · '+record.observedAt);
+    await vscode.env.clipboard.writeText(lines.join('\n'));
+    vscode.window.showInformationMessage('Indizivo: evidence copied to clipboard.');
+  }
   async saveTimeout(value) {
     if (this.running) throw new Error('Wait for the active check to finish before editing timeout.');
     if (!Number.isInteger(value) || value<400 || value>10000) throw new Error('Timeout must be between 400 and 10000 ms.');
@@ -257,6 +270,7 @@ class ControlCenter {
       case 'declineServices': this.pendingApproval=null; this.broadcast(); break;
       case 'addService': await this.addService(m); break;
       case 'removeService': await this.removeService(m.url); break;
+      case 'copyEvidence': await this.copyEvidence(m.id); break;
       case 'saveTimeout': await this.saveTimeout(m.value); break;
       case 'clearHistory': await this.clearHistory(); break;
       case 'export': await this.export(m.format); break;

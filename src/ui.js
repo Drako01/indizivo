@@ -18,6 +18,10 @@ function browserUI() {
     const top = el('div','check-top');
     top.append(el('span','check-label',c.label),el('span','status status-'+c.status,c.status));
     item.append(top,el('div','muted',c.detail));
+    const copy=el('button','quiet','Copy evidence');
+    copy.setAttribute('type','button');
+    copy.addEventListener('click',()=>fire('copyEvidence',{id:c.id}));
+    item.append(copy);
     if (c.suggestion) item.append(el('div','suggestion','Next: '+c.suggestion));
     for (const e of c.evidence || []) {
       const details = el('details','evidence');
@@ -55,8 +59,10 @@ function browserUI() {
       '. Results apply only to the tests that ran.' :
       'Start a diagnosis to inspect your development environment without changing files or processes.');
     const comparison=clear('comparison');
+    comparison.hidden=true;
     const trends=state.session?.comparison?.observations || [];
     if (trends.length) {
+      comparison.hidden=false;
       comparison.append(el('h3',null,'Changes since previous diagnosis'));
       comparison.append(el('p','muted',state.session.comparison.note));
       for (const trend of trends.filter(x=>x.trend!=='unchanged').slice(0,12))
