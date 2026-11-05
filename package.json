@@ -58,7 +58,8 @@
     "lint:security": "node scripts/quality-gate.cjs",
     "test:coverage": "npm run build:types && node --experimental-test-coverage --test test/*.test.js",
     "smoke:vsix": "node test/vsix-e2e/run.js",
-    "lint:types": "node scripts/lint-types.cjs"
+    "lint:types": "node scripts/lint-types.cjs",
+    "prebuild:types": "node scripts/clean-types.cjs"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
