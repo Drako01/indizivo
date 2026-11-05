@@ -47,5 +47,5 @@ if (-not $Apply) {
   Write-Host "DRY RUN completed. Apply only when ready: .\scripts\apply-rulesets.ps1 -Apply"
 } else {
   Write-Host "Verify applied server-side rules:"
-  Invoke-Gh @('api',"repos/$repository/rulesets")
+  Invoke-Gh -Arguments @('api',"repos/$repository/rulesets")
 }
