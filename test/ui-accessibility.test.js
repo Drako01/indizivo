@@ -19,3 +19,13 @@ test('history can select stored session and return to current while preserving e
  assert.ok(source.includes("fire('selectHistory',{index:-1})"));
  assert.ok(source.includes('state.selectedHistoryIndex===index'));
 });
+
+test('ARIA tabs have matching panels and keyboard-accessible history',()=>{
+ for(const name of ['diagnostics','services','history','settings']) {
+  assert.ok(source.includes('id="tab-'+name+'"'));
+  assert.ok(source.includes('id="section-'+name+'"'));
+  assert.ok(source.includes('aria-controls="section-'+name+'"'));
+ }
+ assert.ok(source.includes("event.key==='ArrowRight'"));
+ assert.ok(source.includes("restore.focus({preventScroll:true})"));
+});
