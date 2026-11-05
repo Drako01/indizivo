@@ -1,5 +1,19 @@
 # Indizivo — PLAN.md
 
+### Segunda ejecución Windows — VALIDADA (2026-11-05 17:07:59 ART)
+
+> **Estado vigente:** fuente verificada en commit `e883932fa3c344af5018ad32226e33d8a845b086`, Windows, Node `v24.22.1`, npm `11.6.2`, árbol Git limpio. **18 gates: 17 PASS / 0 FAIL / 1 WARN**. Este resultado reemplaza el bloqueo de compilación del primer log; las secciones anteriores quedan como historial y NO representan el estado actual.
+
+- **PASS:** `npm ci`; TypeScript estricto `tsc --noEmit`; lint TS y seguridad; 67/67 pruebas Node, 0 omitidas; E2E oficial de Extension Host VS Code `1.145.0` (exit 0); empaquetado, inspección e instalación de VSIX aislado con smoke PASS; cobertura; benchmark sintético; `npm audit --omit=dev` sin vulnerabilidades; rulesets GitHub activos y árbol limpio.
+- **VSIX probado:** `indizivo-0.1.0.vsix`, 34 archivos, 45,52 KB; SHA-256 `b112d77d52ac5b733a0e03b5c12d43914b7acd4bafc326c67764d860cca4e7a5`. El inventario de distribución pasó y preservó los adaptadores CommonJS y 9 módulos JS compilados desde TypeScript.
+- **Cobertura total:** líneas `73.50%` (base `67.68%`, +5,82 pp); ramas `68.45%` (base `69.40%`, -0,95 pp); funciones `72.50%` (base `71.43%`, +1,07 pp). `dist/typed/ui.js` solo `12.08%` de líneas: falta ejercitar interacciones reales de Webview; no confundir sus tests estáticos con a11y E2E.
+- **Rendimiento sintético (8 rondas):** p50 `39.3ms`, p95 `51.9ms`, pico RSS `52.9MiB`. Base histórica p95 ~`44.0ms`; subida indicativa ~`17.95%`, pero 8 rondas no demuestran regresión estadística: repetir muestras comparables antes de decidir.
+- **WARN:** auditoría completa `npm audit`: 3 avisos moderados de `glob`/`minimatch` en la cadena de desarrollo de `@vscode/vsce`; `npm audit fix --force` propone versión mayor y **no debe ejecutarse sin evaluación y regresión**. `npm audit --omit=dev`: 0 vulnerabilidades.
+- **Advertencias adicionales del entorno:** `DEP0190` señala `shell:true` en la invocación de `.cmd` del harness E2E de Windows, sujeto a hardening; `DEP0169` corresponde a una dependencia que usa `url.parse()` y requiere atribución antes de modificarla. Mensajes de GitHub AgentHost sin sesión no invalidaron el E2E.
+- **PENDIENTES NO CERTIFICADOS:** pruebas reales de teclado/foco/zoom 200%/alto contraste/NVDA; Webview E2E interactivo EN/ES; host Windows/Linux/macOS y WSL/SSH/contendedores; revisión adversarial completa, cancelación de subprocesos en cada SO, prueba de usabilidad, clearance legal de marca; y autorización expresa para publicación.
+- **Decisión:** **PASS de QA automatizado Windows en el commit verificado; NO-GO para release público Enterprise AAA 10/10**. PR #4 permanece draft, `main` intacta, GitHub Actions/publicación desactivados. Los commits de documentación posteriores NO fueron parte de la ejecución medida.
+
+
 **Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
 
 
