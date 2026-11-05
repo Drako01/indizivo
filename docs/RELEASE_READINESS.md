@@ -97,3 +97,26 @@ Source: owner-provided execution log for `git pull --ff-only origin main; npm ci
 - Legal/brand clearance and public-release approval: BLOCKED.
 
 **Decision:** NO-GO for 10/10 Enterprise AAA certification. Once final Windows logs and package checks are available, update individual results without upgrading unrelated gates.
+
+## Latest owner-run Windows validation (2026-11-05, source commit `151d695`)
+
+Source: owner-supplied `logs(1).log`, recorded in PowerShell on Windows x64 with Node.js v24.22.1, npm 11.6.2 and official VS Code 1.145.0. This was **before** the Activity Bar glyph change in PR #2.
+
+- `npm ci`: PASS (315 installed packages; full audit 3 moderate advisories).
+- `npm run release:check`: PASS; strict typecheck, typed contract lint, syntax, security hygiene and 57/57 Node tests, 0 fails/0 skipped.
+- Official development Extension Host E2E: PASS.
+- Packaged `indizivo-0.1.0.vsix`: PASS, 26 files, 36.2 KB; SHA-256 `a4dc162061f8eaf99c2d210939973cfac4b08ee95122fdcae122d96819453e63`.
+- Isolated installed-VSIX Extension Host smoke: PASS (`Indizivo packaged VSIX smoke: PASS`).
+- `npm run test:coverage`: PASS; **global lines 67.68%, branches 69.40%, functions 71.43%**; `src/ui.js` lines **11.66%**. This is insufficient to claim full browser UI coverage.
+- Synthetic-local benchmark (8 rounds): p50 40.4 ms, p95 44.9 ms, max 44.9 ms, peak RSS 52.7 MiB. Not a field benchmark or defined production SLO.
+- `npm audit --omit=dev`: 0 vulnerabilities; full `npm audit`: WARN (3 moderate advisories, involving development packaging dependency tree `glob`/`minimatch`, through `@vscode/vsce`).
+- `npm run rulesets:check`: PASS but **dry-run configuration check only**. Actual GitHub rulesets were subsequently created and are active (server-side IDs 26636048 and 26636049).
+- `git diff --check`: PASS; summary 13 PASS, 0 FAIL, 1 WARN.
+
+The V8/Linux/macOS platform matrix, real interactive accessibility in VS Code, complete EN/ES content coverage and comprehensive field security validation remain **NOT VERIFIED**. Do not interpret an E2E smoke as certification.
+
+### Activity Bar visual change — PR #2
+
+- Theme-adaptive monochrome SVG optimized for 24×24; source structure and local raster preview inspected.
+- Node tests, latest package VSIX smoke and **manual dark/light/high contrast** inspection of this glyph change are still **PENDING** on the PR head.
+- The previous VSIX checksum and run above do not include this icon revision.
