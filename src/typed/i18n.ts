@@ -386,7 +386,7 @@ export type Params =Readonly<Record<string,string|number>>;
 export interface Descriptor {key:I18nKey;values?:Params}
 export function t(locale:string|undefined,key:I18nKey,values:Params={}):string {
  const template=CATALOG[locale==='es'?'es':'en'][key];
- return template.replace(/\\{([a-zA-Z][a-zA-Z0-9_]*)\\}/g,(_,name:string)=>String(values[name]??'{'+name+'}'));
+ return template.replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,(_,name:string)=>String(values[name]??'{'+name+'}'));
 }
 export interface FindingTranslation {label?:Descriptor;category?:Descriptor;detail?:Descriptor;suggestion?:Descriptor;evidence?:Descriptor}
 export interface Finding {id:string;label:string;category:string;detail:string;suggestion?:string;status:string;evidence?:{fact:string;observedAt:string;id?:string}[];i18n?:FindingTranslation}
