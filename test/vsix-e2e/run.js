@@ -3,12 +3,14 @@ const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
 const {spawnSync}=require('node:child_process');
+const {invocation}=require('../../scripts/safe-vscode-cli.cjs');
 const {downloadAndUnzipVSCode,resolveCliArgsFromVSCodeExecutablePath,runTests}=require('@vscode/test-electron');
 const {inspect}=require('../../scripts/inspect-vsix.cjs');
 
 function runCli(executable,args) {
- const result=spawnSync(executable,args,{encoding:'utf8',stdio:'pipe',timeout:120000,
-  windowsHide:true,shell:process.platform==='win32'&&executable.toLowerCase().endsWith('.cmd')});
+ const command=invocation(executable,args);
+ const result=spawnSync(command.file,command.args,{encoding:'utf8',stdio:'pipe',timeout:120000,
+  windowsHide:true,shell:false});
  if(result.error)throw result.error;
  if(result.status!==0)throw new Error('VS Code CLI failed: '+String(result.stderr||result.stdout).slice(0,2000));
  return String(result.stdout||'');
