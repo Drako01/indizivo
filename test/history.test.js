@@ -33,7 +33,8 @@ function load(vscode) {
   if(request==='vscode')return vscode;
   return original.call(this,request,parent,isMain);
  };
- try{delete require.cache[require.resolve('../src/extension')];return require('../src/extension');}
+ try{delete require.cache[require.resolve('../src/extension')];
+   delete require.cache[require.resolve('../dist/typed/extension')];return require('../src/extension');}
  finally{Module._load=original;}
 }
 test('history persists a complete navigable snapshot and exports the selected session state',async()=>{
