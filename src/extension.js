@@ -6,6 +6,7 @@ const { diagnose, verifyServices, validateService } = require('./diagnostics');
 const { html } = require('./ui');
 const { compareSessions } = require('./comparison');
 const { validateUiMessage } = require('./messages');
+const { t, localizeFinding, localizeSession } = require('./i18n');
 
 class ControlCenter {
   constructor(context) {
@@ -22,6 +23,7 @@ class ControlCenter {
     this.abort = null;
     this.restore();
   }
+  tr(key,values) {return t(this.data.locale,key,values);}
   scopeKey() {
     return 'indizivo:v1:' + crypto.createHash('sha256').update(this.currentRoot?.toString() || 'none').digest('hex');
   }
@@ -51,7 +53,7 @@ class ControlCenter {
       project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
       host: process.platform + ' · extension host',
       trusted: vscode.workspace.isTrusted,
-      session: this.viewedSession(),
+      session: localizeSession(this.viewedSession(),this.data.locale),
       services: this.data.services,
       history: this.data.history,
       timeoutMs: this.data.timeoutMs,
@@ -75,7 +77,7 @@ class ControlCenter {
     this.views.add(webview);
     const subscription = webview.onDidReceiveMessage(async m => {
       try { await this.message(m); } catch (e) {
-        this.error = e?.message || 'Unexpected error.';
+        this.error = e?.message || this.tr('host.unexpected');
         this.broadcast();
       }
     });
@@ -97,12 +99,12 @@ class ControlCenter {
     }, null, this.context.subscriptions);
   }
   async selectProject() {
-    if (this.running) throw new Error('Cancel the active diagnosis before switching projects.');
+    if (this.running) throw new Error(this.tr('host.cancelProject'));
     const folders = vscode.workspace.workspaceFolders || [];
     if (!folders.length) { this.error='Open a project folder first.'; this.broadcast(); return; }
     const selected = folders.length===1 ? folders[0] : await vscode.window.showQuickPick(
       folders.map(folder=>({label:folder.name,description:folder.uri.fsPath,folder})),
-      {placeHolder:'Choose the project to diagnose'});
+      {placeHolder:this.tr('host.selectProject')});
     if (!selected) return;
     this.currentRoot = selected.folder ? selected.folder.uri : selected.uri;
     this.selectedHistoryIndex=null;
@@ -112,13 +114,13 @@ class ControlCenter {
     this.broadcast();
   }
   ensureReady() {
-    if (!vscode.workspace.isTrusted) throw new Error('Trust the workspace before running diagnostics.');
-    if (!this.currentRoot) throw new Error('Choose a project first.');
+    if (!vscode.workspace.isTrusted) throw new Error(this.tr('host.trust'));
+    if (!this.currentRoot) throw new Error(this.tr('host.projectFirst'));
     const folders = vscode.workspace.workspaceFolders || [];
     if (!folders.some(folder=>folder.uri.toString()===this.currentRoot.toString()))
-      throw new Error('The selected project is no longer open in this VS Code workspace.');
-    if (this.currentRoot.scheme !== 'file') throw new Error('This version supports local filesystem workspaces only.');
-    if (this.running) throw new Error('A diagnosis is already running.');
+      throw new Error(this.tr('host.workspaceClosed'));
+    if (this.currentRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
+    if (this.running) throw new Error(this.tr('host.alreadyRunning'));
   }
   cancel() {
     if (this.abort) this.abort.abort();
@@ -139,7 +141,7 @@ class ControlCenter {
       const session=await diagnose(this.currentRoot.fsPath,this.data.timeoutMs,signal,checks=>{
         this.data.session = {
           project: vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name || 'Project',
-          startedAt:new Date().toISOString(), completedAt:'In progress',
+          startedAt:new Date().toISOString(), completedAt:this.tr('ui.progress'),
           state:'running', checks, serviceChecks:[]
         };
         this.broadcast();
@@ -153,8 +155,8 @@ class ControlCenter {
       this.data.history=this.data.history.slice(0,10);
       await this.save();
     } catch(e) {
-      this.error = signal.aborted ? 'Diagnosis cancelled; partial observations may be visible.' :
-        'Diagnosis failed: ' + (e?.message || 'unknown error');
+      this.error = signal.aborted ? this.tr('host.cancelled') :
+        this.tr('host.failed',{reason:e?.message || this.tr('host.unknown')});
       if (this.data.session) this.data.session.state=signal.aborted?'cancelled':'failed';
     } finally {
       this.running=false;
@@ -164,18 +166,18 @@ class ControlCenter {
   }
   async prepareServices() {
     this.ensureReady();
-    if (this.selectedHistoryIndex!==null) throw new Error('Return to the current session before checking services.');
-    if (!this.data.session) throw new Error('Run a diagnosis before checking services.');
-    if (!this.data.services.length) throw new Error('Add a loopback endpoint in Services first.');
+    if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
+    if (!this.data.session) throw new Error(this.tr('host.diagnoseFirst'));
+    if (!this.data.services.length) throw new Error(this.tr('host.addEndpointFirst'));
     this.pendingApproval=this.data.services.map(s=>({...s}));
     this.error='';
     this.broadcast();
   }
   async confirmServices() {
     this.ensureReady();
-    if (!this.pendingApproval || !this.data.session) throw new Error('Approval plan expired; review again.');
+    if (!this.pendingApproval || !this.data.session) throw new Error(this.tr('host.approvalExpired'));
     const plan=this.pendingApproval.map(validateService).filter(Boolean);
-    if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error('Service targets changed; review again.');
+    if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error(this.tr('host.targetsChanged'));
     this.pendingApproval=null;
     this.running=true;
     this.abort=new AbortController();
@@ -193,7 +195,7 @@ class ControlCenter {
         this.data.history[0].snapshot=structuredClone(this.data.session);
       await this.save();
     } catch(e) {
-      this.error=signal.aborted?'Service check cancelled.':'Service check failed: '+(e?.message||'Unknown');
+      this.error=signal.aborted?this.tr('host.serviceCancelled'):this.tr('host.serviceFailed',{reason:e?.message||this.tr('host.unknown')});
     } finally {
       this.running=false;
       this.abort=null;
@@ -201,17 +203,17 @@ class ControlCenter {
     }
   }
   async addService(message) {
-    if (this.running) throw new Error('Wait for the active check to finish before editing services.');
+    if (this.running) throw new Error(this.tr('host.waitServiceEdit'));
     const service=validateService(message);
-    if (!service) throw new Error('Use a name and a loopback HTTP URL such as http://127.0.0.1:5000/health.');
-    if (this.data.services.length >= 20) throw new Error('Maximum 20 services per project.');
+    if (!service) throw new Error(this.tr('host.invalidService'));
+    if (this.data.services.length >= 20) throw new Error(this.tr('host.maxServices'));
     if (!this.data.services.some(item=>item.url===service.url)) this.data.services.push(service);
     this.pendingApproval=null;
     await this.save();
     this.broadcast();
   }
   async removeService(url) {
-    if (this.running) throw new Error('Wait for the active check to finish before editing services.');
+    if (this.running) throw new Error(this.tr('host.waitServiceEdit'));
     if (typeof url!=='string') return;
     this.data.services=this.data.services.filter(x=>x.url!==url);
     this.pendingApproval=null;
@@ -219,48 +221,51 @@ class ControlCenter {
     this.broadcast();
   }
   async copyEvidence(id) {
-    if (typeof id!=='string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new Error('Invalid finding identifier.');
+    if (typeof id!=='string' || !/^[a-z0-9-]{1,90}$/i.test(id)) throw new Error(this.tr('host.invalidFinding'));
     const viewed=this.viewedSession();
     const checks=[...(viewed?.checks||[]),...(viewed?.serviceChecks||[])];
     const finding=checks.find(check=>check.id===id);
-    if (!finding) throw new Error('The requested finding is no longer available.');
-    const lines=['Indizivo diagnostic evidence',finding.label,
-      'Status: '+finding.status,'Observation: '+finding.detail,
-      'Suggested next step: '+(finding.suggestion||'None')];
-    for(const record of finding.evidence||[])
-      lines.push('Evidence: '+record.fact+' · '+record.observedAt);
+    if (!finding) throw new Error(this.tr('host.findingUnavailable'));
+    const localized=localizeFinding(finding,this.data.locale);
+    const lines=[this.tr('report.copiedTitle'),localized.label,
+      this.tr('report.status')+': '+this.tr('status.'+localized.status),
+      this.tr('report.observation')+': '+localized.detail,
+      this.tr('report.next')+': '+(localized.suggestion||this.tr('report.none'))];
+    for(const record of localized.evidence||[])
+      lines.push(this.tr('report.evidence')+': '+record.fact+' · '+record.observedAt);
     await vscode.env.clipboard.writeText(lines.join('\n'));
-    vscode.window.showInformationMessage('Indizivo: evidence copied to clipboard.');
+    vscode.window.showInformationMessage(this.tr('host.copied'));
   }
   async selectHistory(index) {
-    if(this.running)throw new Error('Wait for the active check to finish.');
+    if(this.running)throw new Error(this.tr('host.waitCurrent'));
     if(index===-1) {this.selectedHistoryIndex=null;this.broadcast();return;}
     const item=this.data.history[index];
     if(!Number.isInteger(index)||!item?.snapshot)
-      throw new Error('This historical summary predates saved snapshots; rerun diagnosis to create one.');
+      throw new Error(this.tr('host.oldHistory'));
     this.selectedHistoryIndex=index;
     this.pendingApproval=null;
     this.broadcast();
   }
   async setLocale(locale) {
-    if(!['es','en'].includes(locale))throw new Error('Unsupported interface language.');
+    if(!['es','en'].includes(locale))throw new Error(this.tr('host.langUnsupported'));
     this.data.locale=locale;
+    this.error='';
     await this.save();
     this.broadcast();
   }
   async saveTimeout(value) {
-    if (this.running) throw new Error('Wait for the active check to finish before editing timeout.');
-    if (!Number.isInteger(value) || value<400 || value>10000) throw new Error('Timeout must be between 400 and 10000 ms.');
+    if (this.running) throw new Error(this.tr('host.waitTimeout'));
+    if (!Number.isInteger(value) || value<400 || value>10000) throw new Error(this.tr('host.timeoutInvalid'));
     this.data.timeoutMs=value;
     this.pendingApproval=null;
     await this.save();
     this.broadcast();
   }
   async clearHistory() {
-    if (this.running) throw new Error('Cancel the active diagnosis before deleting history.');
-    const result=await vscode.window.showWarningMessage('Permanently delete local Indizivo history for this project?',
-      {modal:true},'Delete');
-    if (result!=='Delete') return;
+    if (this.running) throw new Error(this.tr('host.cancelHistory'));
+    const result=await vscode.window.showWarningMessage(this.tr('host.confirmDelete'),
+      {modal:true},this.tr('host.delete'));
+    if (result!==this.tr('host.delete')) return;
     this.data.history=[];
     this.data.session=null;
     this.selectedHistoryIndex=null;
@@ -268,8 +273,8 @@ class ControlCenter {
     this.broadcast();
   }
   async export(format) {
-    if (this.running) throw new Error('Wait for the active diagnosis to finish before exporting.');
-    const session=this.viewedSession();
+    if (this.running) throw new Error(this.tr('host.waitExport'));
+    const session=localizeSession(this.viewedSession(),this.data.locale);
     if (!session || !['json','md'].includes(format)) return;
     const name='indizivo-report.'+format;
     const uri=await vscode.window.showSaveDialog({
@@ -280,23 +285,24 @@ class ControlCenter {
     let output='';
     if (format==='json') output=JSON.stringify(session,null,2)+'\n';
     else {
-      const lines=['# Indizivo diagnosis','', 'Project: '+session.project,
-        'Date: '+session.completedAt,'State: '+session.state,
-        '', '> Only executed checks are reported. Observations do not prove total project health.',''];
+      const lines=['# '+this.tr('report.heading'),'',this.tr('report.project')+': '+session.project,
+        this.tr('report.date')+': '+session.completedAt,
+        this.tr('report.state')+': '+this.tr('state.'+session.state),
+        '', '> '+this.tr('report.disclaimer'),''];
       for (const c of [...(session.checks||[]),...(session.serviceChecks||[])]) {
-        lines.push('## '+c.label,'','**'+c.status.toUpperCase()+'** — '+c.detail,
+        lines.push('## '+c.label,'','**'+this.tr('status.'+c.status)+'** — '+c.detail,
           '',c.suggestion||'','');
-        for (const e of c.evidence||[]) lines.push('- Evidence: '+e.fact+' ('+e.observedAt+')');
+        for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
         lines.push('');
       }
       output=lines.join('\n');
     }
     await fs.writeFile(uri.fsPath,output,'utf8');
-    vscode.window.showInformationMessage('Indizivo report exported.');
+    vscode.window.showInformationMessage(this.tr('host.reportExported'));
   }
   async message(m) {
     const request=validateUiMessage(m);
-    if(!request)throw new Error('Invalid Indizivo UI request.');
+    if(!request)throw new Error(this.tr('host.invalidRequest'));
     switch(request.type) {
       case 'ready': this.broadcast(); break;
       case 'selectProject': await this.selectProject(); break;
@@ -336,7 +342,7 @@ function activate(context) {
   };
   for (const [name,handler] of Object.entries(commands)) {
     context.subscriptions.push(vscode.commands.registerCommand(name, async()=>{
-      try {await handler();} catch(e){vscode.window.showErrorMessage('Indizivo: '+(e?.message||'Unexpected error')); }
+      try {await handler();} catch(e){vscode.window.showErrorMessage('Indizivo: '+(e?.message||controller.tr('host.unexpected'))); }
     }));
   }
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{
@@ -347,7 +353,7 @@ function activate(context) {
       controller.currentRoot=folders.length===1 ? folders[0].uri : null;
       controller.restore();
       controller.selectedHistoryIndex=null;
-      controller.error='The previous project was closed; select the current workspace before diagnosing.';
+      controller.error=controller.tr('host.workspaceWasClosed');
     }
     controller.broadcast();
   }));
