@@ -17,7 +17,7 @@ MVP competitive distinction:
 - NOT GumRun: no generic process launcher.
 - NOT CodeVitals: no generic editor metrics dashboard.
 - NOT Dev Env Diff: no plaintext .env comparison UI.
-- NOT Probato PR: no PR/code review workflow.
+- This product does not include pull-request or code-review workflows.
 
 ### 2. Engineering standards
 

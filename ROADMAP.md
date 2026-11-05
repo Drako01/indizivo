@@ -1,6 +1,6 @@
 # Indizivo Roadmap
 
-The complete end-to-end delivery checklist is [PLAN.md](PLAN.md).
+Features are delivered incrementally after reproducible tests, security review and usability verification.
 
 1. **0.1 local MVP:** UI, Node/Go discovery, local port checks, env key names, approved HTTP loopback checks, evidence and export. Source implemented; E2E pending.
 2. **0.2 reliability:** strict TypeScript contracts, formal schema validation, recheck comparability, runtime requirement validation and safe process ownership evidence.

@@ -1,6 +1,6 @@
 # Security Policy — Indizivo
 
-Indizivo is currently an unreleased, private, pre-1.0 project. Before publication it requires the security gate in [PLAN.md](PLAN.md) to pass.
+Indizivo is currently a pre-1.0 preview project. Security-sensitive behavior must be verified before a production release.
 
 ## Threat model
 See [Security and Privacy](docs/SECURITY.md).
