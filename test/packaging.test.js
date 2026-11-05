@@ -33,3 +33,10 @@ test('declared entry points and local source modules have no missing files',()=>
    'src/port-owners.js','src/comparison.js','src/ui.js'];
  for(const rel of sources) assert.ok(fs.existsSync(path.join(root,rel)),rel);
 });
+
+test('VSIX ignore excludes local logs and downloaded test copies of VS Code',()=>{
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.match(ignore,/logs\.log/);
+ assert.match(ignore,/\.vscode-test\/\*\*/);
+ assert.match(ignore,/coverage\/\*\*/);
+});

@@ -50,5 +50,10 @@ exports.run=async function run(){
   assert.ok(controller.data.history.length>=2);
   assert.ok((await fs.stat(vscode.workspace.workspaceFolders[0].uri.fsPath)).isDirectory());
   controller.panel?.dispose();
+  assert.equal(controller.panel,null,'Disposing a panel must release its controller reference without Webview errors');
+  await vscode.commands.executeCommand('indizivo.openHome');
+  assert.ok(controller.panel,'Control Center must reopen after disposal');
+  controller.panel.dispose();
+  assert.equal(controller.panel,null,'Repeated disposal must release the panel');
   console.log('Indizivo real Extension Host E2E completed successfully');
 };

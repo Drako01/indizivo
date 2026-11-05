@@ -124,3 +124,69 @@ test('project/service configuration is immutable while probes are running',async
   controller.running=false;
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('closing editor webview does not access an already disposed panel and allows reopening',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try{
+   const app=fixture(root,true);
+   let closed=false;
+   let onDispose=()=>{};
+   app.vscode.window.createWebviewPanel=()=>{
+     const webview={
+       cspSource:'vscode-resource:',
+       asWebviewUri:uri=>uri.fsPath,
+       onDidReceiveMessage:()=>({dispose(){}}),
+       postMessage:()=>Promise.resolve(true)
+     };
+     return {
+       get webview(){
+         if(closed)throw new Error('Webview is disposed');
+         return webview;
+       },
+       reveal(){},
+       onDidDispose(handler){onDispose=handler;return {dispose(){}};},
+       dispose(){closed=true;onDispose();}
+     };
+   };
+   const {controller}=loadExtension(app.vscode).activate(app.context);
+   await controller.openHome();
+   assert.equal(controller.views.size,1);
+   controller.panel.dispose();
+   assert.equal(controller.panel,null);
+   assert.equal(controller.views.size,0);
+   closed=false;
+   await controller.openHome();
+   assert.equal(controller.views.size,1);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('disposing sidebar webview does not read its invalidated getter',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try{
+   const app=fixture(root,true);
+   let resolveView;
+   app.vscode.window.registerWebviewViewProvider=(name,provider)=>{
+     resolveView=provider.resolveWebviewView;
+     return {dispose(){}};
+   };
+   const {controller}=loadExtension(app.vscode).activate(app.context);
+   let closed=false,handler;
+   const webview={
+     cspSource:'vscode-resource:',
+     asWebviewUri:uri=>uri.fsPath,
+     onDidReceiveMessage:()=>({dispose(){}}),
+     postMessage:()=>Promise.resolve(true)
+   };
+   const view={
+     get webview(){
+       if(closed)throw new Error('Webview is disposed');
+       return webview;
+     },
+     onDidDispose(fn){handler=fn;return {dispose(){}};}
+   };
+   resolveView(view);
+   assert.equal(controller.views.size,1);
+   closed=true;
+   assert.doesNotThrow(()=>handler());
+   assert.equal(controller.views.size,0);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

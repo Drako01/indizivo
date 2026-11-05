@@ -77,9 +77,11 @@ class ControlCenter {
       vscode.ViewColumn.One,{ enableScripts:true, retainContextWhenHidden:true,
         localResourceRoots:[vscode.Uri.joinPath(this.context.extensionUri,'media')] });
     this.panel=panel;
-    this.attach(panel.webview);
+    const panelWebview=panel.webview;
+    this.attach(panelWebview);
     panel.onDidDispose(()=>{
-      this.views.delete(panel.webview);
+      // VS Code invalidates panel.webview before calling onDidDispose.
+      this.views.delete(panelWebview);
       if (this.panel===panel) this.panel=null;
     }, null, this.context.subscriptions);
   }
@@ -281,8 +283,11 @@ class ControlCenter {
 function activate(context) {
   const controller=new ControlCenter(context);
   context.subscriptions.push(vscode.window.registerWebviewViewProvider('indizivo.control',{
-    resolveWebviewView(view) { controller.attach(view.webview);
-      view.onDidDispose(()=>controller.views.delete(view.webview),null,context.subscriptions); }
+    resolveWebviewView(view) {
+      const viewWebview=view.webview;
+      controller.attach(viewWebview);
+      view.onDidDispose(()=>controller.views.delete(viewWebview),null,context.subscriptions);
+    }
   }));
   const commands = {
     'indizivo.openHome':()=>controller.openHome(),

@@ -5,3 +5,13 @@ node_modules/**
 .git/**
 .github/**
 *.vsix
+# Local-only diagnostics, build artefacts and developer state
+**/*.log
+logs.log
+.vscode-test/**
+coverage/**
+.nyc_output/**
+.vscode/**
+.gitignore
+package-lock.json
+**/*.map
