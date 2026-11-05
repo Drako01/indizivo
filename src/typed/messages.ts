@@ -28,7 +28,7 @@ export function validateUiMessage(input:unknown):UIRequest|null {
   if(type==='export')
     return m.format==='md' || m.format==='json'?{type,format:m.format}:null;
   if(type==='selectHistory')
-    return typeof m.index==='number' && Number.isInteger(m.index) && m.index>=0 && m.index<10 ?
+    return typeof m.index==='number' && Number.isInteger(m.index) && m.index>=-1 && m.index<10 ?
       {type,index:m.index}:null;
   if(type==='setLocale')
     return m.locale==='en'||m.locale==='es'?{type,locale:m.locale}:null;
