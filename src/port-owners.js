@@ -44,9 +44,9 @@ function inspectionArgs(platform, port) {
 }
 function inspectOwner(port, timeoutMs, signal, platform=process.platform) {
   const spec=inspectionArgs(platform,port);
-  if (!spec) return Promise.resolve({status:'unsupported',owners:[],detail:'Platform not supported for owner inspection.'});
+  if (!spec) return Promise.resolve({status:'unsupported',owners:[],detail:'Platform not supported for owner inspection.',i18nDetail:{key:'diag.ownerUnsupported'}});
   return new Promise(resolve=>{
-    if (signal?.aborted) return resolve({status:'cancelled',owners:[],detail:'Cancelled'});
+    if (signal?.aborted) return resolve({status:'cancelled',owners:[],detail:'Cancelled',i18nDetail:{key:'diag.cancelled'}});
     let settled=false;
     const child=execFile(spec.command,spec.args,{shell:false,windowsHide:true,
       timeout:Math.min(5000,Math.max(400,timeoutMs||2000)),maxBuffer:131072},
@@ -55,10 +55,11 @@ function inspectOwner(port, timeoutMs, signal, platform=process.platform) {
         settled=true;
         signal?.removeEventListener('abort',cancel);
         if (signal?.aborted) return resolve({status:'cancelled',owners:[],detail:'Cancelled'});
-        if (err) return resolve({status:'inconclusive',owners:[],detail:'Process ownership unavailable or permission denied.'});
+        if (err) return resolve({status:'inconclusive',owners:[],detail:'Process ownership unavailable or permission denied.',i18nDetail:{key:'diag.ownerNotAvailable'}});
         const owners=parseOwners(platform,stdout,port);
         resolve({status:owners.length?'observed':'inconclusive',owners,
-          detail:owners.length?'Process IDs observed in host tool output.':'No process ID visible; permission or namespace may limit this tool.'});
+          detail:owners.length?'Process IDs observed in host tool output.':'No process ID visible; permission or namespace may limit this tool.',
+          i18nDetail:{key:owners.length?'diag.ownerObserved':'diag.ownerUnknown'}});
       });
     function cancel(){try{child.kill();}catch{/* best effort */}}
     signal?.addEventListener('abort',cancel,{once:true});
