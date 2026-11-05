@@ -67,3 +67,12 @@ test('governance files are excluded from distributed VSIX',()=>{
  const ignore=read('.vscodeignore').toString('utf8');
  assert.match(ignore,/config\/\*\*/);
 });
+
+test('disposable root-level regression script is excluded from VSIX',()=>{
+ const content=read('verify-indizivo.ps1').toString('utf8');
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.match(content,/release:check/);
+ assert.match(content,/test:coverage/);
+ assert.match(content,/logs\.log/);
+ assert.match(ignore,/verify-indizivo\.ps1/);
+});

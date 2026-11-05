@@ -26,3 +26,5 @@ governance/**
 # Repository governance policies are maintainer-only and not runtime assets
 config/**
 .github/CODEOWNERS
+# Temporary local test tool, never distribute in the VSIX
+verify-indizivo.ps1
