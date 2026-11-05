@@ -1,5 +1,8 @@
 # Indizivo — Release readiness
 
+**Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
+
+
 > **Latest state / handoff (2026-11-05):** Current work is on `feat/enterprise-aaa-full-typescript-i18n` (last implementation commit `ab6cec321710`); not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
 
 **Decision for branch `feat/enterprise-aaa-full-typescript-i18n`: NOT TESTED / NO-GO.** Prior 59/59 Windows baseline belongs to stable `main`, not this work branch. New typed diagnostics/UI/i18n sources and package lock have not been compiled/installed/tested together. Rulesets ACTIVE; CI templates still INACTIVE.
