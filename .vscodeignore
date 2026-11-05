@@ -23,3 +23,6 @@ dist/**/*.d.ts
 tsconfig.json
 # Internal repository governance and review policy templates
 governance/**
+# Repository governance policies are maintainer-only and not runtime assets
+config/**
+.github/CODEOWNERS
