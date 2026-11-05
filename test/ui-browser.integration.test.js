@@ -162,7 +162,7 @@ test('actual Webview script renders EN/ES state, accessible evidence and canonic
  assert.equal(doc.getElementById('total').textContent,'1');
  assert.equal(doc.getElementById('warnings').textContent,'1');
  assert.equal(doc.getElementById('timeout').value,'750');
- assert.equal(doc.special.get('.hero p').textContent.includes('diagnóstico'),true);
+ assert.equal(doc.special.get('.hero p').textContent.includes('Diagnosticá'),true);
  assert.equal(doc.locales[1].getAttribute('aria-pressed'),'true');
  const checks=doc.getElementById('checks');
  assert.equal(checks.children.length,1);
