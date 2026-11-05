@@ -2,7 +2,7 @@
 
 Comparison source: \`Drako01/probato-pr\`, GitHub Rulesets GET API, 2026-11-05.
 
-## Observed Probato PR rulesets
+## Observed reference rulesets
 
 **Protect main**, ID 26362018, active:
 - Default branch, refuse deletion and non-fast-forward pushes; linear history

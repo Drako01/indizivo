@@ -57,3 +57,8 @@ test('runtime adapters use generated strict TypeScript modules',()=>{
     'TypeScript build output missing for '+unit);
  }
 });
+
+test('internal governance rulesets cannot enter VSIX',()=>{
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.ok(ignore.includes('governance/**'));
+});

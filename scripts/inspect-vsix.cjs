@@ -16,7 +16,7 @@ const MANDATORY=[
 ];
 const FORBIDDEN=[
  /(?:^|\/)PLAN\.md$/i,/(?:^|\/)node_modules\//i,
- /(?:^|\/)(?:test|docs|coverage|\.github|\.git|\.vscode-test)\//i,
+ /(?:^|\/)(?:test|docs|governance|coverage|\.github|\.git|\.vscode-test)\//i,
  /(?:^|\/)package-lock\.json$/i,/(?:^|\/)[^/]*\.log$/i,
  /(?:^|\/)\.env(?:\.|$)/i
 ];
