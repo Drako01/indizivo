@@ -112,6 +112,7 @@ function inspectService(service, timeout, signal) {
     function finish(ok, detail) { if (done) return; done = true;
       signal?.removeEventListener('abort', cancel); resolve({ ok, detail }); }
     const req = http.get(valid.url, { timeout, agent: false,
+      lookup: (_host, _options, callback) => callback(null, '127.0.0.1', 4),
       headers: { 'user-agent': 'Indizivo/0.1' } }, res => {
       res.resume(); finish(res.statusCode >= 200 && res.statusCode < 300, 'HTTP ' + res.statusCode);
     });
