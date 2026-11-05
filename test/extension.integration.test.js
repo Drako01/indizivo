@@ -11,7 +11,9 @@ function fixture(root,trusted=true) {
   const folder={name:path.basename(root),uri};
   const state=new Map();
   const commands=new Map();
+  let clipboardText='';
   const vscode={
+    env:{clipboard:{writeText:async value=>{clipboardText=value;}}},
     Uri:{joinPath:(base,...parts)=>({scheme:'file',fsPath:path.join(base.fsPath||root,...parts),toString:()=>path.join(base.fsPath||root,...parts)})},
     ViewColumn:{One:1},
     workspace:{
@@ -34,7 +36,7 @@ function fixture(root,trusted=true) {
     get:(key,def)=>state.get(key)||def,
     update:async(key,value)=>{state.set(key,value);}
   }};
-  return {vscode,context,commands,state};
+  return {vscode,context,commands,state,getClipboard:()=>clipboardText};
 }
 function loadExtension(vscode) {
   const orig=Module._load;
@@ -93,4 +95,32 @@ test('active service probe only executes after explicit plan approval',async()=>
   await new Promise(resolve=>server.close(resolve));
   await fs.rm(root,{recursive:true,force:true});
  }
+});
+
+test('UI evidence copy is scoped to a current finding; stale workspace is rejected',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({scripts:{dev:'next dev --port 3105'}}));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  await controller.copyEvidence('port-3105');
+  assert.match(app.getClipboard(),/Indizivo diagnostic evidence/);
+  assert.match(app.getClipboard(),/Port 3105/);
+  await assert.rejects(()=>controller.copyEvidence('../package.json'),/Invalid finding/);
+  app.vscode.workspace.workspaceFolders=[];
+  await assert.rejects(()=>controller.runDiagnosis(),/no longer open/);
+ } finally {await fs.rm(root,{recursive:true,force:true});}
+});
+test('project/service configuration is immutable while probes are running',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  controller.running=true;
+  await assert.rejects(()=>controller.addService({name:'local',url:'http://127.0.0.1:5000/'}),/Wait/);
+  await assert.rejects(()=>controller.saveTimeout(600),/Wait/);
+  await assert.rejects(()=>controller.selectProject(),/Cancel/);
+  controller.running=false;
+ }finally{await fs.rm(root,{recursive:true,force:true});}
 });
