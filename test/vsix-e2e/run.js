@@ -10,7 +10,7 @@ const {inspect}=require('../../scripts/inspect-vsix.cjs');
 function runCli(executable,args) {
  const command=invocation(executable,args);
  const result=spawnSync(command.file,command.args,{encoding:'utf8',stdio:'pipe',timeout:120000,
-  windowsHide:true,shell:false});
+  windowsHide:true,shell:false,windowsVerbatimArguments:command.windowsVerbatimArguments});
  if(result.error)throw result.error;
  if(result.status!==0)throw new Error('VS Code CLI failed: '+String(result.stderr||result.stdout).slice(0,2000));
  return String(result.stdout||'');
