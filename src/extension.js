@@ -83,13 +83,13 @@ class ControlCenter {
     }, null, this.context.subscriptions);
   }
   async selectProject() {
+    if (this.running) throw new Error('Cancel the active diagnosis before switching projects.');
     const folders = vscode.workspace.workspaceFolders || [];
     if (!folders.length) { this.error='Open a project folder first.'; this.broadcast(); return; }
     const selected = folders.length===1 ? folders[0] : await vscode.window.showQuickPick(
       folders.map(folder=>({label:folder.name,description:folder.uri.fsPath,folder})),
       {placeHolder:'Choose the project to diagnose'});
     if (!selected) return;
-    this.cancel();
     this.currentRoot = selected.folder ? selected.folder.uri : selected.uri;
     this.pendingApproval=null;
     this.error='';
@@ -176,6 +176,7 @@ class ControlCenter {
     }
   }
   async addService(message) {
+    if (this.running) throw new Error('Wait for the active check to finish before editing services.');
     const service=validateService(message);
     if (!service) throw new Error('Use a name and a loopback HTTP URL such as http://127.0.0.1:5000/health.');
     if (this.data.services.length >= 20) throw new Error('Maximum 20 services per project.');
@@ -185,6 +186,7 @@ class ControlCenter {
     this.broadcast();
   }
   async removeService(url) {
+    if (this.running) throw new Error('Wait for the active check to finish before editing services.');
     if (typeof url!=='string') return;
     this.data.services=this.data.services.filter(x=>x.url!==url);
     this.pendingApproval=null;
@@ -192,6 +194,7 @@ class ControlCenter {
     this.broadcast();
   }
   async saveTimeout(value) {
+    if (this.running) throw new Error('Wait for the active check to finish before editing timeout.');
     if (!Number.isInteger(value) || value<400 || value>10000) throw new Error('Timeout must be between 400 and 10000 ms.');
     this.data.timeoutMs=value;
     this.pendingApproval=null;
@@ -199,6 +202,7 @@ class ControlCenter {
     this.broadcast();
   }
   async clearHistory() {
+    if (this.running) throw new Error('Cancel the active diagnosis before deleting history.');
     const result=await vscode.window.showWarningMessage('Permanently delete local Indizivo history for this project?',
       {modal:true},'Delete');
     if (result!=='Delete') return;
@@ -208,6 +212,7 @@ class ControlCenter {
     this.broadcast();
   }
   async export(format) {
+    if (this.running) throw new Error('Wait for the active diagnosis to finish before exporting.');
     if (!this.data.session || !['json','md'].includes(format)) return;
     const session=this.data.session;
     const name='indizivo-report.'+format;

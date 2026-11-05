@@ -33,12 +33,13 @@ function browserUI() {
     set('host',state.host || 'Current extension host');
     set('state-label',state.running ? 'Diagnosing…' : state.session ? state.session.state : 'Ready');
     $('diagnose').disabled = !!state.running || !state.trusted || !root;
+    $('select-project').disabled = !!state.running;
     $('recheck').disabled = !!state.running || !state.session || !state.trusted;
     $('cancel').disabled = !state.running;
     $('verify').disabled = !!state.running || !state.services?.length || !state.trusted || !state.session;
-    $('export-md').disabled = !state.session;
-    $('export-json').disabled = !state.session;
-    $('clear-history').disabled = !state.history?.length;
+    $('export-md').disabled = !!state.running || !state.session;
+    $('export-json').disabled = !!state.running || !state.session;
+    $('clear-history').disabled = !!state.running || !state.history?.length;
     $('warning').hidden = !!state.trusted;
     $('approval').hidden = !state.pendingApproval;
     $('service-plan').textContent = (state.pendingApproval || []).map(s=>s.name+' → '+s.url).join('\n');
@@ -125,7 +126,7 @@ function html(webview, extensionUri, vscode) {
     '<style nonce="'+nonce+'">'+STYLE+'</style></head><body><main class="shell">'+
     '<header class="brand"><img alt="Indizivo logo" src="'+logo+'"><div><div class="eyebrow">Developer Environment Diagnostics</div><h1>INDIZIVO</h1><p class="subtitle">Find the cause. Fix with confidence.</p></div></header>'+
     '<div class="hero"><div class="eyebrow">CONTROL CENTER · <span id="state-label">Ready</span></div><h2 id="project-name">No project selected</h2><div class="muted" id="host">Extension host</div><p>Diagnose a project without modifying its files or terminating any processes. Every finding includes observations and limitations.</p>'+
-    '<div class="toolbar"><button id="diagnose" data-action="diagnose">Diagnose project</button><button class="quiet" id="recheck" data-action="recheck">Recheck</button><button class="quiet" data-action="selectProject">Choose project</button><button class="quiet" data-action="openHome">Full view</button><button class="quiet" id="cancel" data-action="cancel" disabled>Cancel</button></div></div>'+
+    '<div class="toolbar"><button id="diagnose" data-action="diagnose">Diagnose project</button><button class="quiet" id="recheck" data-action="recheck">Recheck</button><button class="quiet" id="select-project" data-action="selectProject">Choose project</button><button class="quiet" data-action="openHome">Full view</button><button class="quiet" id="cancel" data-action="cancel" disabled>Cancel</button></div></div>'+
     '<div id="warning" class="callout" hidden>This workspace is not trusted. Diagnostics are disabled until you trust it in VS Code.</div><div id="progress" class="callout" role="status" hidden>Diagnosis running…</div><div id="error" class="callout" role="alert" hidden></div>'+
     '<nav class="tabs" aria-label="Control center sections"><button class="tab active" data-action="tab" data-tab="diagnostics">Diagnostics</button><button class="tab" data-action="tab" data-tab="services">Services</button><button class="tab" data-action="tab" data-tab="history">History & Reports</button><button class="tab" data-action="tab" data-tab="settings">Settings</button></nav>'+
     '<section data-section="diagnostics"><div class="metrics"><div class="metric"><span class="muted">Checks</span><strong id="total">0</strong></div><div class="metric"><span class="muted">Warnings</span><strong id="warnings">0</strong></div><div class="metric"><span class="muted">Observations</span><strong id="observations">0</strong></div></div><p class="muted" id="summary"></p><div id="checks"></div></section>'+
