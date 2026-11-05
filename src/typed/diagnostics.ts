@@ -218,6 +218,10 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('node',['--version'], t, signal);
     assertActive(signal);
+    const localizedVersion=result.ok ? result.value :
+      result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
+      result.value==='Could not inspect runtime' ? msg('diag.runtimeUnavailable') :
+      msg('diag.runtimeUnknown');
     const verdict = result.ok ? evaluateVersion(result.value.replace(/^v/,''),d.nodeRequirement,'node') : null;
     const nodeStatus = !result.ok || verdict?.status==='incompatible'?'warn':
       verdict?.status==='compatible'?'pass':'info';
@@ -229,18 +233,22 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       'The declared requirement was evaluated when supported.',
       'Runtime output: '+result.value, {
         category:msg('diag.category.Runtime'),
-        detail:msg('diag.nodeDetail',{version:result.value,
+        detail:msg('diag.nodeDetail',{version:localizedVersion,
           required:d.nodeRequirement?msg('diag.nodeRequired',{requirement:d.nodeRequirement}):'',
           verdict:verdict ? (verdict.translation||verdict.detail):''}),
         suggestion:msg(nodeStatus==='warn'?'diag.nodeWarn':
           !d.nodeRequirement?'diag.nodeNoReq':'diag.nodeChecked'),
-        evidence:msg('diag.outputVersion',{value:result.value})
+        evidence:msg('diag.outputVersion',{value:localizedVersion})
       }));
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('go',['version'],t,signal);
     assertActive(signal);
+    const localizedVersion=result.ok ? result.value :
+      result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
+      result.value==='Could not inspect runtime' ? msg('diag.runtimeUnavailable') :
+      msg('diag.runtimeUnknown');
     const actual = /^go version go([\d.]+)/.exec(result.value)?.[1];
     const verdict = actual ? evaluateVersion(actual,d.goRequirement,'go') : null;
     const goStatus = !result.ok || verdict?.status==='incompatible'?'warn':
@@ -251,11 +259,11 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       goStatus==='warn'?'Check the declared Go toolchain minimum.':'Only validated constraints are considered compatible.',
       'Runtime output: '+result.value, {
         category:msg('diag.category.Runtime'),
-        detail:msg('diag.nodeDetail',{version:result.value,
+        detail:msg('diag.nodeDetail',{version:localizedVersion,
           required:d.goRequirement?msg('diag.goRequired',{requirement:d.goRequirement}):'',
           verdict:verdict ? (verdict.translation||verdict.detail):''}),
         suggestion:msg(goStatus==='warn'?'diag.goWarn':'diag.goChecked'),
-        evidence:msg('diag.outputVersion',{value:result.value})
+        evidence:msg('diag.outputVersion',{value:localizedVersion})
       }));
   }
   if (d.hasEnvExample) {
