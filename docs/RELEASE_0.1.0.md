@@ -1,5 +1,13 @@
 # Indizivo 0.1.0 — Manual release gate
 
+### Icono Activity Bar + QA final Windows (2026-11-05 17:27 ART)
+
+- **Run realmente validado:** `f1edf967c300ade273d05ab6104147ed232d37b6`, `logs(4).log` local, **18 gates: 17 PASS / 0 FAIL / 1 WARN**. TypeScript estricto PASS, **77/77** tests Node PASS, Extension Host E2E real PASS, VSIX instalado aislado PASS. Cobertura total **73,23 % líneas / 70,86 % ramas / 73,17 % funciones**; benchmark sintético **25 rondas**, p50 **38,4 ms**, p95 **40,3 ms**, RSS pico **55,1 MiB**. Auditoría producción **0 vulnerabilidades**; advertencia: **3 moderadas** en `glob`/`minimatch`, transitivas dev `@vscode/vsce`.
+- **Cambio posterior al log (PENDIENTE de rerun):** el usuario aprobó la imagen completa del logo radar monocromo. `media/indizivo-activity-bar.svg` fue reemplazado por el glyph completo (barra vertical, **tres** ondas, trazo diagonal y punto terminal), SVG `viewBox 0 0 24 24`, `currentColor`, sin fondo; geometría fiel al logo original a color y legible en sidebar. El asset `media/indizivo-icon.svg` y `media/indizivo-icon-128.png` del Marketplace no se alteraron. `test/activity-bar-icon.test.js` fue actualizado para exigir la marca completa y la separación Activity Bar/Marketplace.
+- **QA exacto del nuevo SVG:** inspección estática de composición/color y parseo JS del test actualizados; **no se ejecutó de nuevo el VSIX ni se vio el ícono cargado en VS Code después del cambio**. Antes de publicar, ejecutar `.\\verify-indizivo.ps1`, instalar el VSIX nuevo y confirmar visualmente en tema claro/oscuro y a escala real la fidelidad del ícono. No confundir la captura de referencia con un test de aplicación real.
+- **Release:** PR #4 DRAFT; no fusionar, publicar, tagear ni activar CI. `main` intacta.
+
+
 **Target:** Visual Studio Code Marketplace, publisher `armotusitio`, extension `indizivo`, version `0.1.0` (preview scope).
 
 **Ownership:** No tool, bot, script or assistant may merge, publish, enable Actions, tag a release or expose the private repository without the owner's explicit instruction. All active source work remains on `feat/enterprise-aaa-full-typescript-i18n` and PR #4 until review.
