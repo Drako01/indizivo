@@ -46,8 +46,10 @@ Planned hardening: strict TypeScript migration, schema validation for UI message
 - [x] MIT copyright, brand logo, README and user credit authored.
 - [x] Run Node syntax checks and 27/27 unit/integration tests on the tested Windows source (2026-11-05). Re-run after further code changes.
 - [x] Author official @vscode/test-electron Extension Host suite for activation, diagnosis, service approval and UI panel opening.
-- [x] Run the authored Extension Host suite in official VS Code 1.145.0: exit 0, no Webview disposed exception (2026-11-05).\n- [ ] Test complete UI interactions in the actual installed VSIX (including keyboard, focus, accessibility, and history).
-- [x] Package VSIX successfully: 21 files, 29.7 KB, without logs.log.\n- [ ] Install the generated VSIX in a clean VS Code profile and execute smoke/E2E on the installed package.
+- [x] Run the authored Extension Host suite in official VS Code 1.145.0: exit 0, no Webview disposed exception (2026-11-05).
+- [ ] Test complete UI interactions in the actual installed VSIX (including keyboard, focus, accessibility, and history).
+- [x] Package VSIX successfully: 21 files, 29.7 KB, without logs.log.
+- [ ] Install the generated VSIX in a clean VS Code profile and execute smoke/E2E on the installed package.
 - [ ] Finish EN/ES localization and accessibility validation.
 - [x] Implement common Node.js/Go version requirement evaluations (limited-expression support; unrecognized requirements are inconclusive).
 - [ ] Validate all version range semantics and edge cases on real runtimes.
