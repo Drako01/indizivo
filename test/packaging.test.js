@@ -30,7 +30,7 @@ test('Marketplace icon is a 128x128 PNG and the Activity Bar icon is monochrome 
 });
 test('declared entry points and local source modules have no missing files',()=>{
  const sources=['src/extension.js','src/diagnostics.js','src/versions.js',
-   'src/port-owners.js','src/comparison.js','src/ui.js'];
+   'src/port-owners.js','src/comparison.js','src/messages.js','src/ui.js'];
  for(const rel of sources) assert.ok(fs.existsSync(path.join(root,rel)),rel);
 });
 

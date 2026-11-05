@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const { diagnose, verifyServices, validateService } = require('./diagnostics');
 const { html } = require('./ui');
 const { compareSessions } = require('./comparison');
+const { validateUiMessage } = require('./messages');
 
 class ControlCenter {
   constructor(context) {
@@ -260,8 +261,9 @@ class ControlCenter {
     vscode.window.showInformationMessage('Indizivo report exported.');
   }
   async message(m) {
-    if (!m || typeof m.type!=='string') return;
-    switch(m.type) {
+    const request=validateUiMessage(m);
+    if(!request)throw new Error('Invalid Indizivo UI request.');
+    switch(request.type) {
       case 'ready': this.broadcast(); break;
       case 'selectProject': await this.selectProject(); break;
       case 'openHome': await this.openHome(); break;
@@ -270,12 +272,12 @@ class ControlCenter {
       case 'prepareServices': await this.prepareServices(); break;
       case 'confirmServices': await this.confirmServices(); break;
       case 'declineServices': this.pendingApproval=null; this.broadcast(); break;
-      case 'addService': await this.addService(m); break;
-      case 'removeService': await this.removeService(m.url); break;
-      case 'copyEvidence': await this.copyEvidence(m.id); break;
-      case 'saveTimeout': await this.saveTimeout(m.value); break;
+      case 'addService': await this.addService(request); break;
+      case 'removeService': await this.removeService(request.url); break;
+      case 'copyEvidence': await this.copyEvidence(request.id); break;
+      case 'saveTimeout': await this.saveTimeout(request.value); break;
       case 'clearHistory': await this.clearHistory(); break;
-      case 'export': await this.export(m.format); break;
+      case 'export': await this.export(request.format); break;
       default: break;
     }
   }

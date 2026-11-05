@@ -43,7 +43,7 @@
     "onView:indizivo.control"
   ],
   "scripts": {
-    "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/comparison.js && node --check src/ui.js && node --check src/extension.js && node --check scripts/inspect-vsix.cjs",
+    "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/comparison.js && node --check src/ui.js && node --check src/messages.js && node --check src/extension.js && node --check scripts/inspect-vsix.cjs",
     "test": "node --test test/*.test.js",
     "verify": "npm run check && npm test",
     "package": "npm run verify && npx --no-install @vscode/vsce package --no-dependencies && npm run inspect:vsix",

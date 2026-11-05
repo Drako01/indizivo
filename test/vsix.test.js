@@ -36,7 +36,7 @@ test('VSIX inventory denies logs, local test state, node_modules and internal pl
  const allowed=[
  '[Content_Types].xml','extension.vsixmanifest','extension/package.json',
  'extension/src/extension.js','extension/src/diagnostics.js','extension/src/ui.js',
- 'extension/src/versions.js','extension/src/port-owners.js','extension/src/comparison.js',
+ 'extension/src/versions.js','extension/src/port-owners.js','extension/src/comparison.js','extension/src/messages.js',
  'extension/media/indizivo-icon-128.png','extension/readme.md',
  'extension/LICENSE.txt','extension/PRIVACY.md'
  ];

@@ -190,3 +190,15 @@ test('disposing sidebar webview does not read its invalidated getter',async()=>{
    assert.equal(controller.views.size,0);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('Webview controller refuses untrusted or oversized command payloads',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await assert.rejects(()=>controller.message({type:'exec',command:'rm -rf /'}),/Invalid Indizivo UI/);
+  await assert.rejects(()=>controller.message({type:'saveTimeout',value:'99999999'}),/Invalid Indizivo UI/);
+  await assert.rejects(()=>controller.message({type:'addService',name:'API',url:'a'.repeat(2000)}),/Invalid Indizivo UI/);
+  assert.equal(controller.data.services.length,0);
+ } finally {await fs.rm(root,{recursive:true,force:true});}
+});
