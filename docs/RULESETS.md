@@ -75,3 +75,17 @@ GitHub's enforcement of rulesets and required reviews can depend on subscription
 - Keep `Drako01/indizivo` private.
 - Never activate workflows, modify repository visibility, tags or publish artifacts as part of this ruleset preparation.
 - Keep the branch protections consistent with the independent source/PR engineering workflow.
+
+
+### Safe PowerShell helper (Windows)
+
+Run from the repository root after the feature branch has been reviewed and merged, with GitHub CLI authenticated:
+
+~~~powershell
+.\scripts\apply-rulesets.ps1           # read-only preview
+.\scripts\apply-rulesets.ps1 -Apply    # create missing rulesets
+~~~
+
+The helper never updates or deletes existing rulesets and leaves mandatory CI checks disabled. Its repository target is hardcoded as \`Drako01/indizivo\`. The first real GitHub API POST changes server-side governance, so it requires explicit owner action.
+
+**Important:** requiring one approving PR review in a solo-maintainer repository may block merges unless another reviewer is available or an appropriately authorized bypass is effective. Review the bypass behavior before enabling.

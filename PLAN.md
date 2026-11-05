@@ -248,3 +248,16 @@ PowerShell:
 Review the log and mark exact-commit PASS/FAIL/WARN/SKIP/BLOCKED. A clean Windows VSIX installation using a previous build DOES NOT prove this branch is ready.
 
 **Release verdict: NO-GO for Enterprise AAA 10/10.** Main is intentionally unchanged; source changes are in an isolated branch.
+
+
+### Repository rulesets — staged, not applied (2026-11-05)
+
+- [x] Read real \`Drako01/probato-pr\` branch and tag rulesets.
+- [x] Compare against Indizivo (0 server-side rulesets at inspection).
+- [x] Add main, release-tag and future CI-check templates plus CODEOWNERS.
+- [x] Add read-only-by-default PowerShell application helper.
+- [ ] Apply and inspect server-side rulesets as administrator after owner approval; no API write capability available through the current GitHub connector.
+- [ ] Confirm private-repository enforcement and administrator bypass behavior.
+- [ ] After the CI is intentionally activated and real checks exist, add required status check names from successful runs.
+
+All workflows remain inactive under \`.github/workflows-disabled/\`; no store publication or repository visibility changes.
