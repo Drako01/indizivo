@@ -120,3 +120,8 @@ The V8/Linux/macOS platform matrix, real interactive accessibility in VS Code, c
 - Theme-adaptive monochrome SVG optimized for 24×24; source structure and local raster preview inspected.
 - Node tests, latest package VSIX smoke and **manual dark/light/high contrast** inspection of this glyph change are still **PENDING** on the PR head.
 - The previous VSIX checksum and run above do not include this icon revision.
+
+
+## Activity Bar correction following user review (2026-11-05)
+
+The owner rejected the Activity Bar redraw introduced by PR #2. This change restores the **exact original SVG** from commit `151d6956e452191bbc554efb97d2d14b7d56d8c8` and adjusts the anatomy regression test to enforce original geometry. The previous 57/57 Windows test log predates the PR #2 redraw and is not proof of validation of this corrective PR. Rebuild/retest the final VSIX before claiming release PASS.
