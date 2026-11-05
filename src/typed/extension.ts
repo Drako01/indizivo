@@ -148,7 +148,8 @@ export class ControlCenter {
     if (!vscode.workspace.isTrusted) throw new Error(this.tr('host.trust'));
     if (!this.currentRoot) throw new Error(this.tr('host.projectFirst'));
     const folders = vscode.workspace.workspaceFolders || [];
-    if (!folders.some(folder=>folder.uri.toString()===this.currentRoot.toString()))
+    const selectedRoot=this.currentRoot;
+    if (!folders.some(folder=>folder.uri.toString()===selectedRoot.toString()))
       throw new Error(this.tr('host.workspaceClosed'));
     if (this.currentRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
     if (this.running) throw new Error(this.tr('host.alreadyRunning'));
@@ -209,7 +210,8 @@ export class ControlCenter {
   }
   async confirmServices() {
     this.ensureReady();
-    if (!this.pendingApproval || !this.data.session) throw new Error(this.tr('host.approvalExpired'));
+    const session=this.data.session;
+    if (!this.pendingApproval || !session) throw new Error(this.tr('host.approvalExpired'));
     const plan=this.pendingApproval.map(validateService).filter((item):item is ServiceTarget=>item!==null);
     if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error(this.tr('host.targetsChanged'));
     this.pendingApproval=null;
@@ -219,16 +221,16 @@ export class ControlCenter {
     this.broadcast();
     try {
       const result=await verifyServices(plan,this.data.timeoutMs,signal,partial=>{
-        this.data.session.serviceChecks=partial;
+        session.serviceChecks=partial;
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.serviceCancelled'));
-      this.data.session.serviceChecks=result;
-      this.data.session.completedAt=new Date().toISOString();
+      session.serviceChecks=result;
+      session.completedAt=new Date().toISOString();
       const recent=this.data.history[0];
-      if(recent?.snapshot && 'id' in this.data.session &&
-        recent.snapshot.id===this.data.session.id)
-        recent.snapshot=structuredClone(this.data.session as DiagnosticSession);
+      if(recent?.snapshot && 'id' in session &&
+        recent.snapshot.id===session.id)
+        recent.snapshot=structuredClone(session as DiagnosticSession);
       await this.save();
     } catch(e) {
       this.error=signal.aborted?this.tr('host.serviceCancelled'):this.tr('host.serviceFailed',{reason:errorMessage(e)||this.tr('host.unknown')});
@@ -326,7 +328,7 @@ export class ControlCenter {
         this.tr('report.state')+': '+this.tr(`state.${session.state}`),
         '', '> '+this.tr('report.disclaimer'),''];
       for (const c of [...(session.checks||[]),...(session.serviceChecks||[])]) {
-        lines.push('## '+c.label,'','**'+this.tr('status.'+c.status)+'** — '+c.detail,
+        lines.push('## '+c.label,'','**'+this.tr(`status.${c.status}`)+'** — '+c.detail,
           '',c.suggestion||'','');
         for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
         lines.push('');
