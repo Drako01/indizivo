@@ -14,8 +14,9 @@ function assertActive(signal) {
     throw err;
   }
 }
-function createCheck(id, category, label, status, detail, suggestion, fact) {
-  return { id, category, label, status, detail, suggestion: suggestion || '',
+const msg=(key,values)=>values?{key,values}:{key};
+function createCheck(id, category, label, status, detail, suggestion, fact, i18n) {
+  return { id, category, label, status, detail, suggestion: suggestion || '', i18n,
     evidence: [{ id: crypto.randomBytes(6).toString('hex'), fact: String(fact || detail),
       observedAt: new Date().toISOString() }] };
 }
@@ -168,7 +169,9 @@ async function diagnose(root, timeout = 2500, signal, progress) {
   const push = c => { checks.push(c); progress?.([...checks]); };
   const t = Math.min(10000, Math.max(400, Number(timeout) || 2500));
   if (d.malformedPackage) push(createCheck('package','Configuration','package.json','warn',
-    'Invalid JSON; Node.js project metadata cannot be inspected.'));
+    'Invalid JSON; Node.js project metadata cannot be inspected.','','', {
+      category:msg('diag.category.Configuration'),detail:msg('diag.invalidPackage')
+    }));
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('node',['--version'], t, signal);
@@ -182,7 +185,15 @@ async function diagnose(root, timeout = 2500, signal, progress) {
       nodeStatus==='warn'?'Check the configured Node.js runtime version.':
       !d.nodeRequirement?'Declare engines.node in package.json or add .nvmrc to enable compatibility checks.':
       'The declared requirement was evaluated when supported.',
-      'Runtime output: '+result.value));
+      'Runtime output: '+result.value, {
+        category:msg('diag.category.Runtime'),
+        detail:msg('diag.nodeDetail',{version:result.value,
+          required:d.nodeRequirement?msg('diag.nodeRequired',{requirement:d.nodeRequirement}):'',
+          verdict:verdict ? (verdict.translation||verdict.detail):''}),
+        suggestion:msg(nodeStatus==='warn'?'diag.nodeWarn':
+          !d.nodeRequirement?'diag.nodeNoReq':'diag.nodeChecked'),
+        evidence:msg('diag.outputVersion',{value:result.value})
+      }));
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
@@ -196,7 +207,14 @@ async function diagnose(root, timeout = 2500, signal, progress) {
       result.value + (d.goRequirement ? ' — module requirement: '+d.goRequirement : '') +
       (verdict ? '. '+verdict.detail : ''),
       goStatus==='warn'?'Check the declared Go toolchain minimum.':'Only validated constraints are considered compatible.',
-      'Runtime output: '+result.value));
+      'Runtime output: '+result.value, {
+        category:msg('diag.category.Runtime'),
+        detail:msg('diag.nodeDetail',{version:result.value,
+          required:d.goRequirement?msg('diag.goRequired',{requirement:d.goRequirement}):'',
+          verdict:verdict ? (verdict.translation||verdict.detail):''}),
+        suggestion:msg(goStatus==='warn'?'diag.goWarn':'diag.goChecked'),
+        evidence:msg('diag.outputVersion',{value:result.value})
+      }));
   }
   if (d.hasEnvExample) {
     const missing = d.missingEnv;
@@ -204,7 +222,12 @@ async function diagnose(root, timeout = 2500, signal, progress) {
       missing.length ? 'Missing in .env: ' + missing.join(', ') :
         'Required names present. Secret values were not inspected or validated.',
       'Add required keys manually. Never paste secrets into reports.',
-      'Key presence only; secret values not retained'));
+      'Key presence only; secret values not retained', {
+        label:msg('diag.label.env'),category:msg('diag.category.Configuration'),
+        detail:msg(missing.length?'diag.missingEnv':'diag.envPresent',
+          missing.length?{keys:missing.join(', ')}:{}),
+        suggestion:msg('diag.envNext'),evidence:msg('diag.envEvidence')
+      }));
   }
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
@@ -222,11 +245,24 @@ async function diagnose(root, timeout = 2500, signal, progress) {
         status === 'not-listening' ? 'No local TCP listener responded on 127.0.0.1:'+port+
         '. The application may not be started.' : 'Port status could not be verified.')+ownerDetail,
       'Inspect service startup logs and host bindings; do not terminate processes blindly.',
-      'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.')));
+      'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.'), {
+        category:msg('diag.category.Ports'),label:msg('diag.label.port',{port}),
+        detail:msg(status==='listening'?'diag.portListening':
+          status==='not-listening'?'diag.portNotListening':'diag.portUnknown',
+          {port,owner:status==='listening'?owner?.owners?.length?
+            msg('diag.portOwners',{owners:owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')}):
+            msg('diag.portNoOwner'):''}),
+        suggestion:msg('diag.portNext'),
+        evidence:msg('diag.portEvidence',{status,ownership:owner?.i18nDetail||
+          (owner?.detail||msg('diag.portOwnerNA'))})
+      }));
   }
   assertActive(signal);
   if (!checks.length) push(createCheck('none','Discovery','No applicable checks','info',
-    'No supported Node.js/Go configuration or ports found. Add a local service to investigate.'));
+    'No supported Node.js/Go configuration or ports found. Add a local service to investigate.','','',{
+      label:msg('diag.label.none'),category:msg('diag.category.Discovery'),
+      detail:msg('diag.noneDetail')
+    }));
   return { id: crypto.randomBytes(8).toString('hex'), project: d.project,
     startedAt:start, completedAt:new Date().toISOString(), host:process.platform,
     state:'completed', checks, discovery:d, serviceChecks:[] };
@@ -242,7 +278,19 @@ async function verifyServices(services, timeout, signal, progress) {
     checks.push(createCheck('service-'+i,'Services',svc.name,
       result.ok?'pass':'warn',result.detail,
       result.ok?'':'Check the service, port and endpoint; no changes were made.',
-      'Loopback '+svc.url+' → '+result.detail));
+      'Loopback '+svc.url+' → '+result.detail, {
+        category:msg('diag.category.Services'),
+        detail:msg(result.detail==='Cancelled'?'diag.cancelled':
+          result.detail==='Connection unavailable'?'diag.connectionUnavailable':
+          result.detail.startsWith('HTTP ')?'diag.http':'diag.blockedTarget',
+          result.detail.startsWith('HTTP ')?{status:result.detail.slice(5)}:{}),
+        suggestion:result.ok?undefined:msg('diag.serviceNext'),
+        evidence:msg('diag.serviceEvidence',{url:svc.url,
+          detail:result.detail==='Cancelled'?msg('diag.cancelled'):
+          result.detail==='Connection unavailable'?msg('diag.connectionUnavailable'):
+          result.detail.startsWith('HTTP ')?msg('diag.http',{status:result.detail.slice(5)}):
+          msg('diag.blockedTarget')})
+      }));
     progress?.([...checks]);
   }
   return checks;
