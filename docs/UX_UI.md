@@ -19,3 +19,13 @@ The UI additionally provides per-finding Copy Evidence and a comparison panel be
 - History now persists up to ten recent full evidence snapshots; clicking one shows its findings, evidence and export. The current session remains available.
 - ARIA tablist/tab/tabpanel identifiers, arrow/Home/End navigation, focus restoration and live announcements.
 - Backend diagnostic suggestions are still in English; complete bilingual QA, high contrast and screen reader tests remain required.
+
+
+## Activity Bar legibility pass (2026-11-05)
+
+The Activity Bar requires a **24x24 transparent, monochrome SVG** using `currentColor`; VS Code controls the selected/inactive color for light, dark and high-contrast themes. The product's colored Marketplace logo must **not** replace this resource.
+
+- `media/indizivo-activity-bar.svg`: stronger 2.55–3.2px strokes, larger evidence point and near-full 24px footprint. The symbol retains the brand's `I + radar + evidence` motif, without extra details lost at native size.
+- `media/indizivo-icon-128.png` and the full-color branding remain unchanged.
+- Automated tests guard theme adaptation, 24px viewBox, absence of fixed colors and core glyph anatomy.
+- Manual signoff still required: check **inactive / active** icons in Windows VS Code dark/light/high-contrast themes and at 100%/200% scale after installing the rebuilt VSIX. Do not classify this as verified until visually inspected.
