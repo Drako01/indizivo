@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/main/media/readme-logo.png" width="128" height="128" alt="Indizivo — full-color radar logo">
+</p>
+
 <h1 align="center">Indizivo</h1>
 
 <p align="center">
@@ -21,6 +25,20 @@ A project that refuses to start does not always have a code problem. An incompat
 **Indizivo brings these signals together in one Visual Studio Code control center.** Run diagnostics, inspect the supporting evidence and decide what to investigate next — without switching between unrelated utilities.
 
 Indizivo prioritizes **observed facts over guesses**. When it cannot establish a cause, it says so. It does not silently change your files or terminate processes.
+
+## Screenshots
+
+### Diagnostics — findings and supporting evidence
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-diagnostics.png" width="1200" alt="Indizivo Diagnostics: completed project scan with Node.js warning, missing environment key and port observation">
+</p>
+
+### Services — review and approve local checks
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-services.png" width="1200" alt="Indizivo Services: localhost endpoint configuration and explicit approval plan">
+</p>
 
 ## Features
 

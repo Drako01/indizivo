@@ -28,3 +28,6 @@ config/**
 .github/CODEOWNERS
 # Temporary local test tool, never distribute in the VSIX
 verify-indizivo.ps1
+# README screenshots are hosted from the public repository; do not bundle them in the VSIX
+media/indizivo-diagnostics.png
+media/indizivo-services.png

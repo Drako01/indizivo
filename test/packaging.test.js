@@ -89,7 +89,23 @@ test('Marketplace-facing metadata and README do not link to the private GitHub r
  assert.equal(pkg.repository,undefined,'Private source URL must not be advertised as public');
  assert.equal(pkg.bugs.url,'https://armotusitio.com.ar/soporte/');
  assert.ok(readme.includes('https://armotusitio.com.ar/soporte/'));
- assert.doesNotMatch(readme,/github\.com\/Drako01\/indizivo/);
+ assert.match(readme,/<img src="https:\/\/raw\.githubusercontent\.com\/Drako01\/indizivo\/main\/media\/readme-logo\.png"/,
+   'README must display the full-color brand logo');
+ assert.doesNotMatch(readme,/https:\/\/github\.com\/Drako01\/indizivo\/issues\b/,
+   'Support link must resolve to the public support channel');
+ for(const name of ['indizivo-diagnostics.png','indizivo-services.png']) {
+   const image=read('media/'+name);
+   assert.equal(image.subarray(0,8).toString('hex'),'89504e470d0a1a0a',
+     'Approved screenshot must be a PNG: '+name);
+   assert.ok(image.length>80000,'Screenshot must retain original image detail: '+name);
+   const url='https://raw.githubusercontent.com/Drako01/indizivo/';
+   assert.ok(readme.includes('/media/'+name), 'README image missing: '+name);
+   assert.ok(readme.includes(url), 'Screenshots must resolve without a relative repository link');
+   assert.ok(read('.vscodeignore').toString('utf8').includes('media/'+name),
+     'Public README-only screenshot must not inflate VSIX: '+name);
+ }
+ assert.doesNotMatch(readme,/SCREENSHOT [12]: Save the approved screenshot/,
+   'Placeholder comments must be replaced by the approved images');
  assert.doesNotMatch(readme,/\]\((?:\.\.?\/)?[A-Za-z_][\w/.-]*\.md\)/);
  assert.doesNotMatch(readme,/href="(?:LICENSE|\.\.?\/)/);
 });
