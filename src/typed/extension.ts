@@ -43,8 +43,8 @@ export class ControlCenter {
     this.context = context;
     this.views = new Set<vscode.Webview>();
     this.panel = null;
-    this.currentRoot = vscode.workspace.workspaceFolders?.length === 1 ?
-      vscode.workspace.workspaceFolders[0]?.uri ?? null;
+    const initialFolders=vscode.workspace.workspaceFolders;
+    this.currentRoot=initialFolders?.length===1 ? (initialFolders[0]?.uri ?? null) : null;
     this.data = { session: null, services: [], history: [], timeoutMs: 2500, locale:'en' };
     this.pendingApproval = null;
     this.selectedHistoryIndex = null;
