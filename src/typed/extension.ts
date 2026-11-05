@@ -44,7 +44,7 @@ export class ControlCenter {
     this.views = new Set<vscode.Webview>();
     this.panel = null;
     this.currentRoot = vscode.workspace.workspaceFolders?.length === 1 ?
-      vscode.workspace.workspaceFolders[0].uri : null;
+      vscode.workspace.workspaceFolders[0]?.uri ?? null;
     this.data = { session: null, services: [], history: [], timeoutMs: 2500, locale:'en' };
     this.pendingApproval = null;
     this.selectedHistoryIndex = null;
@@ -386,7 +386,7 @@ export function activate(context:vscode.ExtensionContext) {
     const selected=controller.currentRoot?.toString();
     if(selected && !folders.some(folder=>folder.uri.toString()===selected)) {
       controller.cancel();
-      controller.currentRoot=folders.length===1 ? folders[0].uri : null;
+      controller.currentRoot=folders.length===1 ? folders[0]?.uri ?? null : null;
       controller.restore();
       controller.selectedHistoryIndex=null;
       controller.error=controller.tr('host.workspaceWasClosed');
