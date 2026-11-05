@@ -89,7 +89,7 @@ The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the ins
 
 The first preview focuses on **local Node.js and Go development environments**. The interface is available in **English and Spanish**, selectable in Settings. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
 
-Future capabilities are described in the [Roadmap](ROADMAP.md).
+Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
 ## Development
 
@@ -116,5 +116,5 @@ Found an incorrect diagnosis, an incomplete check or a missing development envir
   <br>
   © 2026 <a href="https://armotusitio.com.ar">ArmoTuSitio</a>. Copyright holder.
   <br>
-  Released under the <a href="LICENSE">MIT License</a>.
+  Released under the MIT License (included with the extension).
 </p>
