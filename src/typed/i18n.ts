@@ -382,11 +382,15 @@ export const es: Record<I18nKey,string> = {
   "diag.comparison": "Comparación de estados únicamente. Un resultado diferente o ausente no demuestra que se haya resuelto la causa."
 };
 export const CATALOG: Record<Locale,Record<I18nKey,string>>={en,es};
-export type Params =Readonly<Record<string,string|number>>;
+export type Param=string|number|Descriptor;
+export type Params=Readonly<Record<string,Param>>;
 export interface Descriptor {key:I18nKey;values?:Params}
 export function t(locale:string|undefined,key:I18nKey,values:Params={}):string {
  const template=CATALOG[locale==='es'?'es':'en'][key];
- return template.replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,(_,name:string)=>String(values[name]??'{'+name+'}'));
+ return template.replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,(_,name:string)=>{
+   const part=values[name];
+   return part===undefined?'{'+name+'}':typeof part==='object'?t(locale,part.key,part.values):String(part);
+ });
 }
 export interface FindingTranslation {label?:Descriptor;category?:Descriptor;detail?:Descriptor;suggestion?:Descriptor;evidence?:Descriptor}
 export interface Finding {id:string;label:string;category:string;detail:string;suggestion?:string;status:string;evidence?:{fact:string;observedAt:string;id?:string}[];i18n?:FindingTranslation}
