@@ -4,6 +4,8 @@ const path = require('node:path');
 const net = require('node:net');
 const http = require('node:http');
 const crypto = require('node:crypto');
+const { evaluateVersion } = require('./versions');
+const { inspectOwner } = require('./port-owners');
 
 function createCheck(id, category, label, status, detail, suggestion, fact) {
   return { id, category, label, status, detail, suggestion: suggestion || '',
@@ -130,16 +132,27 @@ async function diagnose(root, timeout = 2500, signal, progress) {
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('node',['--version'], t, signal);
-    push(createCheck('node','Runtime','Node.js','' + (result.ok?'pass':'warn'),
-      result.value + (d.nodeRequirement ? ' — declared requirement: ' + d.nodeRequirement : ''),
-      'Verify compatibility using a trusted version manager.', result.value));
+    const verdict = result.ok ? evaluateVersion(result.value.replace(/^v/,''),d.nodeRequirement,'node') : null;
+    const nodeStatus = !result.ok || verdict?.status==='incompatible'?'warn':
+      verdict?.status==='compatible'?'pass':'info';
+    push(createCheck('node','Runtime','Node.js',nodeStatus,
+      result.value + (d.nodeRequirement ? ' — declared requirement: ' + d.nodeRequirement : '') +
+      (verdict ? '. '+verdict.detail : ''),
+      nodeStatus==='warn'?'Check the configured Node.js runtime version.':'Only validated constraints are considered compatible.',
+      'Runtime output: '+result.value));
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await runVersion('go',['version'],t,signal);
-    push(createCheck('go','Runtime','Go',result.ok?'pass':'warn',
-      result.value + (d.goRequirement ? ' — module requirement: ' + d.goRequirement : ''),
-      'Verify toolchain compatibility.', result.value));
+    const actual = /^go version go([\d.]+)/.exec(result.value)?.[1];
+    const verdict = actual ? evaluateVersion(actual,d.goRequirement,'go') : null;
+    const goStatus = !result.ok || verdict?.status==='incompatible'?'warn':
+      verdict?.status==='compatible'?'pass':'info';
+    push(createCheck('go','Runtime','Go',goStatus,
+      result.value + (d.goRequirement ? ' — module requirement: '+d.goRequirement : '') +
+      (verdict ? '. '+verdict.detail : ''),
+      goStatus==='warn'?'Check the declared Go toolchain minimum.':'Only validated constraints are considered compatible.',
+      'Runtime output: '+result.value));
   }
   if (d.hasEnvExample) {
     const missing = d.missingEnv;
@@ -152,14 +165,18 @@ async function diagnose(root, timeout = 2500, signal, progress) {
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
     const status = await inspectPort(port,t,signal);
+    const owner = status==='listening' ? await inspectOwner(port,t,signal) : null;
+    const ownerDetail=owner?.owners?.length ?
+      ' Listening owner(s): '+owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')+'.' :
+      status==='listening' ? ' Process owner not established (tool, permission or namespace limitation).' : '';
     push(createCheck('port-'+port,'Ports','Port '+port,
       ['listening','not-listening'].includes(status)?'info':'warn',
-      status === 'listening' ? 'A TCP listener responded on 127.0.0.1:'+port+
+      (status === 'listening' ? 'A TCP listener responded on 127.0.0.1:'+port+
         '. This does not establish a process conflict.' :
         status === 'not-listening' ? 'No local TCP listener responded on 127.0.0.1:'+port+
-        '. The application may not be started.' : 'Port status could not be verified.',
+        '. The application may not be started.' : 'Port status could not be verified.')+ownerDetail,
       'Inspect service startup logs and host bindings; do not terminate processes blindly.',
-      'TCP loopback result: '+status));
+      'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.')));
   }
   if (!checks.length) push(createCheck('none','Discovery','No applicable checks','info',
     'No supported Node.js/Go configuration or ports found. Add a local service to investigate.'));
