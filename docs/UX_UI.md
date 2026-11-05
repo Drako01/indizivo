@@ -21,11 +21,12 @@ The UI additionally provides per-finding Copy Evidence and a comparison panel be
 - Backend diagnostic suggestions are still in English; complete bilingual QA, high contrast and screen reader tests remain required.
 
 
-## Activity Bar legibility pass (2026-11-05)
+## Activity Bar original artwork — restored (2026-11-05)
 
-The Activity Bar requires a **24x24 transparent, monochrome SVG** using `currentColor`; VS Code controls the selected/inactive color for light, dark and high-contrast themes. The product's colored Marketplace logo must **not** replace this resource.
+The product owner explicitly confirmed the **original Indizivo Activity Bar glyph** must be retained, with no redesign. The attempted stronger-stroke glyph from PR #2 was not approved.
 
-- `media/indizivo-activity-bar.svg`: stronger 2.55–3.2px strokes, larger evidence point and near-full 24px footprint. The symbol retains the brand's `I + radar + evidence` motif, without extra details lost at native size.
-- `media/indizivo-icon-128.png` and the full-color branding remain unchanged.
-- Automated tests guard theme adaptation, 24px viewBox, absence of fixed colors and core glyph anatomy.
-- Manual signoff still required: check **inactive / active** icons in Windows VS Code dark/light/high-contrast themes and at 100%/200% scale after installing the rebuilt VSIX. Do not classify this as verified until visually inspected.
+- Restored `media/indizivo-activity-bar.svg` **byte-for-byte** from commit `151d6956e452191bbc554efb97d2d14b7d56d8c8` (before PR #2).
+- Original silhouette: vertical I, two radar arcs, one evidence point; transparent 24×24 SVG with inherited `currentColor` for native VS Code theme behavior.
+- No change to the 128px Marketplace icon, colored logo, manifest, UI, diagnostic logic or publishing workflows.
+- Tests assert the original geometry and monochromatic theme adaptation. Any future visual redesign requires an explicit approved visual reference.
+- Manual inspection of the restored icon in an installed VSIX remains pending, particularly active/inactive and different themes.

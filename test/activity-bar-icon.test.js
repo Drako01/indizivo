@@ -19,15 +19,13 @@ test('Activity Bar uses a dedicated monochrome glyph, not the colored Marketplac
  assert.doesNotMatch(svg,/\b(?:href|style|opacity)=/i);
 });
 
-test('The 24px glyph uses sufficiently strong radar strokes and one filled evidence point',()=>{
+test('Activity Bar keeps the approved original Indizivo radar silhouette',()=>{
  const svg=fs.readFileSync(path.join(root,'media/indizivo-activity-bar.svg'),'utf8');
- const paths=[...svg.matchAll(/<path\b[^>]*>/g)].map(match=>match[0]);
- assert.equal(paths.length,4,'I, two radar arcs and an evidence ray are expected');
- for(const element of paths){
-   assert.match(element,/stroke="currentColor"/);
-   assert.match(element,/stroke-linecap="round"/);
-   const width=Number(/stroke-width="([\d.]+)"/.exec(element)?.[1]);
-   assert.ok(width>=2.5 && width<=3.5,'Small glyph strokes must remain legible');
- }
- assert.match(svg,/<circle\b[^>]*r="2.5"[^>]*fill="currentColor"/);
+ const paths=[...svg.matchAll(/<path\b[^>]*>/g)].map(m=>m[0]);
+ assert.equal(paths.length,3,'Original mark: I and two radar arcs, without added ray');
+ assert.match(paths[0],/d="M6 4v16"/);
+ assert.match(paths[1],/d="M10 5c5\.5 0 9 3\.5 9 8\.8"/);
+ assert.match(paths[2],/d="M10 9c3 0 5 2 5 4\.8"/);
+ assert.match(svg,/<circle cx="19" cy="14" r="2" fill="currentColor" stroke="none"\/>/);
+ assert.match(svg,/stroke-linecap="round"/);
 });

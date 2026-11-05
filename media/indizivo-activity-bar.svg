@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <!-- Native Activity Bar glyph: theme-colored, high contrast at 24px.
-       Monogram I + two radar arcs + evidence point. -->
-  <path d="M4.5 3.5v17" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
-  <path d="M9.5 4.5a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M9.5 9.75a4.75 4.75 0 0 1 4.75 4.75" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="m9.7 20.1 9.2-4.4" stroke="currentColor" stroke-width="2.55" stroke-linecap="round"/>
-  <circle cx="19.5" cy="15.4" r="2.5" fill="currentColor"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16" stroke-width="2.5"/><path d="M10 5c5.5 0 9 3.5 9 8.8" stroke-width="2"/><path d="M10 9c3 0 5 2 5 4.8" stroke-width="2"/><circle cx="19" cy="14" r="2" fill="currentColor" stroke="none"/></svg>
