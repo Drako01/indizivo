@@ -1,4 +1,9 @@
 # Indizivo — PLAN.md
+
+> **Latest state / handoff (2026-11-05):** plan Current work is on `feat/enterprise-aaa-full-typescript-i18n` at `ab6cec321710`; not yet typechecked or tested. See **[docs/HANDOFF.md](docs/HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
+
+**Correction:** GitHub rulesets `Protect main` (26636048) and `Protect release tags` (26636049) are ACTIVE. CI publication workflows remain disabled. The previously verified Windows baseline is 59/59 Node tests on `main`; the current TS/i18n branch is unverified. Full migration, including `extension.js`, is unfinished.
+
 ## Enterprise AAA end-to-end engineering, verification and release plan
 
 **Project owner:** Alejandro Daniel Di Stefano

@@ -1,5 +1,10 @@
 # Enterprise AAA acceptance gates — Indizivo
 
+> **Latest state / handoff (2026-11-05):** gates Current work is on `feat/enterprise-aaa-full-typescript-i18n` at `ab6cec321710`; not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
+
+**Updated acceptance state:** TS migration **PARTIAL** (host still JS, other typed modules unverified); EN/ES **AUTHORED/PARTIAL** (dynamic content unverified); Windows regression for new branch **NOT EXECUTED**; Linux/macOS/a11y **NOT EXECUTED**; rulesets **ACTIVE**; release **NO-GO**.
+
+
 This is the engineering acceptance contract. It is NOT a certification and does not supersede actual test results. Never present unexecuted checks as PASS.
 
 ## A. Engineering quality
