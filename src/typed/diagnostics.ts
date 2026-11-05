@@ -58,7 +58,8 @@ export function parsePorts(scripts:Record<string,string>|null|undefined):number[
   for (const script of Object.values(scripts || {})) {
     if (typeof script !== 'string') continue;
     const match = /(?:--port[= ]|(?:^|\s)PORT\s*=\s*)(\d{2,5})/i.exec(script);
-    if (match && +match[1] > 0 && +match[1] < 65536) result.add(+match[1]);
+    const port=Number(match?.[1] ?? 0);
+    if (port > 0 && port < 65536) result.add(port);
   }
   return [...result].sort((a, b) => a-b).slice(0, 12);
 }
@@ -174,7 +175,7 @@ function inspectPort(port:number,timeout:number,signal?:AbortSignal):Promise<Por
     socket.setTimeout(timeout);
     socket.once('connect', () => finish('listening'));
     socket.once('timeout', () => finish('timeout'));
-    socket.once('error', err => finish(err.code === 'ECONNREFUSED' ? 'not-listening' : 'inconclusive'));
+    socket.once('error', err => finish('code' in err && err.code === 'ECONNREFUSED' ? 'not-listening' : 'inconclusive'));
     socket.connect({ host: '127.0.0.1', port });
   });
 }
