@@ -1,14 +1,13 @@
 # Indizivo Privacy Policy
 
-**Status:** Product policy for the unreleased local-first extension; verify behavior in the packaged VSIX before public release.
+**Applies to:** Indizivo 0.1.0 preview for Visual Studio Code.
 
-- No account, analytics, advertising, telemetry or cloud backend.
-- Indizivo reads bounded local project manifests, runtime version output, declared ports and variable **names** from .env.example/.env, not their values.
-- The extension stores bounded workspace-scoped diagnostic results and loopback endpoint preferences via VS Code workspaceState. Users can clear history through the interface.
-- Optional HTTP GET requests to loopback endpoints must be explicitly approved; URLs with embedded credentials or query strings are rejected.
-- No code or project files are sent to an AI provider.
-- Exported Markdown/JSON diagnostics are written only to user-selected destinations.
-- Deleting history removes workspace-scoped saved sessions, but does not delete external reports deliberately exported by the user.
-- Operating-system permissions apply; this extension does not sandbox diagnostic processes.
+- **Local-first:** no account, analytics, telemetry, advertising, mandatory AI provider or cloud backend.
+- Indizivo reads bounded local project manifests, runtime version output, declared ports and variable **names** from `.env.example` and `.env`. Variable **values** are not stored in findings.
+- Diagnostic history and configured loopback endpoints are saved in VS Code's workspace-scoped storage. Users can delete local history through the Control Center.
+- Optional HTTP GET checks run **only after the user reviews and explicitly approves** specific loopback endpoints. URLs containing credentials, query parameters or fragments are rejected.
+- Indizivo does not execute project scripts or upload source code to an AI provider.
+- Markdown and JSON reports are written only to a destination selected by the user. Deleting history does not remove external reports previously exported.
+- Checks run with the operating-system permissions of the VS Code extension host. This extension is not a sandbox and does not guarantee full detection of environment problems.
 
-For privacy and security issues, contact the repository owner using the private vulnerability channel.
+For a privacy request, contact [ArmoTuSitio support](https://armotusitio.com.ar/soporte/). Do not send live keys, `.env` values or confidential project logs.
