@@ -7,6 +7,7 @@ test('Windows VS Code CMD invocation never needs shell:true with unescaped argum
  const command=invocation('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd',
    ['--install-extension','F:\\indizivo\\indizivo-0.1.0.vsix','--force'],'win32','C:\\Windows\\System32\\cmd.exe');
  assert.equal(command.file,'C:\\Windows\\System32\\cmd.exe');
+ assert.equal(command.windowsVerbatimArguments,true);
  assert.deepEqual(command.args.slice(0,3),['/d','/s','/c']);
  assert.equal(command.args[3],
    '""C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd" "--install-extension" "F:\\indizivo\\indizivo-0.1.0.vsix" "--force""');
@@ -20,5 +21,6 @@ test('non-Windows CLI invocations preserve argument arrays without shell',()=>{
  const args=['--list-extensions','/tmp/some profile'];
  const result=invocation('/usr/bin/code',args,'linux');
  assert.equal(result.file,'/usr/bin/code');
+ assert.equal(result.windowsVerbatimArguments,false);
  assert.deepEqual(result.args,args);
 });
