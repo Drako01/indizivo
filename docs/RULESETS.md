@@ -68,7 +68,7 @@ Do **not** run `main-with-ci.json` while the CI is disabled.
 
 ## Private-repository constraints
 
-GitHub's enforcement of rulesets and required reviews can depend on subscription/organization settings for private repositories. Confirm the rules actually enforce restrictions rather than assuming that creation or UI display implies enforcement.
+GitHub rulesets are available for **public repositories on Free** and **public/private repositories on GitHub Pro, Team or Enterprise Cloud**. Since Indizivo is private, verify that its GitHub account/repository is eligible for enforcement before applying. See https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository . A ChatGPT Plus subscription does not determine GitHub plan eligibility.
 
 ## Repository governance
 
