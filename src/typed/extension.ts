@@ -210,6 +210,7 @@ export class ControlCenter {
   }
   async confirmServices() {
     this.ensureReady();
+    if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
     const session=this.data.session;
     if (!this.pendingApproval || !session) throw new Error(this.tr('host.approvalExpired'));
     const plan=this.pendingApproval.map(validateService).filter((item):item is ServiceTarget=>item!==null);
@@ -305,6 +306,7 @@ export class ControlCenter {
       {modal:true},this.tr('host.delete'));
     if (result!==this.tr('host.delete')) return;
     this.data.history=[];
+    this.pendingApproval=null;
     this.data.session=null;
     this.selectedHistoryIndex=null;
     await this.save();
