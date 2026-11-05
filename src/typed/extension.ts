@@ -248,6 +248,7 @@ export class ControlCenter {
     if (this.data.services.length >= 20) throw new Error(this.tr('host.maxServices'));
     if (!this.data.services.some(item=>item.url===service.url)) this.data.services.push(service);
     this.pendingApproval=null;
+    this.error='';
     await this.save();
     this.broadcast();
   }
@@ -256,6 +257,7 @@ export class ControlCenter {
     if (typeof url!=='string') return;
     this.data.services=this.data.services.filter(x=>x.url!==url);
     this.pendingApproval=null;
+    this.error='';
     await this.save();
     this.broadcast();
   }
