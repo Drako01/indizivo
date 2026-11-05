@@ -6,7 +6,7 @@ function invocation(executable,args,platform=process.platform,comSpec=process.en
     args.some(value=>typeof value!=='string'))
    throw new TypeError('Expected an executable path and string CLI arguments');
  if(platform!=='win32'||! /\.(?:cmd|bat)$/i.test(executable)) {
-   return {file:executable,args};
+   return {file:executable,args,windowsVerbatimArguments:false};
  }
  const values=[executable,...args];
  for(const value of values) {
@@ -14,6 +14,6 @@ function invocation(executable,args,platform=process.platform,comSpec=process.en
      throw new Error('Unsafe Windows VS Code CLI path or argument');
  }
  const quoted=values.map(value=>'"'+value+'"').join(' ');
- return {file:comSpec,args:['/d','/s','/c','"'+quoted+'"']};
+ return {file:comSpec,args:['/d','/s','/c','"'+quoted+'"'],windowsVerbatimArguments:true};
 }
 module.exports={invocation};
