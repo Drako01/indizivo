@@ -53,7 +53,7 @@ function createCheck(id:string,category:string,label:string,status:CheckStatus,
       observedAt: new Date().toISOString() }] };
 }
 export function parsePorts(scripts:Record<string,string>|null|undefined):number[] {
-  const result = new Set();
+  const result = new Set<number>();
   for (const script of Object.values(scripts || {})) {
     if (typeof script !== 'string') continue;
     const match = /(?:--port[= ]|(?:^|\s)PORT\s*=\s*)(\d{2,5})/i.exec(script);
@@ -62,7 +62,7 @@ export function parsePorts(scripts:Record<string,string>|null|undefined):number[
   return [...result].sort((a, b) => a-b).slice(0, 12);
 }
 export function parseKeys(data:string|undefined|null):string[] {
-  const names=new Set();
+  const names=new Set<string>();
   for(const line of (data||'').split(/\r?\n/)) {
     const key=/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]{0,79})\s*=/.exec(line)?.[1];
     if(key)names.add(key);
@@ -189,7 +189,8 @@ function inspectService(service:ServiceTarget,timeout:number,signal?:AbortSignal
       lookup: (_host, _options, callback) => callback(null, '127.0.0.1', 4),
       headers: { 'user-agent': 'Indizivo/0.1' } }, res => {
       // Headers are sufficient evidence. Never download or buffer service bodies.
-      finish(res.statusCode >= 200 && res.statusCode < 300, 'HTTP ' + res.statusCode);
+      const status=res.statusCode ?? 0;
+      finish(status >= 200 && status < 300, 'HTTP ' + status);
       res.destroy();
     });
     const cancel = () => req.destroy(new Error('cancelled'));
