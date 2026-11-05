@@ -81,7 +81,7 @@ export class ControlCenter {
       reviewMode: this.selectedHistoryIndex!==null,
       selectedHistoryIndex: this.selectedHistoryIndex,
       project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
-      host: process.platform + ' · extension host',
+      host: process.platform + ' · ' + this.tr('ui.hostCurrent'),
       trusted: vscode.workspace.isTrusted,
       session: localizeSession(this.viewedSession(),this.data.locale),
       services: this.data.services,
@@ -116,7 +116,7 @@ export class ControlCenter {
   }
   async openHome() {
     if (this.panel) { this.panel.reveal(); return; }
-    const panel = vscode.window.createWebviewPanel('indizivo.home','Indizivo · Control Center',
+    const panel = vscode.window.createWebviewPanel('indizivo.home','Indizivo · '+this.tr('ui.panelTitle'),
       vscode.ViewColumn.One,{ enableScripts:true, retainContextWhenHidden:true,
         localResourceRoots:[vscode.Uri.joinPath(this.context.extensionUri,'media')] });
     this.panel=panel;
