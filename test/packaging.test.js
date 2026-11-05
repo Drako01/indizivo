@@ -49,7 +49,7 @@ test('build inventory excludes development-only scripts and private CI material'
 });
 
 test('runtime adapters use generated strict TypeScript modules',()=>{
- const src=['messages','versions','comparison'];
+ const src=['messages','versions','comparison','port-owners','i18n'];
  for(const unit of src) {
   const code=read('src/'+unit+'.js').toString('utf8');
   assert.match(code,new RegExp('dist/typed/'+unit));
