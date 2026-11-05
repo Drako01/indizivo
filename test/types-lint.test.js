@@ -9,3 +9,11 @@ test('typed contract linter rejects any, unsafe non-null assertions and suppress
  assert.ok(s.includes('ts.isNonNullExpression'));
  assert.ok(s.includes('@ts-ignore'));
 });
+
+test('compiled TypeScript builds clear stale dist output first',()=>{
+ const pkg=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../package.json'),'utf8'));
+ assert.equal(pkg.scripts['prebuild:types'],'node scripts/clean-types.cjs');
+ const cleaner=fs.readFileSync(path.resolve(__dirname,'../scripts/clean-types.cjs'),'utf8');
+ assert.match(cleaner,/dist\\/typed/);
+ assert.match(cleaner,/rmSync/);
+});
