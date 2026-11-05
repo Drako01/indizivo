@@ -1,11 +1,11 @@
 # Indizivo Support
 
-**Status:** unreleased private development preview.
+**Product:** Indizivo 0.1.0 (Preview) for Visual Studio Code.
 
-When a preview build is provided, report reproducible issues to the project owner on GitHub.
+Report errors or request support using the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/). Mention **Indizivo** in the request. The source repository is private, so GitHub Issues are not a public support channel.
 
-Include: Indizivo version, VS Code version, OS and extension host (local/WSL/remote), exact steps, observed vs expected behavior, and diagnostic check status. **Remove secrets, proprietary file contents, private paths and credentials before attaching logs.**
+Provide the Indizivo version, VS Code version, operating system and extension host (local, WSL, remote, or dev container), steps to reproduce, expected behavior and actual diagnostic result.
 
-Do not post live API keys, .env files or confidential logs. For security issues, use the private vulnerability reporting path in SECURITY.md.
+**Remove secrets, private environment values, proprietary file contents and credentials before sending screenshots or logs.** For security issues, request a private disclosure channel as explained in `SECURITY.md`.
 
-Main website: https://armotusitio.com.ar
+Website: https://armotusitio.com.ar/
