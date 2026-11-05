@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — Delivery pipeline verification
+
+- Non-functional source annotation to validate the 0.1.1 release pipeline.
+- CI quality gates and OIDC delivery preparation for Visual Studio Marketplace and Open VSX.
+- No changes to runtime behavior, user-facing diagnostics or extension APIs.
+
 ## 0.1.0 — First Preview (release candidate; not published)
 
 Indizivo introduces a local-first diagnostic Control Center for Visual Studio Code 1.99+.
