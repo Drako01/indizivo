@@ -19,13 +19,26 @@ test('Activity Bar uses a dedicated monochrome glyph, not the colored Marketplac
  assert.doesNotMatch(svg,/\b(?:href|style|opacity)=/i);
 });
 
-test('Activity Bar keeps the approved original Indizivo radar silhouette',()=>{
+test('Activity Bar renders the complete approved radar silhouette with every signal arc and sweep',()=>{
  const svg=fs.readFileSync(path.join(root,'media/indizivo-activity-bar.svg'),'utf8');
  const paths=[...svg.matchAll(/<path\b[^>]*>/g)].map(m=>m[0]);
- assert.equal(paths.length,3,'Original mark: I and two radar arcs, without added ray');
- assert.match(paths[0],/d="M6 4v16"/);
- assert.match(paths[1],/d="M10 5c5\.5 0 9 3\.5 9 8\.8"/);
- assert.match(paths[2],/d="M10 9c3 0 5 2 5 4\.8"/);
- assert.match(svg,/<circle cx="19" cy="14" r="2" fill="currentColor" stroke="none"\/>/);
+ assert.equal(paths.length,5,'Full mark requires vertical bar, three arcs and diagonal sweep');
+ assert.match(paths[0],/d="M4\.9 2\.88V21\.6"/);
+ assert.match(paths[1],/d="M9\.94 3\.74C16\.7 3\.74 21\.17 8\.21 21\.17 14\.83"/);
+ assert.match(paths[2],/d="M9\.94 8\.64C13\.68 8\.64 16\.42 11\.23 16\.42 14\.83"/);
+ assert.match(paths[3],/d="M9\.94 13\.39C11\.38 13\.39 12\.24 14\.11 12\.38 15\.26"/);
+ assert.match(paths[4],/d="M8\.35 20\.02L20\.02 14\.83"/);
+ assert.match(svg,/<circle cx="21\.17" cy="14\.83" r="1\.73" fill="currentColor" stroke="none"\/>/);
  assert.match(svg,/stroke-linecap="round"/);
+ assert.doesNotMatch(svg,/<rect\b|<image\b/i,'No background tile or embedded raster in Activity Bar');
+});
+test('Marketplace remains full color while only Activity Bar uses the new monochrome SVG',()=>{
+ const activity=pkg.contributes.viewsContainers.activitybar[0].icon;
+ assert.equal(activity,'media/indizivo-activity-bar.svg');
+ assert.equal(pkg.icon,'media/indizivo-icon-128.png');
+ const brand=fs.readFileSync(path.join(root,'media/indizivo-icon.svg'),'utf8');
+ assert.match(brand,/<linearGradient\b/);
+ assert.match(brand,/#35C2B1/);
+ const sidebar=fs.readFileSync(path.join(root,activity),'utf8');
+ assert.doesNotMatch(sidebar,/#35C2B1|#F6BA65|<rect\b/i);
 });
