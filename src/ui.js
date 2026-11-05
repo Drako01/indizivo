@@ -1,61 +1,8 @@
 'use strict';
 
-function browserUI() {
+function browserUI(TEXT) {
   const vscode = acquireVsCodeApi();
-  const TEXT = {
-    en: {
-      copy:'Copy evidence',next:'Next:',evidence:'View evidence',noEvidence:'No evidence yet. Run a diagnosis to begin.',
-      noServices:'No local endpoints configured.',remove:'Remove',noHistory:'No saved sessions.',
-      changes:'Changes since previous diagnosis',current:'Current session',reviewing:'Viewing saved diagnosis',
-      done:'Checks performed on',limitations:'Results apply only to the tests that ran.',
-      start:'Start a diagnosis to inspect your development environment without changing files or processes.',
-      inProgress:'Diagnosing…',ready:'Ready',project:'No project selected',host:'Current extension host',
-      section:'Control center sections',brand:'Developer Environment Diagnostics',
-      title:'Find the cause. Fix with confidence.',welcome:'Diagnose a project without modifying its files or terminating any processes. Every finding includes observations and limitations.',
-      diagnose:'Diagnose project',recheck:'Recheck',choose:'Choose project',full:'Full view',cancel:'Cancel',
-      trust:'This workspace is not trusted. Diagnostics are disabled until you trust it in VS Code.',
-      loading:'Diagnosis running…',diagnostics:'Diagnostics',services:'Services',history:'History & Reports',settings:'Settings',
-      checks:'Checks',warnings:'Warnings',observations:'Observations',serviceTitle:'Local service checks',
-      serviceNote:'Add loopback HTTP endpoints only. Requests are never sent until you inspect the plan and approve them.',
-      serviceName:'Service name',serviceURL:'Loopback URL',add:'Add service',review:'Review checks & approve',
-      approval:'Approval required',approvalText:'Indizivo will make GET requests to exactly these loopback endpoints:',
-      confirm:'Approve and run',decline:'Cancel',historyTitle:'Local review history',exportMD:'Export Markdown',
-      exportJSON:'Export JSON',clearHistory:'Delete history',settingsTitle:'Probe settings',
-      settingsNote:'All local settings can be managed here. No manual editing of settings.json is required.',
-      timeout:'Timeout per probe (400–10000 ms)',save:'Save settings',
-      privacy:'Privacy: local-first, no telemetry, no AI, no cloud. Indizivo reads key names from .env without retaining values. Repository scripts are never executed.',
-      language:'Interface language',english:'English',spanish:'Español',
-      selectHistory:'Inspect session',backCurrent:'Back to current session',unavailableHistory:'Summary only — rerun to capture full evidence',
-      status:'Status',untrusted:'Untrusted workspace'
-    },
-    es: {
-      copy:'Copiar evidencia',next:'Siguiente paso:',evidence:'Ver evidencia',noEvidence:'Todavía no hay evidencias. Ejecutá un diagnóstico para comenzar.',
-      noServices:'No hay servicios locales configurados.',remove:'Eliminar',noHistory:'Todavía no hay sesiones guardadas.',
-      changes:'Cambios desde el diagnóstico anterior',current:'Sesión actual',reviewing:'Revisando diagnóstico guardado',
-      done:'Comprobaciones realizadas el',limitations:'Los resultados corresponden únicamente a las pruebas ejecutadas.',
-      start:'Ejecutá un diagnóstico para revisar tu entorno sin modificar archivos ni procesos.',
-      inProgress:'Diagnosticando…',ready:'Listo',project:'No hay proyecto seleccionado',host:'Host de la extensión actual',
-      section:'Secciones del centro de control',brand:'Diagnóstico de entornos de desarrollo',
-      title:'Encontrá la causa. Resolvé con confianza.',welcome:'Diagnosticá tu proyecto sin modificar archivos ni terminar procesos. Cada resultado incluye evidencias y sus limitaciones.',
-      diagnose:'Diagnosticar proyecto',recheck:'Volver a comprobar',choose:'Elegir proyecto',full:'Vista completa',cancel:'Cancelar',
-      trust:'Este espacio de trabajo no es confiable. Los diagnósticos están deshabilitados hasta que lo autorices en VS Code.',
-      loading:'Diagnóstico en curso…',diagnostics:'Diagnósticos',services:'Servicios',history:'Historial e informes',settings:'Configuración',
-      checks:'Comprobaciones',warnings:'Advertencias',observations:'Observaciones',serviceTitle:'Comprobaciones de servicios locales',
-      serviceNote:'Solo se permiten endpoints HTTP locales. No se envía ninguna solicitud sin que revises y apruebes el plan.',
-      serviceName:'Nombre del servicio',serviceURL:'URL local',add:'Agregar servicio',review:'Revisar y autorizar',
-      approval:'Autorización necesaria',approvalText:'Indizivo enviará solicitudes GET exactamente a estos endpoints locales:',
-      confirm:'Autorizar y ejecutar',decline:'Cancelar',historyTitle:'Historial de diagnósticos',
-      exportMD:'Exportar Markdown',exportJSON:'Exportar JSON',clearHistory:'Eliminar historial',
-      settingsTitle:'Configuración de comprobaciones',
-      settingsNote:'Configurá todas las opciones locales desde este panel, sin editar settings.json manualmente.',
-      timeout:'Tiempo máximo por comprobación (400–10000 ms)',save:'Guardar configuración',
-      privacy:'Privacidad: funcionamiento local, sin telemetría, IA ni nube. Indizivo solo examina nombres de variables de .env, no sus valores. Nunca ejecuta scripts del repositorio.',
-      language:'Idioma de la interfaz',english:'English',spanish:'Español',
-      selectHistory:'Ver sesión',backCurrent:'Volver a la sesión actual',
-      unavailableHistory:'Solo resumen — ejecutá otro diagnóstico para guardar la evidencia completa',
-      status:'Estado',untrusted:'Espacio no confiable'
-    }
-  };
+
   const tr = key => (TEXT[state.locale==='es'?'es':'en'][key] || TEXT.en[key] || key);
   const $ = id => document.getElementById(id);
   let state = {locale:'en'};
@@ -71,7 +18,7 @@ function browserUI() {
   function renderCheck(node, c) {
     const item = el('article','check');
     const top = el('div','check-top');
-    top.append(el('span','check-label',c.label),el('span','status status-'+c.status,c.status));
+    top.append(el('span','check-label',c.label),el('span','status status-'+c.status,tr('status.'+c.status)));
     item.append(top,el('div','muted',c.detail));
     const copy=el('button','quiet',tr('copy'));
     copy.setAttribute('type','button');
@@ -92,7 +39,7 @@ function browserUI() {
     document.documentElement.lang=state.locale==='es'?'es':'en';
     set('host',state.host || tr('host'));
     applyStaticTranslations();
-    set('state-label',state.running ? tr('inProgress') : state.session ? state.session.state : tr('ready'));
+    set('state-label',state.running ? tr('inProgress') : state.session ? tr('state.'+state.session.state) : tr('ready'));
     $('diagnose').disabled = !!state.running || !state.trusted || !root;
     $('select-project').disabled = !!state.running;
     $('recheck').disabled = !!state.running || !state.session || !state.trusted;
@@ -125,7 +72,7 @@ function browserUI() {
       comparison.append(el('p','muted',state.session.comparison.note));
       for (const trend of trends.filter(x=>x.trend!=='unchanged').slice(0,12))
         comparison.append(el('div','history-row',trend.id+' · '+trend.trend+
-          (trend.before?' ('+trend.before+' → '+(trend.after||'not checked')+')':'')));
+          (trend.before?' ('+tr('status.'+trend.before)+' → '+(trend.after?tr('status.'+trend.after):tr('ui.notChecked'))+')':'')));
     }
     const checks = clear('checks');
     if (!items.length) checks.append(el('p','empty',tr('noEvidence')));
@@ -234,6 +181,12 @@ function browserUI() {
     if(cancel)cancel.textContent=tr('decline');
     const locale=document.querySelector('nav.tabs');
     if(locale)locale.setAttribute('aria-label',tr('section'));
+    const logo=document.querySelector('.brand img');
+    if(logo)logo.setAttribute('alt',tr('ui.logoAlt'));
+    const footer=document.querySelector('footer.privacy');
+    if(footer)footer.textContent=tr('ui.footer');
+    const serviceName=document.getElementById('service-name');
+    if(serviceName)serviceName.setAttribute('placeholder',tr('ui.placeholder.service'));
   }
   document.addEventListener('keydown',event=>{
     const current=event.target.closest?.('[data-tab]');
@@ -265,7 +218,9 @@ function html(webview, extensionUri, vscode) {
   const logo = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'indizivo-icon.svg'));
   const csp = "default-src 'none'; img-src "+webview.cspSource+
     "; style-src 'nonce-"+nonce+"'; script-src 'nonce-"+nonce+"';";
-  const script = '(' + browserUI.toString() + ')();';
+  const { CATALOG } = require('./i18n');
+  const catalog=JSON.stringify(CATALOG).replace(/</g,'\\u003c');
+  const script = '(' + browserUI.toString() + ')(' + catalog + ');';
   return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'+
     '<meta http-equiv="Content-Security-Policy" content="'+csp+'">'+
     '<style nonce="'+nonce+'">'+STYLE+'</style></head><body><main class="shell">'+
