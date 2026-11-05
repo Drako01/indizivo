@@ -157,7 +157,7 @@ jobs:
           sha256sum --check indizivo.vsix.sha256
           test -f "indizivo-$VERSION.vsix"
           unset VSCE_PAT AZURE_DEVOPS_EXT_PAT
-          npm exec --yes --package=@vscode/vsce@4.0.0 -- vsce publish --oidc --packagePath "indizivo-$VERSION.vsix" --skip-duplicate
+          npm exec --yes --package=@vscode/vsce@4.1.0 -- vsce publish --oidc --packagePath "indizivo-$VERSION.vsix" --skip-duplicate
       - name: Wait for the published version to become visible
         shell: bash
         env:
