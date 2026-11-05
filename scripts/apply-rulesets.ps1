@@ -24,7 +24,7 @@ Write-Host "Target repository: $repository"
 Write-Host "Action: $(if ($Apply) {'CREATE repository rulesets'} else {'READ-ONLY PREVIEW'})"
 Write-Host "WARNING: Required CI checks are intentionally excluded while workflows are disabled."
 
-$rulesetsText = Invoke-Gh @('api',"repos/$repository/rulesets")
+$rulesetsText = Invoke-Gh -Arguments @('api',"repos/$repository/rulesets")
 $rulesets = @($rulesetsText | ConvertFrom-Json)
 foreach ($file in $files) {
   $full = Join-Path $root $file
@@ -37,7 +37,7 @@ foreach ($file in $files) {
   }
   if ($Apply) {
     Write-Host "Creating: $($rule.name)"
-    Invoke-Gh @('api','--method','POST',"repos/$repository/rulesets",'--input',$full)
+    Invoke-Gh -Arguments @('api','--method','POST',"repos/$repository/rulesets",'--input',$full)
   } else {
     Write-Host "Would create: $($rule.name)"
     Write-Host "  From: $full"
