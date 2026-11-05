@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "rootDir": "src/typed",
+    "outDir": "dist/typed",
+    "lib": [
+      "ES2022"
+    ]
+  },
+  "include": [
+    "src/typed/**/*.ts"
+  ]
+}
