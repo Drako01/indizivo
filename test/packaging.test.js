@@ -82,3 +82,14 @@ test('disposable root-level regression script is excluded from VSIX',()=>{
  assert.match(content,/logs\.log/);
  assert.match(ignore,/verify-indizivo\.ps1/);
 });
+
+test('Marketplace-facing metadata and README do not link to the private GitHub repository',()=>{
+ const pkg=JSON.parse(read('package.json').toString('utf8'));
+ const readme=read('README.md').toString('utf8');
+ assert.equal(pkg.repository,undefined,'Private source URL must not be advertised as public');
+ assert.equal(pkg.bugs.url,'https://armotusitio.com.ar/soporte/');
+ assert.ok(readme.includes('https://armotusitio.com.ar/soporte/'));
+ assert.doesNotMatch(readme,/github\.com\/Drako01\/indizivo/);
+ assert.doesNotMatch(readme,/\]\((?:\.\.?\/)?[A-Za-z_][\w/.-]*\.md\)/);
+ assert.doesNotMatch(readme,/href="(?:LICENSE|\.\.?\/)/);
+});
