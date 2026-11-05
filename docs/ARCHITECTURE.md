@@ -1,6 +1,6 @@
 # Architecture
 
-> **Latest state / handoff (2026-11-05):** architecture Current work is on `feat/enterprise-aaa-full-typescript-i18n` at `ab6cec321710`; not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
+> **Latest state / handoff (2026-11-05):** Current work is on `feat/enterprise-aaa-full-typescript-i18n` (last implementation commit `ab6cec321710`); not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
 
 Current migration routes `diagnostics.js`, `ui.js`, `port-owners.js` and earlier adapters into `src/typed/*.ts` compiled to `dist/typed/`. `extension.js` still contains the real Extension Host logic. These source changes are **not yet verified by tsc**; do not assume `src/typed/ui.ts` or `src/typed/diagnostics.ts` works until tests pass.
 

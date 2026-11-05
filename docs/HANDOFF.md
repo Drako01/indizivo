@@ -9,7 +9,7 @@
 - GitHub private repository: `Drako01/indizivo`. Do **not** make it public or publish the extension without an explicit new owner instruction.
 - Stable `main` baseline: `701444a46b30ecdae399dbb4f61098a8822ab6e1` (original Activity Bar glyph restored in merged PR #3).
 - **Current work branch**: `feat/enterprise-aaa-full-typescript-i18n`.
-- **Work-branch HEAD at this handoff**: `ab6cec321710e68c1215a0da6fded41587dd07f7`.
+- **Last implementation commit before handoff documentation**: `ab6cec321710e68c1215a0da6fded41587dd07f7`. Documentation commits follow this source snapshot; read the current branch HEAD before working.
 - Branch is **NOT yet merged or release-qualified**. Keep commits small; open/review a PR rather than pushing to protected main.
 - Product identity: Indizivo, copyright ArmoTuSitio, MIT, icon `media/indizivo-activity-bar.svg` **must remain the original design**. Do not redesign without explicit approval.
 - Owner wants an Enterprise AAA level, KISS/DRY/SOLID, careful security and no regressions.
