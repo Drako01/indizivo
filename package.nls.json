@@ -1,0 +1,11 @@
+{
+  "extension.description": "Evidence-first development environment diagnostics. Find the cause. Fix with confidence.",
+  "command.category": "Indizivo",
+  "command.openHome": "Open Control Center",
+  "command.diagnose": "Diagnose Project",
+  "command.export": "Export Diagnostic Report",
+  "command.cancel": "Cancel Diagnosis",
+  "command.settings": "Configure Diagnostics",
+  "views.container": "Indizivo",
+  "views.control": "Control Center"
+}

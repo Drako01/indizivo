@@ -7,7 +7,7 @@ const ZIP_EOCD=0x06054b50;
 const ZIP_CENTRAL=0x02014b50;
 const MANDATORY=[
  '[Content_Types].xml','extension.vsixmanifest','extension/package.json',
- 'extension/src/extension.js','extension/src/diagnostics.js',
+ 'extension/package.nls.json','extension/package.nls.es.json','extension/src/extension.js','extension/src/diagnostics.js',
  'extension/src/ui.js','extension/src/versions.js','extension/src/port-owners.js',
  'extension/src/comparison.js','extension/src/messages.js','extension/dist/typed/messages.js',
  'extension/dist/typed/versions.js','extension/dist/typed/comparison.js',

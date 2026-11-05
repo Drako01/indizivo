@@ -1,0 +1,11 @@
+{
+  "extension.description": "Diagnósticos de entornos de desarrollo basados en evidencias. Encontrá la causa. Resolvé con confianza.",
+  "command.category": "Indizivo",
+  "command.openHome": "Abrir centro de control",
+  "command.diagnose": "Diagnosticar proyecto",
+  "command.export": "Exportar informe de diagnóstico",
+  "command.cancel": "Cancelar diagnóstico",
+  "command.settings": "Configurar diagnósticos",
+  "views.container": "Indizivo",
+  "views.control": "Centro de control"
+}
