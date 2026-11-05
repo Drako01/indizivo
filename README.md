@@ -1,4 +1,4 @@
-<p align="center"><img src="media/indizivo-icon.svg" width="112" alt="Indizivo logo: a letter I with three diagnostic arcs and a point of evidence"></p>
+<p align="center"><img src="media/readme-logo.png" width="112" alt="Indizivo logo: a letter I with three diagnostic arcs and a point of evidence"></p>
 <h1 align="center">Indizivo</h1>
 <p align="center"><strong>Developer Environment Diagnostics</strong><br><em>Find the cause. Fix with confidence.</em></p>
 <p align="center"><a href="LICENSE">MIT License</a> · <a href="PLAN.md">Enterprise AAA Plan</a> · <a href="docs/BRAND_IDENTITY.md">Identity</a></p>
