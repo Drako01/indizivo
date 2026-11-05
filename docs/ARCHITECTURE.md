@@ -1,15 +1,18 @@
 # Architecture
 
+**Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
+
+
 > **Latest state / handoff (2026-11-05):** Current work is on `feat/enterprise-aaa-full-typescript-i18n` (last implementation commit `ab6cec321710`); not yet typechecked or tested. See **[docs/HANDOFF.md](HANDOFF.md)** for authoritative work-in-progress status. Earlier dated sections below are historical and may be superseded.
 
-Current migration routes `diagnostics.js`, `ui.js`, `port-owners.js` and earlier adapters into `src/typed/*.ts` compiled to `dist/typed/`. `extension.js` still contains the real Extension Host logic. These source changes are **not yet verified by tsc**; do not assume `src/typed/ui.ts` or `src/typed/diagnostics.ts` works until tests pass.
+Current migration routes `diagnostics.js`, `ui.js`, `port-owners.js` and earlier adapters into `src/typed/*.ts` compiled to `dist/typed/`. `src/typed/extension.ts` now contains the authored Extension Host logic, while `src/extension.js` is a CommonJS bootstrap. These source changes are **not yet verified by tsc**; do not assume `src/typed/ui.ts` or `src/typed/diagnostics.ts` works until tests pass.
 
 
 The first implementation is local-first, uses built-in Node.js APIs and does not require a cloud backend.
 
-- src/extension.js owns the VS Code host, commands, consent, workspace lifecycle and persistence.
-- src/diagnostics.js exposes bounded and deterministic discovery and probes without depending on vscode.
-- src/ui.js renders a controlled, nonce-CSP webview using native VS Code theme tokens.
+- src/typed/extension.ts owns the VS Code host, commands, consent, workspace lifecycle and persistence. src/extension.js is a minimal compatibility adapter.
+- src/typed/diagnostics.ts exposes bounded and deterministic discovery and probes without depending on vscode; src/diagnostics.js is a compatibility adapter.
+- src/typed/ui.ts renders a controlled, nonce-CSP webview using native VS Code theme tokens; src/ui.js is a compatibility adapter.
 - test/diagnostics.test.js contains initial synthetic fixtures.
 
 The UI displays a projection of authoritative extension-host state. It requests allowlisted operations only; it never executes arbitrary commands. HTTP probes require explicit target approval and are limited to loopback hosts. The user may configure all implemented workflows in the UI.
