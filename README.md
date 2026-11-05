@@ -1,48 +1,47 @@
-# Indizivo
+<p align="center"><img src="media/indizivo-icon.svg" width="112" alt="Indizivo logo: a letter I with three diagnostic arcs and a point of evidence"></p>
+<h1 align="center">Indizivo</h1>
+<p align="center"><strong>Developer Environment Diagnostics</strong><br><em>Find the cause. Fix with confidence.</em></p>
+<p align="center"><a href="LICENSE">MIT License</a> · <a href="PLAN.md">Enterprise AAA Plan</a> · <a href="docs/BRAND_IDENTITY.md">Identity</a></p>
 
-**Developer Environment Diagnostics**  
-**Find the cause. Fix with confidence.**
+## Overview
 
-> Product definition and visual identity baseline. **Not yet an implemented VS Code extension.**
+Indizivo investigates why a local development project does not start or why local services are unreachable. It combines observable evidence rather than producing speculative answers. The goal is to identify possible causes, explain their limitations, and suggest non-destructive next steps.
 
-Indizivo will diagnose why a development project fails to start or why its local components cannot communicate. It will correlate observed facts about runtimes, ports, processes, local services and approved project configuration, show evidence, distinguish facts from hypotheses, and suggest reversible actions requiring user approval.
+**Status: v0.1.0 local MVP, not yet release-certified.** This is code for an extension, but a clean VS Code installation, packaged VSIX validation and cross-platform E2E testing are not yet complete. Do not present it as Enterprise AAA or Marketplace Ready until all release gates pass.
 
-## Product principles
+## Control everything from the UI
 
-- **Evidence before action.** Never claim a root cause without supporting diagnostics.
-- **UI-first.** The developer can discover, initiate, inspect, configure, cancel, export and approve every supported workflow from VS Code, without editing JSON or using a terminal.
-- **Local-first and free core.** No account, cloud, paid AI, telemetry or backend needed for diagnostics.
-- **Read-only by default.** No process termination, code changes, downloads, installs or external requests without contextual consent.
-- **Clarity over noise.** This is not a generic process launcher, port dashboard, resource monitor or .env comparator.
-- **VS Code native.** Follow themes, accessibility, keyboard navigation and remote extension host boundaries.
+Open the Indizivo icon in the VS Code Activity Bar. The control center exposes:
+- **Diagnostics:** choose a project, diagnose, cancel, recheck, inspect evidence and suggestions.
+- **Services:** add or remove localhost HTTP endpoints, review the exact probe targets and explicitly approve calls.
+- **History & Reports:** recent local sessions, Markdown/JSON export and history deletion.
+- **Settings:** configure timeout and service targets without editing configuration files.
 
-## Current status
+The extension reads bounded project manifests, detects Node.js and Go runtimes, examines declared ports, and compares environment variable key **names** between .env.example and .env without retaining secret values. It does not terminate processes, install packages, execute repository scripts, scan remote servers or automatically modify project files.
 
-**DESIGN APPROVED / IMPLEMENTATION NOT STARTED.** This repository currently defines the market positioning, brand direction, architecture, UX and MVP acceptance. Branding and name are provisional until trademark/domain clearance. Platform compatibility and QA remain to be implemented and proven.
+## Quick start
 
-## Design documentation
+1. Open a local project with VS Code 1.99+ and trust the workspace.
+2. Install a locally built VSIX. Public Marketplace distribution has not been completed.
+3. Open Indizivo from the Activity Bar. Choose the project for multi-root workspaces.
+4. Select **Diagnose project**, and inspect the results.
+5. For service diagnostics, add a loopback HTTP URL on the Services tab, review the exact plan and approve.
+6. Export a local report or rerun checks after manually investigating a reported problem.
 
-- [Product and differentiation](docs/PRODUCT_BRIEF.md)
-- [Enterprise AAA technical architecture](docs/ARCHITECTURE.md)
-- [Full UI/UX specification](docs/UX_UI.md)
-- [Evidence, diagnostics and safety](docs/DIAGNOSTICS_AND_SECURITY.md)
-- [MVP scope and acceptance](docs/MVP_ACCEPTANCE.md)
-- [Roadmap and release gates](docs/ROADMAP.md)
-- [Brand identity](docs/BRAND_IDENTITY.md)
-- [Name verification / unresolved items](docs/NAMING_DUE_DILIGENCE.md)
-- [Engineering practices drawn from Probato PR](docs/ENGINEERING_STANDARDS.md)
-- [Editable vector brand assets](media/brand/)
+Developer commands: npm test; npm run check; npm run verify. Install development dependencies before running npm run package. The package and a real Extension Host E2E test must be verified before release.
 
-## Prototype onboarding target
+## Security, differentiation and limitations
 
-Install extension → open trusted project → click **Diagnose project** → review checks and approve optional active probes → inspect observations, evidence, possible causes and proposed actions → apply only approved remedies → rerun affected checks → export report.
+Indizivo is not GumRun, CodeVitals, Dev Env Diff, a port killer or another process dashboard. It collects minimal observations and correlates them; a listening port does not itself prove a conflict, and a passing check never proves full project health. The initial port probe cannot identify the owning PID. The UI currently operates in English; localization and cross-platform qualification are tracked in PLAN.md.
 
-## Project governance
+All diagnostics are local-first with no telemetry or AI. Explicit loopback HTTP probes require approval. See docs/SECURITY.md and PLAN.md for the complete threat model, test targets and release controls.
 
-- Repository stays private until an authorized public release.
-- The logo concept and brand name are design choices, **not registered trademarks**.
-- No CI, marketplace publishing, automated fixes or remote writes without explicit authorization.
-- Work in feature branches and use review/PR before merging when the repository is initialized for implementation.
-- Maintain a traceable PASS / FAIL / WARN / SKIP / BLOCKED release evidence record.
+## Ownership and licensing
 
-© 2026 Indizivo project. License is **TBD**; do not assume MIT merely because Probato PR uses MIT.
+**Designed and developed by Alejandro Daniel Di Stefano.**
+
+**Copyright © 2026 ArmoTuSitio — https://armotusitio.com.ar.** ArmoTuSitio is the copyright holder. The source code is distributed under the **MIT License**, subject to the permissions and notice obligations defined in LICENSE. Copyright ownership and an MIT license are compatible; the license grants reuse rights under its conditions.
+
+Indizivo branding is provisional until trademark clearance. The project remains private until explicitly approved for public distribution.
+
+The product takes engineering and UX standards from Probato PR (https://github.com/Drako01/probato-pr) but is a separate extension with no runtime dependency on it.

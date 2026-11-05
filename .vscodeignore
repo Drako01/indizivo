@@ -1,0 +1,7 @@
+test/**
+docs/**
+PLAN.md
+node_modules/**
+.git/**
+.github/**
+*.vsix

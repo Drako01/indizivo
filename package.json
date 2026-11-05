@@ -1,0 +1,101 @@
+{
+  "name": "indizivo",
+  "displayName": "Indizivo",
+  "version": "0.1.0",
+  "publisher": "armotusitio",
+  "description": "Evidence-first development environment diagnostics. Find the cause. Fix with confidence.",
+  "author": {
+    "name": "Alejandro Daniel Di Stefano",
+    "url": "https://armotusitio.com.ar"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Drako01/indizivo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Drako01/indizivo/issues"
+  },
+  "homepage": "https://armotusitio.com.ar",
+  "license": "MIT",
+  "private": true,
+  "preview": true,
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "environment",
+    "diagnostics",
+    "troubleshooting",
+    "node",
+    "go",
+    "ports",
+    "local services"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onView:indizivo.control"
+  ],
+  "scripts": {
+    "check": "node --check src/diagnostics.js && node --check src/ui.js && node --check src/extension.js",
+    "test": "node --test test/*.test.js",
+    "verify": "npm run check && npm test",
+    "package": "npm run verify && npx --no-install @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "indizivo.openHome",
+        "title": "Open Control Center",
+        "category": "Indizivo"
+      },
+      {
+        "command": "indizivo.diagnose",
+        "title": "Diagnose Project",
+        "category": "Indizivo"
+      },
+      {
+        "command": "indizivo.export",
+        "title": "Export Diagnostic Report",
+        "category": "Indizivo"
+      },
+      {
+        "command": "indizivo.cancel",
+        "title": "Cancel Diagnosis",
+        "category": "Indizivo"
+      },
+      {
+        "command": "indizivo.settings",
+        "title": "Configure Diagnostics",
+        "category": "Indizivo"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "indizivo",
+          "title": "Indizivo",
+          "icon": "media/indizivo-activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "indizivo": [
+        {
+          "id": "indizivo.control",
+          "name": "Control Center",
+          "type": "webview"
+        }
+      ]
+    }
+  }
+}
