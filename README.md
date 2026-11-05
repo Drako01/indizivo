@@ -30,21 +30,15 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 
 ### Diagnostics — findings and supporting evidence
 
-*Screenshot 1: Indizivo Control Center with a completed project diagnosis.*
-
-<!-- SCREENSHOT 1: Save the approved screenshot as media/indizivo-diagnostics.png.
-     Then replace this comment and the italic placeholder above with:
-![Indizivo diagnostics — findings and supporting evidence](https://raw.githubusercontent.com/Drako01/indizivo/main/media/indizivo-diagnostics.png)
--->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-diagnostics.png" width="1200" alt="Indizivo Diagnostics: completed project scan with Node.js warning, missing environment key and port observation">
+</p>
 
 ### Services — review and approve local checks
 
-*Screenshot 2: Configure a localhost endpoint and review the explicit approval plan.*
-
-<!-- SCREENSHOT 2: Save the approved screenshot as media/indizivo-services.png.
-     Then replace this comment and the italic placeholder above with:
-![Indizivo services — explicit loopback endpoint approval](https://raw.githubusercontent.com/Drako01/indizivo/main/media/indizivo-services.png)
--->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-services.png" width="1200" alt="Indizivo Services: localhost endpoint configuration and explicit approval plan">
+</p>
 
 ## Features
 
