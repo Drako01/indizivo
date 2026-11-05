@@ -100,6 +100,9 @@ class ControlCenter {
   ensureReady() {
     if (!vscode.workspace.isTrusted) throw new Error('Trust the workspace before running diagnostics.');
     if (!this.currentRoot) throw new Error('Choose a project first.');
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (!folders.some(folder=>folder.uri.toString()===this.currentRoot.toString()))
+      throw new Error('The selected project is no longer open in this VS Code workspace.');
     if (this.currentRoot.scheme !== 'file') throw new Error('This version supports local filesystem workspaces only.');
     if (this.running) throw new Error('A diagnosis is already running.');
   }
@@ -279,7 +282,17 @@ function activate(context) {
       try {await handler();} catch(e){vscode.window.showErrorMessage('Indizivo: '+(e?.message||'Unexpected error')); }
     }));
   }
-  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>controller.broadcast()));
+  context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{
+    const folders=vscode.workspace.workspaceFolders || [];
+    const selected=controller.currentRoot?.toString();
+    if(selected && !folders.some(folder=>folder.uri.toString()===selected)) {
+      controller.cancel();
+      controller.currentRoot=folders.length===1 ? folders[0].uri : null;
+      controller.restore();
+      controller.error='The previous project was closed; select the current workspace before diagnosing.';
+    }
+    controller.broadcast();
+  }));
   if (vscode.workspace.onDidGrantWorkspaceTrust)
     context.subscriptions.push(vscode.workspace.onDidGrantWorkspaceTrust(()=>controller.broadcast()));
   return { controller };
