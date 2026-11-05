@@ -1,12 +1,11 @@
-# Support
+# Indizivo Support
 
-Indizivo is in private prerelease. For collaborators, open a repository issue with:
-- VS Code version and operating system
-- Extension commit/version
-- A minimal synthetic reproduction
-- Expected and observed behavior
-- Sanitized logs (no .env values, access tokens or personal data)
+**Status:** unreleased private development preview.
 
-For security vulnerabilities, follow SECURITY.md rather than opening a public issue. Public support channels will be finalized before Marketplace launch.
+When a preview build is provided, report reproducible issues to the project owner on GitHub.
 
-Maintained by Alejandro Daniel Di Stefano — ArmoTuSitio (armotusitio.com.ar).
+Include: Indizivo version, VS Code version, OS and extension host (local/WSL/remote), exact steps, observed vs expected behavior, and diagnostic check status. **Remove secrets, proprietary file contents, private paths and credentials before attaching logs.**
+
+Do not post live API keys, .env files or confidential logs. For security issues, use the private vulnerability reporting path in SECURITY.md.
+
+Main website: https://armotusitio.com.ar

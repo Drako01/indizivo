@@ -1,18 +1,14 @@
-# Indizivo Security Policy
+# Security Policy — Indizivo
 
-Indizivo is a local-first VS Code extension. The threat model, trust boundaries and outstanding release checks are documented in [docs/SECURITY.md](docs/SECURITY.md) and [PLAN.md](PLAN.md).
+Indizivo is currently an unreleased, private, pre-1.0 project. Before publication it requires the security gate in [PLAN.md](PLAN.md) to pass.
+
+## Threat model
+See [Security and Privacy](docs/SECURITY.md).
+
+The extension treats workspace files, configuration, service URLs and webview messages as untrusted. It uses read-only local diagnostics by default and requires explicit approval for optional loopback HTTP service probes. It never runs project scripts automatically or terminates user processes.
 
 ## Reporting a vulnerability
+During private development, contact the repository owner through GitHub's private security advisory workflow. Do not publish security-sensitive reproduction details in public issues.
 
-Use [GitHub private security advisories](https://github.com/Drako01/indizivo/security/advisories/new) when available. Because the repository is currently private, only authorized collaborators can access it. Do not publish exploit details as a public issue. Include the affected commit, OS, VS Code version, minimal reproduction and impact.
-
-## Security guarantees and limitations
-
-- No telemetry, cloud backend, AI requests, package installation or remote internet probes in the current MVP.
-- User-triggered diagnostics only; local HTTP probes require separate explicit approval.
-- VS Code workspace trust required.
-- The extension is NOT sandboxed from the current user account.
-- Host/process cancellation and cross-platform assurance need real E2E before public release.
-- Only the newest eventual released version will be supported for security patches.
-
-No claim of comprehensive security audit is made at this stage.
+## Supported versions
+No public supported release exists yet. Once published, the supported version policy will be maintained here.
