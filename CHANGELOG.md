@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 — Multi-registry delivery verification
+
+- Version bump to verify the complete automatic release pipeline following a PR merge to `main`.
+- Non-functional TypeScript source comment; no changes to diagnostics, UI, runtime behavior or APIs.
+- Target distribution: Visual Studio Marketplace and Open VSX via the same verified VSIX using OIDC.
+
+
 ## 0.1.1 — Delivery pipeline verification
 
 - Non-functional source annotation to validate the 0.1.1 release pipeline.
