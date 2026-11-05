@@ -6,9 +6,9 @@ This is the engineering acceptance contract. It is NOT a certification and does 
 
 | Gate | Acceptance | Current evidence |
 |---|---|---|
-| A1 Architecture | Strict TypeScript contracts across extension host, diagnostics, UI messages, storage and reports; typecheck clean | **BLOCKED / NOT IMPLEMENTED**; runtime schema validation now added, but code is JavaScript |
+| A1 Architecture | Strict TypeScript contracts across extension host, diagnostics, UI messages, storage and reports; typecheck clean | **PARTIAL — authored**; strict TypeScript for message contracts, comparisons and versions; host and probes remain JavaScript, exact-branch checks pending |
 | A2 Clean code | KISS, DRY, SOLID used pragmatically; no circular dependencies or monolithic control layer | **PARTIAL** |
-| A3 Quality automation | Lint, typecheck, complete node tests, deterministic coverage budget, no hidden skipped tests | **PARTIAL**; Node tests exist, lint/typecheck/coverage not yet configured |
+| A3 Quality automation | Lint, typecheck, complete node tests, deterministic coverage budget, no hidden skipped tests | **PARTIAL — authored**; tsc typecheck, typed AST lint, runtime security lint and coverage report added; final-branch execution and coverage threshold pending |
 | A4 Reproducible installs | npm ci from committed package-lock.json succeeds | **PASS on Windows prior commit**; re-run after changes |
 
 ## B. Security and privacy
@@ -31,7 +31,7 @@ This is the engineering acceptance contract. It is NOT a certification and does 
 | C2 OS compatibility | Windows, Linux, macOS validated with real owning process, runtime and HTTP scenarios | **NOT VERIFIED** |
 | C3 Remote topology | Explicitly distinguish local/WSL/SSH/devcontainer host & service namespaces | **NOT IMPLEMENTED**; should not claim support |
 | C4 Accessibility | Keyboard, 200% zoom, high contrast, screen reader and focus restoration across 4 tabs | **NOT VERIFIED** |
-| C5 Internationalization | EN/ES translations complete with no UI hard-coded leftovers | **NOT IMPLEMENTED** |
+| C5 Internationalization | EN/ES translations complete with no UI hard-coded leftovers | **PARTIAL — authored**; ES/EN selector and static interface copy implemented, dynamic diagnostic text translation incomplete |
 | C6 Evidence integrity | Each observed failure backed by reproducible check; no causal claim from mere port occupancy | **PARTIAL; unit coverage exists** |
 | C7 Performance | Measured startup, worst-case cancellation, peak memory, p95 latency on 3 fixture sizes | **NOT MEASURED** |
 | C8 UX evaluation | At least 15 external developers test prepared diagnosis scenarios | **NOT EXECUTED** |
@@ -65,3 +65,8 @@ This is the engineering acceptance contract. It is NOT a certification and does 
 8. Only with authorized GO: enable verify workflow, later enable protected publication with OIDC.
 
 Do not compress these steps into an untested all-in-one change. The initial successful 27/27 tests from November 5 predate the new packaging, schema and CI checks.
+
+
+### Current ruleset and branch caveat
+
+Protect main and Protect release tags are present as **DISABLED JSON templates only**; the GitHub API still reports no rulesets for Indizivo. The templates must be registered and activated separately with owner approval and a viable code-review path. CI remains completely inactive. Branch `feat/enterprise-aaa-phases-1-4` contains unverified implementation and is not merged.

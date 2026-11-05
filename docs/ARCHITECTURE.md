@@ -15,3 +15,10 @@ Future work: strict TypeScript, schema-validated messages and persistence, OS-sp
 - src/port-owners.js: optional, read-only OS-specific process PID inspection; no process termination.
 - src/comparison.js: non-causal observation trend mapping across comparable completed sessions.
 - test/e2e: official Extension Host launch harness using @vscode/test-electron; execution evidence pending.
+
+
+## Strict TypeScript transition (implementation branch)
+
+The original `src/extension.js`, `src/diagnostics.js`, `src/ui.js` and platform probes remain CommonJS. `src/messages.js`, `src/versions.js`, `src/comparison.js` are compatibility adapters to `dist/typed/` generated from `src/typed/*.ts`. This preserves existing imports while enforcing strict typing on shared contracts and pure logic. `npm run build:types` runs before the test suite; publishing requires the generated runtime files in the VSIX.
+
+Until all host/probe/UI modules have been migrated with appropriate platform typings, the project is **PARTIALLY TYPED** and does not satisfy the complete AAA type coverage gate.
