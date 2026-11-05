@@ -215,3 +215,31 @@ test('actual Webview script blocks commands on untrusted state and requires expl
  assert.equal(h.messages.at(-1).type,'setLocale');
  assert.equal(h.messages.at(-1).locale,'es');
 });
+
+test('Webview retains rejected input and clears it only after service is accepted',()=>{
+ const h=createWebviewHarness(),doc=h.document;
+ h.send(state({services:[]}));
+ doc.getElementById('service-name').value='Local API';
+ doc.getElementById('service-url').value='http://127.0.0.1:5000/health';
+ doc.special.get('[data-action="addService"]').click();
+ assert.equal(h.messages.at(-1).type,'addService');
+ assert.equal(doc.getElementById('service-name').value,'Local API');
+ h.send(state({services:[],error:'Invalid service'}));
+ assert.equal(doc.getElementById('service-name').value,'Local API');
+ assert.equal(doc.getElementById('service-url').value,'http://127.0.0.1:5000/health');
+ doc.special.get('[data-action="addService"]').click();
+ h.send(state({services:[{name:'Local API',url:'http://127.0.0.1:5000/health'}],error:''}));
+ assert.equal(doc.getElementById('service-name').value,'');
+ assert.equal(doc.getElementById('service-url').value,'');
+});
+test('Host-provided evidence stays inert text rather than executable HTML',()=>{
+ const h=createWebviewHarness();
+ const suspicious='<img src=x onerror=alert(1)>';
+ const sessionValue=session();
+ sessionValue.checks[0].detail=suspicious;
+ h.send(state({session:sessionValue}));
+ const check=h.document.getElementById('checks').children[0];
+ const detail=check.children.find(node=>node.className==='muted');
+ assert.equal(detail.textContent,suspicious);
+ assert.equal(detail.children.length,0);
+});
