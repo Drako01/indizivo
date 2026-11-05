@@ -37,6 +37,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     return node as HTMLInputElement;
   };
   let state:BrowserState={locale:'en'};
+  let pendingService:{name:string;url:string}|null=null;
   const el=<T extends keyof HTMLElementTagNameMap>(
     tag:T,cls:string|null,content?:string|number):HTMLElementTagNameMap[T] => {
     const node = document.createElement(tag);
@@ -173,8 +174,10 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     else if (action === 'clear') fire('clearHistory');
     else if (action === 'saveTimeout') fire('saveTimeout',{value: Number($('timeout').value)});
     else if (action === 'addService') {
-      fire('addService',{name:$('service-name').value,url:$('service-url').value});
-      $('service-name').value=''; $('service-url').value='';
+      const name=$('service-name').value;
+      const url=$('service-url').value;
+      pendingService={name,url};
+      fire('addService',{name,url});
     }
     else if (action === 'tab') {
       const name=button.dataset.tab;
@@ -242,7 +245,18 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     event.preventDefault();tabs[next]?.focus();tabs[next]?.click();
   });
   window.addEventListener('message',(e:MessageEvent<{type?:string;state?:BrowserState}>)=>{
-    if (e.data && e.data.type==='state' && e.data.state) {state=e.data.state;render();}
+    if (e.data && e.data.type==='state' && e.data.state) {
+      const requested=pendingService;
+      if(requested) {
+        const accepted=e.data.state.services?.some(s=>s.url===requested.url);
+        if(accepted) {
+          if($('service-name').value===requested.name)$('service-name').value='';
+          if($('service-url').value===requested.url)$('service-url').value='';
+        }
+        if(accepted || e.data.state.error)pendingService=null;
+      }
+      state=e.data.state;render();
+    }
   });
   fire('ready');
 }
