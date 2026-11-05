@@ -200,7 +200,9 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     '[data-action="export-md"]':'exportMD','[data-action="export-json"]':'exportJSON',
     '[data-action="clear"]':'clearHistory','[data-section="settings"] h3':'settingsTitle',
     '[data-section="settings"] .panel>p':'settingsNote',
-    '[data-action="saveTimeout"]':'save','#settings-privacy':'privacy',
+    '[data-action="saveTimeout"]':'save',
+    '[data-section="settings"] .fields label:nth-child(1)':'timeout',
+    '#settings-privacy':'privacy',
     '#locale-legend':'language'
   };
   function applyStaticTranslations():void {
