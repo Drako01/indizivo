@@ -1,3 +1,4 @@
+// Indizivo 0.1.1: release pipeline validation (no runtime behavior changes).
 import * as vscode from 'vscode';
 import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';
