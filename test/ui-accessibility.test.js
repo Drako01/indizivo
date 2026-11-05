@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const source=fs.readFileSync(path.resolve(__dirname,'../src/ui.js'),'utf8');
+const source=fs.readFileSync(path.resolve(__dirname,'../src/typed/ui.ts'),'utf8');
 const catalog=fs.readFileSync(path.resolve(__dirname,'../src/typed/i18n.ts'),'utf8');
 test('Control Center supports Spanish and English with consent controls intact',()=>{
  assert.match(catalog,/Encontrá la causa/);
