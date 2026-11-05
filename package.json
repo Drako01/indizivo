@@ -43,11 +43,12 @@
     "onView:indizivo.control"
   ],
   "scripts": {
-    "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/ui.js && node --check src/extension.js",
+    "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/comparison.js && node --check src/ui.js && node --check src/extension.js",
     "test": "node --test test/*.test.js",
     "verify": "npm run check && npm test",
     "package": "npm run verify && npx --no-install @vscode/vsce package --no-dependencies",
-    "test:e2e": "node test/e2e/run.js"
+    "test:e2e": "node test/e2e/run.js",
+    "release:check": "npm run verify && npm run test:e2e && npm run package"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
@@ -100,5 +101,9 @@
       ]
     }
   },
-  "icon": "media/indizivo-icon-128.png"
+  "icon": "media/indizivo-icon-128.png",
+  "galleryBanner": {
+    "color": "#18232F",
+    "theme": "dark"
+  }
 }

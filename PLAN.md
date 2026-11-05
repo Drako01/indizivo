@@ -41,14 +41,18 @@ Planned hardening: strict TypeScript migration, schema validation for UI message
 - [x] Declared local TCP port checks authored; no unsupported process ownership claim.
 - [x] .env.example / .env key presence comparison without persisting values authored.
 - [x] Loopback HTTP service configuration, approval and check authored.
-- [x] Evidence, limitations, safe guidance, history, report export authored.
+- [x] Evidence, limitations, safe guidance, history, report export and evidence copy through UI authored.
+- [x] Compare consecutive completed sessions without claiming resolution.
 - [x] MIT copyright, brand logo, README and user credit authored.
 - [ ] Build/test code against exact released commit.
-- [ ] Verify all UI actions inside official VS Code on an actual project.
+- [x] Author official @vscode/test-electron Extension Host suite for activation, diagnosis, service approval and UI panel opening.
+- [ ] Execute the suite in official VS Code against the final commit and validate full UI interactions.
 - [ ] Create and test installable VSIX.
 - [ ] Finish EN/ES localization and accessibility validation.
-- [ ] Implement consistent runtime version compatibility checks (currently shows declared/current only).
-- [ ] Implement OS-specific process ownership, with permissions/namespace evidence.
+- [x] Implement common Node.js/Go version requirement evaluations (limited-expression support; unrecognized requirements are inconclusive).
+- [ ] Validate all version range semantics and edge cases on real runtimes.
+- [x] Add read-only Windows/Linux/macOS process-owner parsers and probes.
+- [ ] Execute platform-specific owner inspection on real target hosts, including permissions/namespace limitations.
 - [ ] Verify host/WSL/SSH/container semantics and labels.
 - [ ] Add evidence comparability/attribution rather than inventing causality.
 
@@ -115,6 +119,7 @@ Prepare Node.js and npm; obtain developer dependencies legitimately:
     npm install
     npm run check
     npm test
+    npm run test:e2e
     npm run package
 
 Then launch the official VS Code Extension Development Host; use prepared fixtures to run E2E-01 through E2E-22; install the final generated VSIX into a clean profile and repeat smoke. Capture commands, timestamps, platform versions, outputs and commit hash in docs/RELEASE_READINESS.md.

@@ -17,7 +17,7 @@ Open the Indizivo icon in the VS Code Activity Bar. The control center exposes:
 - **History & Reports:** recent local sessions, Markdown/JSON export and history deletion.
 - **Settings:** configure timeout and service targets without editing configuration files.
 
-The extension reads bounded project manifests, detects Node.js and Go runtimes, examines declared ports, and compares environment variable key **names** between .env.example and .env without retaining secret values. It does not terminate processes, install packages, execute repository scripts, scan remote servers or automatically modify project files.
+The extension reads bounded project manifests, detects Node.js and Go runtimes, evaluates commonly supported version requirements, examines declared ports, and compares environment variable key **names** between .env.example and .env without retaining secret values. It does not terminate processes, install packages, execute repository scripts, scan remote servers or automatically modify project files.
 
 ## Quick start
 
@@ -30,9 +30,22 @@ The extension reads bounded project manifests, detects Node.js and Go runtimes, 
 
 Developer commands: npm test; npm run check; npm run verify. Install development dependencies before running npm run package. The package and a real Extension Host E2E test must be verified before release.
 
+## Quality checks
+
+Local commands:
+
+```
+npm install
+npm run verify
+npm run test:e2e
+npm run package
+```
+
+The official Extension Host test can download a VS Code build. To use an existing executable, set `INDIZIVO_VSCODE_EXECUTABLE_PATH`. On headless Linux a GUI display (for example xvfb-run) is needed. **These commands are prepared but have not been run on the final commit in this session.** See docs/RELEASE_READINESS.md.
+
 ## Security, differentiation and limitations
 
-Indizivo is not GumRun, CodeVitals, Dev Env Diff, a port killer or another process dashboard. It collects minimal observations and correlates them; a listening port does not itself prove a conflict, and a passing check never proves full project health. The initial port probe cannot identify the owning PID. The UI currently operates in English; localization and cross-platform qualification are tracked in PLAN.md.
+Indizivo is not GumRun, CodeVitals, Dev Env Diff, a port killer or another process dashboard. It collects minimal observations and correlates them; a listening port does not itself prove a conflict, and a passing check never proves full project health. When a TCP listener responds, Indizivo attempts to identify its owning PID using read-only platform tools (Windows netstat, Linux ss, macOS lsof). Missing permissions or tools produce an inconclusive result; a PID alone does not prove a conflict. The UI currently operates in English; localization and cross-platform qualification are tracked in PLAN.md.
 
 All diagnostics are local-first with no telemetry or AI. Explicit loopback HTTP probes require approval. See docs/SECURITY.md and PLAN.md for the complete threat model, test targets and release controls.
 
