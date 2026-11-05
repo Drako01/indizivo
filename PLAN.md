@@ -1,5 +1,22 @@
 # Indizivo — PLAN.md
 
+### Release 0.1.0 final hardening — AUTHORED / REVALIDATION PENDING (2026-11-05)
+
+**Latest handoff status:** After the successful Windows run at `e883932fa3c` (17 PASS / 0 FAIL / 1 WARN, 67/67 Node tests, installed VSIX and Extension Host E2E PASS), new commits prepared the first Marketplace preview. **These new commits have NOT been tested with npm, TypeScript, real Extension Host or packaged VSIX.** Never infer PASS for the current branch from the earlier SHA.
+
+Implementation in `feat/enterprise-aaa-full-typescript-i18n`, PR #4 (draft):
+- Hardened Windows `.cmd` execution: `scripts/safe-vscode-cli.cjs`, `test/vsix-e2e/run.js` no longer use `shell:true`; explicit `cmd.exe /d /s /c`, fail-closed metacharacter validation and `windowsVerbatimArguments` with tests.
+- Webview improvements in `src/typed/ui.ts`: accessible labels for copy/history/remove buttons, forced-colors focus, mobile layout, service input preserved on invalid requests until host acknowledgment.
+- Host approval lifecycle: viewing history or clearing diagnostics cancels pending service authorization; `confirmServices` rejects historical views and successful service edits reset stale errors.
+- New dependency-free Webview VM integration test (`test/ui-browser.integration.test.js`) executes the **actual generated Webview JavaScript**, validates EN/ES state, keyboard tab handling and focus, informed consent, clipboard message, inert evidence rendering and service form acknowledgment. This is NOT a browser visual/screen-reader test.
+- Added Windows shell hardening tests `test/vsix-cli.test.js`, consent regression test, Marketplace-facing private-link guard; benchmark default increased from 8 to 25 samples.
+- Prepared public Marketplace metadata: `armotusitio` publisher, version `0.1.0`, external support at `https://armotusitio.com.ar/soporte/`, private GitHub repo not exposed via package manifest/README, README EN/ES corrected, changelog/security/privacy/support updated. Original `media/indizivo-activity-bar.svg` content untouched.
+- Added explicit owner-only release checklist: `docs/RELEASE_0.1.0.md`. The earlier `@vscode/vsce` development dependency moderate advisory risk remains documented; no force upgrades without clean lockfile + retest.
+- **Static-only post-change verification:** 7 changed `.js/.cjs` files parsed through V8, expected manifest/support fields and private link guards checked, original icon SHA intact. This is NOT execution of `npm test`, `tsc` or VSIX E2E.
+
+**Next gate:** fetch latest feature branch and run `.\\verify-indizivo.ps1` (with `npm ci`). Read `logs.log` for actual PASS/FAIL/WARN. Then perform the manual EN/ES, keyboard, contrast and consent checklist in `docs/RELEASE_0.1.0.md`. **No merge, tag, GitHub Actions activation or Marketplace publication until approved by owner and gates satisfied.** `main` remains unchanged.
+
+
 ### Segunda ejecución Windows — VALIDADA (2026-11-05 17:07:59 ART)
 
 > **Estado vigente:** fuente verificada en commit `e883932fa3c344af5018ad32226e33d8a845b086`, Windows, Node `v24.22.1`, npm `11.6.2`, árbol Git limpio. **18 gates: 17 PASS / 0 FAIL / 1 WARN**. Este resultado reemplaza el bloqueo de compilación del primer log; las secciones anteriores quedan como historial y NO representan el estado actual.
