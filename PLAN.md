@@ -159,3 +159,19 @@ Enterprise AAA means observed quality in a real installed product, not merely a 
 ### Windows verified quality-gate rerun — 2026-11-05
 
 User-supplied PowerShell log records: `npm ci` completed; `npm run release:check` exit code 0; 27/27 tests passed twice; VS Code 1.145.0 development Extension Host E2E passed without the prior Webview-disposal error; `indizivo-0.1.0.vsix` built with 21 files / 29.7 KB, without local logs; `npm audit --omit=dev` reported 0 vulnerabilities. The full dependency audit still reports 3 moderate development-tree advisories, requiring evaluation. This **does not** cover clean VSIX install, full interactive browser UI, Windows/Linux/macOS compatibility, accessibility, security adversarial QA or trademark release approval. Keep production Enterprise AAA verdict NO-GO.
+
+
+### CI/CD disabled staging (2026-11-05)
+
+- [x] Prepare cross-platform quality workflow at .github/workflows-disabled/verify.yml.
+- [x] Prepare version-gated OIDC Marketplace/Open VSX workflow at .github/workflows-disabled/publish.yml.
+- [x] Require missing-by-default INDIZIVO_RELEASE_ENABLED=true for future publishing even if templates are moved.
+- [x] Add VSIX inventory validation with denylist for logs, private plans, source test fixtures, secrets and dev-only scripts.
+- [x] Add tests asserting GitHub Actions remains disabled and release protection remains present.
+- [ ] Run all new tests and inventory checks on Windows with npm run release:check; record results.
+- [ ] Validate templates with actionlint on the exact final source.
+- [ ] Validate three OS runners and official VS Code E2E after explicit owner approval to activate CI (not yet authorized).
+- [ ] Configure Marketplace/Open VSX Trusted Publishing policies and protected environments when ready for release.
+- [ ] Obtain explicit publication approval; do not assume staging templates authorizes activation.
+
+CI state: **PREPARED / INACTIVE / NOT EXECUTED**. See docs/CI_RELEASE_PREPARATION.md. These templates are NOT under .github/workflows/.

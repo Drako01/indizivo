@@ -62,3 +62,14 @@ Source: owner-provided execution log for `git pull --ff-only origin main; npm ci
 - `npm audit --omit=dev`: **found 0 vulnerabilities** in the production dependency audit.
 
 **Meaning:** the previously observed Webview teardown error and log inclusion no longer appear in the executed pipeline. This is evidence of a successful development-extension E2E and VSIX build, **not** proof of a clean installation of the packaged VSIX or Enterprise AAA certification. Explicitly retain NO-GO for public production release until the remaining gates pass.
+
+
+## Enterprise delivery additions — 2026-11-05
+
+- CI/CD quality workflow: **PREPARED, DISABLED**, outside GitHub's active workflow directory.
+- Marketplace/Open VSX workflow: **PREPARED, DISABLED**, explicit enablement variable and protected environments required.
+- VSIX content inspection: **SOURCE IMPLEMENTED, NOT YET EXECUTED ON OWNER HOST**. Script scans ZIP central-directory paths, rejects known private/dev files, checks mandatory runtime/legal/media paths and calculates SHA-256.
+- New tests: CI disabled guard, OIDC release template guard, inventory safety and malformed ZIP structure; **NOT YET EXECUTED ON FINAL COMMIT**.
+- Package command now runs inventory inspection after VSIX creation. A failure blocks local packaging and any future pipeline.
+- No GitHub Actions execution, no store publication, no GitHub release or repository visibility change.
+- Production readiness remains **NO-GO for Enterprise AAA** until actual E2E, clean install, accessibility, TypeScript/typecheck, supported OS matrix and security testing pass.

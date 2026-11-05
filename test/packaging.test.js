@@ -40,3 +40,10 @@ test('VSIX ignore excludes local logs and downloaded test copies of VS Code',()=
  assert.match(ignore,/\.vscode-test\/\*\*/);
  assert.match(ignore,/coverage\/\*\*/);
 });
+
+test('build inventory excludes development-only scripts and private CI material',()=>{
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.match(ignore,/scripts\/\*\*/);
+ assert.match(ignore,/\.github\/\*\*/);
+ assert.match(ignore,/PLAN\.md/);
+});
