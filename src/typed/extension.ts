@@ -1,4 +1,4 @@
-// Indizivo 0.1.2: verify version-triggered CI publishing; runtime behavior unchanged.
+// Indizivo 0.1.3: validate multi-registry release automation; runtime behavior unchanged.
 import * as vscode from 'vscode';
 import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';

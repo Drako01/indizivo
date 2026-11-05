@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 — Marketplace OIDC release verification
+
+- Patch-version increment to validate the automatic multi-registry publishing pipeline after merging a pull request to `main`.
+- Uses the corrected `@vscode/vsce` 4.1.0 OIDC exchange for Visual Studio Marketplace and the existing Open VSX Trusted Publishing integration.
+- No functional changes to diagnostics, localization, interface, or extension APIs.
+
+
 ## 0.1.2 — Multi-registry delivery verification
 
 - Version bump to verify the complete automatic release pipeline following a PR merge to `main`.
