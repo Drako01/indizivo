@@ -7,7 +7,7 @@
 | --- | --- | --- |
 | Repository and brand | PASS (source present) | Private repository, MIT/LICENSE, logo README and Marketplace icon |
 | Manifest and source syntax | PASS (isolated static parse) | JavaScript source parsed successfully through V8 syntax construction |
-| Targeted module checks | PASS (mocked) | 10 in-memory checks for version requirements and process-owner parsers; not Node test runner |
+| Targeted module checks | PASS (mocked) | 10 in-memory checks for version requirements and process-owner parsers, plus 10 mocked extension workflow checks (activation, commands, consent, history, trust, copy evidence and CSP); not Node test runner or desktop Extension Host |
 | Local Node.js unit suite | NOT STARTED | npm test has not executed on final commit |
 | Integration fixtures in repository | PASS (authored only) | test/extension.integration.test.js; not executed on final commit |
 | Official Extension Host suite | PASS (authored only) | test/e2e/ with @vscode/test-electron |
@@ -35,3 +35,7 @@ On a developer machine with Node.js 22+, npm, networking for development depende
 For existing official VS Code binary: set environment variable `INDIZIVO_VSCODE_EXECUTABLE_PATH` to its executable path before `npm run test:e2e`.
 
 Keep full logs, terminal outputs, commit SHA and platform info. Record PASS/FAIL/WARN/SKIP/BLOCKED for every mandatory E2E scenario in PLAN.md.
+
+## Additional current-turn mocked-controller check
+
+A V8 sandbox evaluated the exact GitHub source for src/extension.js, src/ui.js and src/comparison.js with mocked VS Code APIs. 10/10 scoped behavior checks returned true. This confirms those isolated paths under stubs only; actual Extension Host activation, UI rendering, node:test and VSIX installation remain NOT STARTED.

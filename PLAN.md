@@ -145,3 +145,11 @@ Trademark availability is NOT confirmed.
 Each test gate records PASS, FAIL, WARN, SKIP, BLOCKED or NOT STARTED. An omitted, mocked or unexecuted test NEVER counts as PASS. The release remains **NO-GO** while mandatory checks are failed, skipped, blocked or not started.
 
 Enterprise AAA means observed quality in a real installed product, not merely a roadmap label.
+
+### Recorded interim technical checks (2026-11-05)
+
+- 10/10 mocked runtime-version and process-owner parser assertions passed in a V8 isolated runtime.
+- 10/10 mocked VS Code controller assertions passed in a V8 isolated runtime, including consent, trust and evidence copying.
+- JavaScript source syntax was parsed using V8 Function constructor after changes.
+- These are **unit-like scripted checks**, not a clean Node test runner, browser accessibility, shipped VSIX or actual VS Code E2E.
+- The mandatory release verdict therefore stays **NO-GO** until tests and package validation are run and failures corrected.
