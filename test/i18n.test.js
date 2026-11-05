@@ -73,3 +73,31 @@ test('Spanish port evidence and status are localized without mutating canonical 
  assert.match(translated.suggestion,/Revisá los logs/);
  assert.equal(raw.evidence[0].fact,'TCP loopback result: listening.');
 });
+
+test('completed sessions localize findings and comparisons without mutating stored evidence',()=>{
+ const {localizeSession}=require('../dist/typed/i18n');
+ const canonical={
+   id:'123',project:'local-project',state:'completed',
+   startedAt:'2026-11-05T00:00:00Z',completedAt:'2026-11-05T00:00:01Z',
+   checks:[{
+     id:'none',category:'Discovery',label:'No applicable checks',status:'info',
+     detail:'No supported Node.js/Go configuration or ports found.',
+     suggestion:'',evidence:[{id:'e1',fact:'No supported Node.js/Go configuration or ports found.',
+       observedAt:'2026-11-05T00:00:00Z'}],
+     i18n:{
+       category:{key:'diag.category.Discovery'},
+       label:{key:'diag.label.none'},
+       detail:{key:'diag.noneDetail'}
+     }
+   }],
+   serviceChecks:[],comparison:{note:'Status comparison only',observations:[]}
+ };
+ const serialized=JSON.stringify(canonical);
+ const localized=localizeSession(canonical,'es');
+ assert.equal(localized.project,'local-project');
+ assert.equal(localized.state,'completed');
+ assert.equal(localized.checks[0].label,'No se encontraron comprobaciones aplicables');
+ assert.ok(localized.checks[0].detail.includes('Node.js/Go'));
+ assert.match(localized.comparison.note,/Comparación de estados/);
+ assert.equal(JSON.stringify(canonical),serialized,'historic canonical observations must remain unchanged');
+});
