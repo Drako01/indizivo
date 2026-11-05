@@ -1,14 +1,21 @@
 # Security Policy — Indizivo
 
-Indizivo is currently a pre-1.0 preview project. Security-sensitive behavior must be verified before a production release.
+Indizivo 0.1.0 is a preview for local developer-environment diagnostics, not an OS sandbox. Security-sensitive behavior depends on VS Code Workspace Trust and the permissions of the extension host.
 
 ## Threat model
-See [Security and Privacy](docs/SECURITY.md).
 
-The extension treats workspace files, configuration, service URLs and webview messages as untrusted. It uses read-only local diagnostics by default and requires explicit approval for optional loopback HTTP service probes. It never runs project scripts automatically or terminates user processes.
+Workspace files, declared local endpoints and Webview messages are treated as untrusted input. Indizivo limits file reads, avoids executing project scripts, and never silently modifies files or kills processes. HTTP GET checks may target only approved loopback URLs, require explicit user consent, do not follow redirects and inspect response headers only.
+
+The installed extension does not depend on external cloud APIs, analytics or an AI provider. See `PRIVACY.md`, which ships with the extension.
 
 ## Reporting a vulnerability
-During private development, contact the repository owner through GitHub's private security advisory workflow. Do not publish security-sensitive reproduction details in public issues.
+
+Use the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/) and identify the product as **Indizivo** and the affected version. Request a private channel for sensitive reproduction details. **Do not include exploits, API keys, private paths or confidential code in public tickets.** Security reports should not be placed in public comments.
 
 ## Supported versions
-No public supported release exists yet. Once published, the supported version policy will be maintained here.
+
+The first supported preview is `0.1.0` once published. During release-candidate testing, no publicly supported build is implied.
+
+## Dependencies
+
+The last Windows pre-release test reported no production dependency vulnerabilities and three moderate development-tool advisories. The development audit must be repeated for the final release commit; the public preview is not presented as security-certified.

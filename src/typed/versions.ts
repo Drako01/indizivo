@@ -1,5 +1,6 @@
+import type {Descriptor} from './i18n';
 export interface Version {major:number;minor:number;patch:number;precision:1|2|3}
-export type VersionVerdict={status:'compatible'|'incompatible'|'inconclusive';detail:string}
+export type VersionVerdict={status:'compatible'|'incompatible'|'inconclusive';detail:string;translation?:Descriptor}
 export function parseVersion(value:unknown):Version|null {
   if(typeof value!=='string')return null;
   const match=/^(?:v|go)?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[-+].*)?$/.exec(value.trim());
@@ -14,28 +15,28 @@ export function compare(a:Version,b:Version):number {
 }
 export function evaluateVersion(installed:string,expression:string,ecosystem:string):VersionVerdict {
   const parsed=parseVersion(installed);
-  if(!parsed)return {status:'inconclusive',detail:'Installed version not recognized.'};
-  if(!expression||!String(expression).trim())return {status:'inconclusive',detail:'No required version declared.'};
+  if(!parsed)return {status:'inconclusive',detail:'Installed version not recognized.',translation:{key:'diag.versionInvalid'}};
+  if(!expression||!String(expression).trim())return {status:'inconclusive',detail:'No required version declared.',translation:{key:'diag.versionNoReq'}};
   const required=String(expression).trim();
   if(ecosystem==='go'){
     const min=parseVersion(required);
     return min?
       {status:compare(parsed,min)>=0?'compatible':'incompatible',
-       detail:'Go module minimum '+required+'; installed '+installed+'.'}:
-      {status:'inconclusive',detail:'Unsupported Go requirement '+required+'.'};
+       detail:'Go module minimum '+required+'; installed '+installed+'.',translation:{key:'diag.goMin',values:{required,installed}}}:
+      {status:'inconclusive',detail:'Unsupported Go requirement '+required+'.',translation:{key:'diag.goUnsupported',values:{required}}};
   }
   if(required.includes('||')||required.includes('*')||
      /[A-Za-z]/.test(required.replace(/[vxX]/g,'')))
-    return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.'};
+    return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.',translation:{key:'diag.nodeUnsupported',values:{required}}};
   const tokens=required.replace(/,/g,' ').match(/(?:>=|<=|>|<|=|\^|~)?\s*v?\d+(?:\.(?:\d+|[xX])){0,2}/g);
   if(!tokens?.length||tokens.join('').replace(/\s/g,'')!==required.replace(/\s/g,''))
-    return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.'};
+    return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.',translation:{key:'diag.nodeUnsupported',values:{required}}};
   for(const token of tokens){
     const match=/^(>=|<=|>|<|=|\^|~)?\s*(.+)$/.exec(token.trim());
-    if(!match)return {status:'inconclusive',detail:'Unsupported Node.js range.'};
+    if(!match)return {status:'inconclusive',detail:'Unsupported Node.js range.',translation:{key:'diag.nodeUnsupportedRange'}};
     const op=match[1]||'=', raw=match[2]||'';
     const value=parseVersion(raw.replace(/\.x$/i,''));
-    if(!value)return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.'};
+    if(!value)return {status:'inconclusive',detail:'Unsupported Node.js version expression '+required+'.',translation:{key:'diag.nodeUnsupported',values:{required}}};
     const c=compare(parsed,value);
     const prefix=parsed.major===value.major&&(value.precision<2||parsed.minor===value.minor);
     let ok:boolean;
@@ -49,9 +50,9 @@ export function evaluateVersion(installed:string,expression:string,ecosystem:str
       case '^':ok=c>=0&&parsed.major===value.major&&
         (value.major!==0||(value.minor===0?
          parsed.minor===0&&parsed.patch===value.patch:parsed.minor===value.minor));break;
-      default:return {status:'inconclusive',detail:'Unsupported operator.'};
+      default:return {status:'inconclusive',detail:'Unsupported operator.',translation:{key:'diag.nodeUnsupportedOp'}};
     }
-    if(!ok)return {status:'incompatible',detail:'Installed Node.js '+installed+' does not satisfy '+required+'.'};
+    if(!ok)return {status:'incompatible',detail:'Installed Node.js '+installed+' does not satisfy '+required+'.',translation:{key:'diag.nodeNotCompatible',values:{installed,required}}};
   }
-  return {status:'compatible',detail:'Installed Node.js '+installed+' satisfies '+required+'.'};
+  return {status:'compatible',detail:'Installed Node.js '+installed+' satisfies '+required+'.',translation:{key:'diag.nodeCompatible',values:{installed,required}}};
 }

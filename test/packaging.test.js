@@ -49,7 +49,7 @@ test('build inventory excludes development-only scripts and private CI material'
 });
 
 test('runtime adapters use generated strict TypeScript modules',()=>{
- const src=['messages','versions','comparison'];
+ const src=['messages','versions','comparison','port-owners','i18n','diagnostics','ui','extension'];
  for(const unit of src) {
   const code=read('src/'+unit+'.js').toString('utf8');
   assert.match(code,new RegExp('dist/typed/'+unit));
@@ -58,6 +58,12 @@ test('runtime adapters use generated strict TypeScript modules',()=>{
  }
 });
 
+test('VS Code Extension Host is compiled from the strict TypeScript source',()=>{
+ const src=read('src/extension.js').toString('utf8');
+ assert.match(src,/dist\/typed\/extension/);
+ assert.ok(fs.existsSync(path.join(root,'dist/typed/extension.js')));
+ assert.ok(fs.statSync(path.join(root,'src/typed/extension.ts')).size>0);
+});
 test('internal governance rulesets cannot enter VSIX',()=>{
  const ignore=read('.vscodeignore').toString('utf8');
  assert.ok(ignore.includes('governance/**'));
@@ -66,4 +72,24 @@ test('internal governance rulesets cannot enter VSIX',()=>{
 test('governance files are excluded from distributed VSIX',()=>{
  const ignore=read('.vscodeignore').toString('utf8');
  assert.match(ignore,/config\/\*\*/);
+});
+
+test('disposable root-level regression script is excluded from VSIX',()=>{
+ const content=read('verify-indizivo.ps1').toString('utf8');
+ const ignore=read('.vscodeignore').toString('utf8');
+ assert.match(content,/release:check/);
+ assert.match(content,/test:coverage/);
+ assert.match(content,/logs\.log/);
+ assert.match(ignore,/verify-indizivo\.ps1/);
+});
+
+test('Marketplace-facing metadata and README do not link to the private GitHub repository',()=>{
+ const pkg=JSON.parse(read('package.json').toString('utf8'));
+ const readme=read('README.md').toString('utf8');
+ assert.equal(pkg.repository,undefined,'Private source URL must not be advertised as public');
+ assert.equal(pkg.bugs.url,'https://armotusitio.com.ar/soporte/');
+ assert.ok(readme.includes('https://armotusitio.com.ar/soporte/'));
+ assert.doesNotMatch(readme,/github\.com\/Drako01\/indizivo/);
+ assert.doesNotMatch(readme,/\]\((?:\.\.?\/)?[A-Za-z_][\w/.-]*\.md\)/);
+ assert.doesNotMatch(readme,/href="(?:LICENSE|\.\.?\/)/);
 });

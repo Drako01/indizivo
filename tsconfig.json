@@ -12,7 +12,9 @@
     "rootDir": "src/typed",
     "outDir": "dist/typed",
     "lib": [
-      "ES2022"
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
     ]
   },
   "include": [

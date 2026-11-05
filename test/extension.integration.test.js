@@ -46,6 +46,7 @@ function loadExtension(vscode) {
   };
   try {
     delete require.cache[require.resolve('../src/extension')];
+    delete require.cache[require.resolve('../dist/typed/extension')];
     return require('../src/extension');
   } finally {
     Module._load=orig;
@@ -201,4 +202,21 @@ test('Webview controller refuses untrusted or oversized command payloads',async(
   await assert.rejects(()=>controller.message({type:'addService',name:'API',url:'a'.repeat(2000)}),/Invalid Indizivo UI/);
   assert.equal(controller.data.services.length,0);
  } finally {await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('history navigation revokes pending active service consent',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-consent-'));
+ try{
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  await controller.addService({name:'local API',url:'http://127.0.0.1:54321/health'});
+  await controller.prepareServices();
+  assert.equal(controller.pendingApproval.length,1);
+  await controller.selectHistory(0);
+  assert.equal(controller.pendingApproval,null);
+  await assert.rejects(()=>controller.confirmServices(),/current session/);
+  await controller.selectHistory(-1);
+  await assert.rejects(()=>controller.confirmServices(),/Approval plan expired/);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
 });

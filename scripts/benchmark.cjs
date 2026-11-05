@@ -11,7 +11,7 @@ function percentile(list,p){
  return sorted[Math.max(0,Math.ceil((p/100)*sorted.length)-1)];
 }
 async function main(){
- const rounds=Math.max(3,Math.min(50,Number(process.env.INDIZIVO_BENCH_RUNS)||8));
+ const rounds=Math.max(3,Math.min(50,Number(process.env.INDIZIVO_BENCH_RUNS)||25));
  const folder=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-benchmark-'));
  try{
    await fs.writeFile(path.join(folder,'package.json'),JSON.stringify({

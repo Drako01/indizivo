@@ -3,17 +3,13 @@
   "displayName": "Indizivo",
   "version": "0.1.0",
   "publisher": "armotusitio",
-  "description": "Evidence-first development environment diagnostics. Find the cause. Fix with confidence.",
+  "description": "%extension.description%",
   "author": {
     "name": "Alejandro Daniel Di Stefano",
     "url": "https://armotusitio.com.ar"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Drako01/indizivo.git"
-  },
   "bugs": {
-    "url": "https://github.com/Drako01/indizivo/issues"
+    "url": "https://armotusitio.com.ar/soporte/"
   },
   "homepage": "https://armotusitio.com.ar",
   "license": "MIT",
@@ -58,46 +54,49 @@
     "lint:security": "node scripts/quality-gate.cjs",
     "test:coverage": "npm run build:types && node --experimental-test-coverage --test test/*.test.js",
     "smoke:vsix": "node test/vsix-e2e/run.js",
-    "lint:types": "node scripts/lint-types.cjs"
+    "lint:types": "node scripts/lint-types.cjs",
+    "prebuild:types": "node scripts/clean-types.cjs"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
     "@vscode/test-electron": "^3.1.0",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "@types/node": "24.10.0",
+    "@types/vscode": "1.99.0"
   },
   "contributes": {
     "commands": [
       {
         "command": "indizivo.openHome",
-        "title": "Open Control Center",
-        "category": "Indizivo"
+        "title": "%command.openHome%",
+        "category": "%command.category%"
       },
       {
         "command": "indizivo.diagnose",
-        "title": "Diagnose Project",
-        "category": "Indizivo"
+        "title": "%command.diagnose%",
+        "category": "%command.category%"
       },
       {
         "command": "indizivo.export",
-        "title": "Export Diagnostic Report",
-        "category": "Indizivo"
+        "title": "%command.export%",
+        "category": "%command.category%"
       },
       {
         "command": "indizivo.cancel",
-        "title": "Cancel Diagnosis",
-        "category": "Indizivo"
+        "title": "%command.cancel%",
+        "category": "%command.category%"
       },
       {
         "command": "indizivo.settings",
-        "title": "Configure Diagnostics",
-        "category": "Indizivo"
+        "title": "%command.settings%",
+        "category": "%command.category%"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "indizivo",
-          "title": "Indizivo",
+          "title": "%views.container%",
           "icon": "media/indizivo-activity-bar.svg"
         }
       ]
@@ -106,7 +105,7 @@
       "indizivo": [
         {
           "id": "indizivo.control",
-          "name": "Control Center",
+          "name": "%views.control%",
           "type": "webview"
         }
       ]

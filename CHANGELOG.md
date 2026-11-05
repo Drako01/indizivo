@@ -1,28 +1,29 @@
 # Changelog
 
-## 0.1.0 — Local MVP (not released)
-- Diagnostics and UI for Node/Go runtime discovery, local ports, environment key presence and approved loopback HTTP service checks.
-- Package and Extension Host E2E pending.
+## 0.1.0 — First Preview (release candidate; not published)
 
-### Unreleased engineering increments
-- Restricted Node and Go version requirement compatibility evaluation.
-- Read-only process-owner detection adapters (Windows netstat, Linux ss, macOS lsof).
-- Local session status comparison without causal claims; Copy Evidence in the UI.
-- Additional safety for workspace identity, active-probe mutations, localhost DNS pinning.
-- Official VS Code Extension Host E2E harness authored; execution remains pending.
+Indizivo introduces a local-first diagnostic Control Center for Visual Studio Code 1.99+.
 
+### Added
+- Node.js and Go runtime discovery with bounded, evidence-backed compatibility checks.
+- Local port inspection and best-effort process-owner identification on supported hosts.
+- Presence-only comparison of `.env.example` and `.env` variable names; values are never recorded.
+- Explicitly approved loopback-only HTTP GET health checks, without following redirects.
+- Diagnostic history, rechecks, cautious status comparisons, evidence copying and Markdown/JSON reports.
+- English and Spanish interface, four keyboard-navigable sections and accessible focus states.
+- Strict TypeScript core and Webview host, with stable packaged CommonJS entry points.
 
-### Enterprise delivery hardening — not released
-- Prepared disabled GitHub Actions templates for three-OS verification and future OIDC Marketplace/Open VSX releases.
-- Added explicit opt-in release variable and environment approval expectations.
-- Added VSIX ZIP inventory verifier; prevent internal plans, logs, secrets, tests and development scripts entering the extension package.
-- Added allowlisted and bounded Webview message schema validation and malicious payload unit/integration cases.
-- New tests and package gate require an actual owner-machine run before claiming PASS.
+### Security and delivery
+- Workspace Trust enforcement, bounded file reads, symlink protections and validated UI messages.
+- Cancellation and timeouts, CSP-constrained Webview and inert evidence rendering.
+- Reproducible npm lockfile, TypeScript/security lint, unit/integration tests and real VS Code Extension Host E2E.
+- VSIX inventory validation and isolated installed-package smoke test.
+- Local owner-controlled release process; no automated CI publishing.
 
+### Scope and known limitations
+- Windows desktop is the first automated platform verified; Linux/macOS and remote/WSL/SSH/container setups are not fully qualified for 0.1.0.
+- There is no automatic remediation, cloud service, mandatory AI account or telemetry.
+- Local tool permissions and operating-system capabilities determine process ownership visibility.
+- Moderate advisories in development-only packaging dependencies are tracked separately; no production dependency advisories were found in the last validated Windows run.
 
-### Four-phase Enterprise AAA engineering branch (unreleased / testing pending)
-- Strict TypeScript contracts and typed adapters for version, comparison and UI request validation.
-- Security improvements to configuration reads, cancellation, HTTP-only headers and bounded inputs.
-- ES/EN Control Center selection, navigable full-evidence history and keyboard-oriented tabs.
-- Packaged-VSIX clean profile smoke harness and reproducible synthetic performance metrics.
-- Prepared branch/tag rulesets and CODEOWNERS; CI/CD, rulesets and publication remain inactive.
+**Release candidate QA:** The pre-hardening Windows revision `e883932fa3c` passed 17/18 harness checks with one development dependency audit warning. This candidate requires one new complete regression run after the final commits; do not treat the earlier run as validation of this exact source.

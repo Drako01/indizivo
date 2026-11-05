@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="media/readme-logo.png" width="128" alt="Indizivo — diagnostic signal logo">
-</p>
-
 <h1 align="center">Indizivo</h1>
 
 <p align="center">
@@ -11,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-35C2B1"></a>
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-35C2B1">
   <img alt="Status: Preview" src="https://img.shields.io/badge/status-preview-F6BA65">
   <img alt="VS Code 1.99 or newer" src="https://img.shields.io/badge/VS_Code-%E2%89%A51.99-18232F">
 </p>
@@ -52,7 +48,7 @@ No terminal is required for normal usage after installation.
 
 ## Getting started
 
-> **Version 0.1.0 is a preview.** Public Marketplace distribution has not yet been announced.
+> **Version 0.1.0 is a preview.** Supported scenarios have been tested on Windows; other desktop hosts are not yet fully qualified.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
@@ -65,15 +61,16 @@ No terminal is required for normal usage after installation.
 
 Multi-root workspaces allow you to choose the project to inspect. Remote development environments have not yet been fully qualified.
 
-### Install a development build
+### Install the preview VSIX
 
-Clone the repository and package the extension:
+In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.1.0.vsix` provided by the publisher. Verify the package origin before installing.
 
-    npm install
-    npm run verify
-    npm run package
+Maintainers with authorized repository access can reproduce the release candidate with:
 
-In VS Code, select **Extensions → … → Install from VSIX…**, then choose the generated Indizivo VSIX file. A clean installation and final release QA are still in progress.
+    npm ci
+    npm run release:check
+
+The automated Windows checks include a fresh, isolated installation of the packaged VSIX. Final user-facing checks remain part of the release sign-off.
 
 ## Privacy and security
 
@@ -86,13 +83,13 @@ In VS Code, select **Extensions → … → Install from VSIX…**, then choose 
 
 Indizivo is not an operating-system sandbox. Runtime and process checks execute with the permissions of the VS Code extension host.
 
-Read the [Privacy Policy](PRIVACY.md) and [Security Policy](SECURITY.md) for details.
+The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the installed VSIX; no access to the private source repository is required.
 
 ## Current scope
 
-The first preview focuses on **local Node.js and Go development environments**. The interface currently uses English. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
+The first preview focuses on **local Node.js and Go development environments**. The interface is available in **English and Spanish**, selectable in Settings. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
 
-Future capabilities are described in the [Roadmap](ROADMAP.md).
+Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
 ## Development
 
@@ -106,11 +103,11 @@ The E2E suite launches an official VS Code Extension Host. It requires a graphic
 
 ## Feedback and support
 
-Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a GitHub issue](https://github.com/Drako01/indizivo/issues).
+Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.1.0**.
 
 **Never upload secrets, private environment values or confidential project logs.**
 
-[Support](SUPPORT.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+[Public support](https://armotusitio.com.ar/soporte/) · Changelog and security/privacy policies are bundled with the extension.
 
 ---
 
@@ -119,5 +116,5 @@ Found an incorrect diagnosis, an incomplete check or a missing development envir
   <br>
   © 2026 <a href="https://armotusitio.com.ar">ArmoTuSitio</a>. Copyright holder.
   <br>
-  Released under the <a href="LICENSE">MIT License</a>.
+  Released under the MIT License (included with the extension).
 </p>
