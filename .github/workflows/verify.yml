@@ -33,6 +33,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Ensure Marketplace publishing CLI exists in the registry
+        if: runner.os == 'Linux'
+        run: npm exec --yes --package=@vscode/vsce@4.0.0 -- vsce --version
       - run: npm run verify
       - run: npm audit --omit=dev
 
