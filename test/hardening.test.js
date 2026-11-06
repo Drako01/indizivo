@@ -5,7 +5,7 @@ const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
-const {diagnose,discover,verifyServices}=require('../src/diagnostics');
+const {diagnose,discover,verifyServices,sameFileIdentity}=require('../src/diagnostics');
 test('cancelled diagnosis never reports a completed session',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-cancel-'));
  try{
@@ -45,4 +45,23 @@ test('local HTTP probing only reads response headers and never trusts a redirect
   assert.equal(checks[0].status,'warn');
   assert.equal(checks[0].detail,'HTTP 302');
  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
+test('file handle identity comparisons reject replaced or unverifiable sources',()=>{
+ assert.equal(sameFileIdentity({dev:1,ino:100},{dev:1,ino:100}),true);
+ assert.equal(sameFileIdentity({dev:1,ino:100},{dev:1,ino:101}),false);
+ assert.equal(sameFileIdentity({dev:1,ino:100},{dev:2,ino:100}),false);
+ assert.equal(sameFileIdentity({dev:1,ino:0},{dev:1,ino:0}),false,
+   'An unknown inode cannot prove identity');
+});
+test('normal bounded project files remain readable by file descriptor',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-fileid-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"consistent"}');
+  await fs.writeFile(path.join(root,'.env.example'),'KEY=placeholder');
+  const discovery=await discover(root);
+  assert.equal(discovery.fileStates['package.json'],'present');
+  assert.equal(discovery.fileStates['.env.example'],'present');
+  assert.equal(discovery.node,true);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
 });
