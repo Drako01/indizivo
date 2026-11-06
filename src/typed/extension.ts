@@ -361,15 +361,27 @@ export class ControlCenter {
     });
     if (!uri) return;
     let output='';
-    if (format==='json') output=JSON.stringify(redactReport(session),null,2)+'\n';
+    if (format==='json') output=JSON.stringify(redactReport({
+      ...session,reportFormatVersion:1,reportGeneratedAt:new Date().toISOString()
+    }),null,2)+'\n';
     else {
       const lines=['# '+this.tr('report.heading'),'',this.tr('report.project')+': '+session.project,
         this.tr('report.date')+': '+session.completedAt,
         this.tr('report.state')+': '+this.tr(`state.${session.state}`),
+        ...('host' in session && session.host?
+          [this.tr('report.host')+': '+session.host]:[]),
+        ...('scopeId' in session && session.scopeId?
+          [this.tr('report.scope')+': '+session.scopeId]:[]),
         '', '> '+this.tr('report.disclaimer'),''];
       for (const c of [...(session.checks||[]),...(session.serviceChecks||[])]) {
         lines.push('## '+c.label,'','**'+this.tr(`status.${c.status}`)+'** — '+c.detail,
           '',c.suggestion||'','');
+        if(c.provenance){
+          lines.push('- '+this.tr('ui.source')+': '+this.tr(`origin.${c.provenance.origin}`),
+            '- '+this.tr('ui.method')+': '+c.provenance.method,
+            '- '+this.tr('ui.confidence')+': '+this.tr(`confidence.${c.provenance.confidence}`),
+            '- '+this.tr('ui.limitations')+': '+c.provenance.limitations);
+        }
         for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
         lines.push('');
       }
