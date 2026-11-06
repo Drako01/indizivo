@@ -63,6 +63,7 @@
     "benchmark": "npm run build:types && node scripts/benchmark.cjs",
     "lint:security": "node scripts/quality-gate.cjs",
     "test:coverage": "npm run build:types && node --experimental-test-coverage --test test/*.test.js",
+    "test:coverage-gate": "npm run build:types && node scripts/coverage-gate.cjs",
     "smoke:vsix": "node test/vsix-e2e/run.js",
     "lint:types": "node scripts/lint-types.cjs",
     "prebuild:types": "node scripts/clean-types.cjs"

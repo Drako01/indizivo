@@ -37,6 +37,9 @@ jobs:
         if: runner.os == 'Linux'
         run: npm exec --yes --package=@vscode/vsce@4.1.0 -- vsce --version
       - run: npm run verify
+      - name: Coverage floors for critical modules
+        if: runner.os == 'Linux'
+        run: npm run test:coverage-gate
       - run: npm audit --omit=dev
 
   vscode-e2e:
