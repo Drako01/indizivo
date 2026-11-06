@@ -229,6 +229,20 @@
 - **No repetir:** este checkpoint modifica únicamente documentación fuera del VSIX según `.vscodeignore`; QA automatizada del candidato 6a738a3 se reutiliza exclusivamente cuando el diff no altera runtime/manifest/lockfile ni superficie empaquetada. No disparar otro VSIX Gate por modificar solo el checklist.
 - **Release:** `main` sigue en 0.1.3; ninguna publicación de 0.2.0, no tag, no merge, no cambios de logos, secrets o branch rules. PR #13 y #14 continúan Draft. **NO-GO** para declaración AAAA/10-10 hasta QA y aprobación explícita.
 
+### Iteracion 2026-11-06 (sesion 3) — bug Windows NTFS, cobertura, corpus, docs
+
+| SHA de codigo | IDs / cambio | Evidencia |
+|---|---|---|
+| 27a07e5 | S-04/D-07: **bug real en Windows**: los file IDs de NTFS superan 2^53 y `Number.isSafeInteger` bloqueaba archivos legitimos (14 tests fallaban en Windows local; el CI no lo detecto porque sus inodes son menores). Ahora `lstat/fstat` usan `bigint` y la identidad se compara exacta. Test de regresion con ID > 2^53. | Local Windows 11, Node 24.22.1: `node --test test/*.test.js` 152 pass / 0 fail (antes 138/14). |
+| 93d9d58 | A-05: `scripts/coverage-gate.cjs` con pisos de cobertura de lineas por modulo critico, medidos (no global); paso en `verify.yml` solo en Linux. | Local: `Coverage gate: PASS`; 2 tests del parser/evaluador. CI: [Quality Gate 42313470854](https://github.com/Drako01/indizivo/actions/runs/42313470854) sobre `bbbd1a6`, 4/4 PASS (Linux, Windows, macOS, Extension Host); log Linux: `Coverage gate: PASS`. |
+| (refactor) | A-01: `beginRun/endRun` elimina el ciclo running/abort duplicado; `renderEvidenceCopy` movido a `reports.ts` (puro, compartido con la redaccion de exports). | Local: 155 pass / 0 fail, `tsc` strict OK. |
+| bbbd1a6 | D-09/P-13: `test/corpus.test.js` + `test/corpus/projects.json`, 15 proyectos etiquetados con presupuesto de error <=5% (puertos declarados vs heuristicos, Go minimo vs toolchain, .env sin fuga de valores, lockfiles, runtimes opcionales). SECURITY.md y SUPPORT.md alineados con 0.1.3 (R-06). | Local: 156 pass / 0 fail. Corpus sintetico: **no** reemplaza falsos positivos medidos en proyectos reales. |
+
+- **Estados:** D-09 pasa a IMPLEMENTED_VERIFIED_LOCAL (corpus sintetico); A-05 IMPLEMENTED_VERIFIED_CI (pisos confirmados en Linux por el run 42313470854); A-01 sigue PARCIAL (ControlCenter conserva storage/bridge/UI). R-05 ya existia: Open VSX inactivo emite `warning` + resumen + `sync-open-vsx` diario; falta evidencia de un run real.
+- **npm audit:** `--omit=dev` 0 vulnerabilidades; `npm audit` completo 3 moderadas (dev tooling, `minimatch`) clasificadas WARN, sin explotabilidad en el VSIX (sin dependencias runtime).
+- **Sin cambio:** version `0.1.3`, logos, publisher, workflows de publicacion, reglas, tags. Merge/publicacion/bump a 0.2.0 siguen pendientes del GO del owner.
+- **Siguiente accion:** el Quality Gate de `bbbd1a6` ya esta en PASS; sigue la matriz manual (a11y, WSL/SSH/Containers, 10-15 devs), que no es automatizable.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
