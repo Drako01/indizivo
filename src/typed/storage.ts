@@ -69,7 +69,12 @@ function finding(value:unknown):DiagnosticCheck|null {
   if(original && str(original.origin,50)&&str(original.confidence,50)&&
      str(original.method,80)&&str(original.host,100)&&str(original.target,100)&&
      typeof original.limitations==='string' && original.limitations.length<=2000){
-    return {...sanitized,provenance:original} as DiagnosticCheck;
+    return {...sanitized,provenance:{
+      origin:original.origin as DiagnosticCheck['provenance']['origin'],
+      confidence:original.confidence as DiagnosticCheck['provenance']['confidence'],
+      method:original.method,host:original.host,target:original.target,
+      limitations:original.limitations
+    }};
   }
   return sanitized as DiagnosticCheck;
 }
