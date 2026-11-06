@@ -89,3 +89,12 @@ test('future snapshot schemas are ignored without suppressing safe history summa
  assert.equal(history[0].snapshot,undefined);
  assert.deepEqual(history[0].checks,[{id:'node',status:'warn'}]);
 });
+
+test('new finding metadata round-trips and future schema metadata is safely discarded',()=>{
+ const current=session();
+ current.checks[0].metadata={schemaVersion:1,checkId:'runtime-version',targetId:'node',severity:'none'};
+ assert.deepEqual(restoreSession(current).checks[0].metadata,current.checks[0].metadata);
+ current.checks[0].metadata={schemaVersion:99,checkId:'runtime-version',targetId:'node',severity:'high'};
+ assert.equal(restoreSession(current).checks[0].metadata,undefined);
+ assert.equal(restoreSession(session()).checks[0].metadata,undefined);
+});

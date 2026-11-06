@@ -100,3 +100,18 @@ test('SSRF allowlist corpus rejects alternate hosts and credential-bearing endpo
    'http://[::1]:3000/health'])
   assert.equal(validateService({name:'approved',url}).url,url);
 });
+
+test('service finding metadata target IDs remain stable under endpoint reorder',async()=>{
+ const local=http.createServer((_req,res)=>{res.writeHead(200);res.end();});
+ await new Promise(resolve=>local.listen(0,'127.0.0.1',resolve));
+ try {
+  const base='http://127.0.0.1:'+local.address().port;
+  const targets=[{name:'one',url:base+'/one'},{name:'two',url:base+'/two'}];
+  const first=await verifyServices(targets,900);
+  const second=await verifyServices([...targets].reverse(),900);
+  assert.equal(first[0].metadata.schemaVersion,1);
+  assert.equal(first[0].metadata.checkId,'approved-http');
+  assert.equal(first[0].metadata.targetId,second[1].metadata.targetId);
+  assert.equal(first[1].metadata.targetId,second[0].metadata.targetId);
+ }finally{await new Promise(resolve=>local.close(resolve));}
+});

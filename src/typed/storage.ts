@@ -58,10 +58,20 @@ function finding(value:unknown):DiagnosticCheck|null {
     const translated=descriptor(translations[key]);
     if(translated)localized[key]=translated;
   }
+  const originalMetadata=record(item.metadata);
+  const severity=originalMetadata?.severity;
+  const safeMetadata=originalMetadata?.schemaVersion===1 &&
+    str(originalMetadata.checkId,80) && /^[a-z][a-z0-9-]*$/.test(originalMetadata.checkId) &&
+    str(originalMetadata.targetId,90) && /^[a-z0-9-]+$/i.test(originalMetadata.targetId) &&
+    ['unassessed','none','low','medium','high'].includes(String(severity)) ?
+    {schemaVersion:1 as const,checkId:originalMetadata.checkId,
+      targetId:originalMetadata.targetId,
+      severity:severity as 'unassessed'|'none'|'low'|'medium'|'high'}:null;
   const sanitized={
     id:item.id,category:item.category,label:item.label,status:item.status as CheckStatus,
     detail:item.detail,suggestion:typeof item.suggestion==='string'?
       item.suggestion.slice(0,3000):'',evidence,
+    ...(safeMetadata?{metadata:safeMetadata}:{}),
     ...(Object.keys(localized).length?{i18n:localized}:{})
   };
   // Historical schema v1 did not include provenance; do not invent it.

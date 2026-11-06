@@ -11,6 +11,13 @@ export interface Evidence {
   fact: string;
   observedAt: string;
 }
+/** Additive v1 finding metadata; legacy sessions may omit it. */
+export interface FindingMetadata {
+ schemaVersion:1;
+ checkId:string;
+ targetId:string;
+ severity:'unassessed'|'none'|'low'|'medium'|'high';
+}
 export interface Finding {
   id: string;
   category: string;
@@ -20,6 +27,7 @@ export interface Finding {
   suggestion?: string;
   evidence: readonly Evidence[];
   provenance?:CheckProvenance;
+  metadata?:FindingMetadata;
 }
 export interface ServiceTarget {name:string; url:string}
 export interface SessionSummary {

@@ -152,3 +152,19 @@ test('Go malformed directives cannot generate a PASS from the installed toolchai
   assert.doesNotMatch(JSON.stringify(session),/1.23oops/);
  } finally {await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('new findings expose stable versioned check and target IDs without invented impact severity',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-finding-v1-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({engines:{node:'>=99'}}));
+  const first=await diagnose(root,900);
+  const found=first.checks.find(check=>check.id==='node');
+  assert.ok(found);
+  assert.equal(found.metadata.schemaVersion,1);
+  assert.equal(found.metadata.checkId,'runtime-version');
+  assert.equal(found.metadata.targetId,'node');
+  assert.equal(found.metadata.severity,'unassessed');
+  const second=await diagnose(root,900);
+  assert.equal(second.checks.find(x=>x.id==='node').metadata.targetId,found.metadata.targetId);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

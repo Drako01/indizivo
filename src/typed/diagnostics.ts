@@ -10,7 +10,7 @@ import {evaluateVersion,parseVersion,compare} from './versions';
 import {inspectOwners} from './port-owners';
 import type {OwnerInspection} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
-import type {CheckStatus,SessionStatus,CheckProvenance} from './contracts';
+import type {CheckStatus,SessionStatus,CheckProvenance,FindingMetadata} from './contracts';
 import type {Comparison} from './comparison';
 export interface PackageManifest {
  scripts?:Record<string,string>;
@@ -36,7 +36,7 @@ export interface Evidence {id:string;fact:string;observedAt:string}
 export interface DiagnosticCheck {
  id:string;category:string;label:string;status:CheckStatus;
  detail:string;suggestion:string;evidence:Evidence[];i18n?:FindingTranslation;
- provenance:CheckProvenance;
+ provenance:CheckProvenance;metadata?:FindingMetadata;
 }
 export interface DiagnosticSession {
  id:string;project:string;startedAt:string;completedAt:string;
@@ -74,7 +74,14 @@ function createCheck(id:string,category:string,label:string,status:CheckStatus,
       category==='Services'?'HTTP status does not prove full service health.':
       'Only supported configuration sources were inspected.'
   };
-  return {id,category,label,status,detail,suggestion:suggestion||'',provenance,
+  const checkId=id.startsWith('service-rejected-')?'service-target-validation':
+    category==='Services'?'approved-http':category==='Ports'?'tcp-listener':
+    category==='Runtime'?'runtime-version':id.startsWith('file-')?'workspace-file-access':id;
+  const metadata:FindingMetadata={
+    schemaVersion:1,checkId,targetId:id,
+    severity:status==='pass'||status==='info'?'none':'unassessed'
+  };
+  return {id,category,label,status,detail,suggestion:suggestion||'',provenance,metadata,
     ...(i18n?{i18n}:{}),
     evidence:[{id:crypto.randomBytes(6).toString('hex'),fact:String(fact||detail),
       observedAt:new Date().toISOString()}]};
