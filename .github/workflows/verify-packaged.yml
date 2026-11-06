@@ -35,6 +35,16 @@ jobs:
       - name: Exercise the installed VSIX with isolated VS Code profile
         run: xvfb-run -a npm run smoke:vsix
       - run: npm run inspect:vsix
+      - name: Capture labelled synthetic p50/p95/RSS profiles, not production SLOs
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > indizivo.synthetic-benchmarks.jsonl
+          for profile in small medium large; do
+            INDIZIVO_BENCH_PROFILE="$profile" INDIZIVO_BENCH_RUNS=12 INDIZIVO_BENCH_JSONL=1 \
+              node scripts/benchmark.cjs >> indizivo.synthetic-benchmarks.jsonl
+          done
+          node -e 'const fs=require("node:fs"); const results=fs.readFileSync("indizivo.synthetic-benchmarks.jsonl","utf8").trim().split("\n").map(JSON.parse); if(results.length!==3||results.some(x=>x.kind!=="synthetic-local-benchmark"||!x.p95Ms||!x.peakRssMiB))process.exit(1); console.log("Synthetic profiles recorded:",results.map(x=>x.profile).join(", "));'
       - name: Fingerprint the immutable candidate without publishing
         shell: bash
         run: |
@@ -49,5 +59,6 @@ jobs:
           path: |
             indizivo-*.vsix
             indizivo.candidate.sha256
+            indizivo.synthetic-benchmarks.jsonl
           if-no-files-found: error
           retention-days: 3

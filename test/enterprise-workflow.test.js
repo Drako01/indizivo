@@ -15,3 +15,10 @@ test('candidate VSIX workflow cannot publish or modify main',()=>{
  assert.doesNotMatch(file,/id-token:\s*write|vsce publish|ovsx publish|gh release create/);
  assert.doesNotMatch(file,/branches: \[main\]/);
 });
+
+test('synthetic benchmark evidence is attached only to unreleased candidate, never publish',()=>{
+ assert.match(file,/INDIZIVO_BENCH_PROFILE/);
+ assert.match(file,/indizivo\.synthetic-benchmarks\.jsonl/);
+ assert.match(file,/INDIZIVO_BENCH_RUNS=12/);
+ assert.doesNotMatch(file,/id-token:\s*write/);
+});

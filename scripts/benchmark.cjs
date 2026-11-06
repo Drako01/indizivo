@@ -12,14 +12,33 @@ function percentile(list,p){
 }
 async function main(){
  const rounds=Math.max(3,Math.min(50,Number(process.env.INDIZIVO_BENCH_RUNS)||25));
+ const profile=['small','medium','large'].includes(process.env.INDIZIVO_BENCH_PROFILE)?
+  process.env.INDIZIVO_BENCH_PROFILE:'small';
  const folder=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-benchmark-'));
  try{
+   const count=profile==='large'?100:profile==='medium'?25:2;
+   const ports=profile==='large'?12:profile==='medium'?5:1;
+   const deps=profile==='large'?250:profile==='medium'?80:0;
+   const scripts=Object.fromEntries(Array.from({length:ports},(_,i)=>[
+     'dev-'+i,'next dev --port '+(32940+i)
+   ]));
+   const dependencies=Object.fromEntries(Array.from({length:deps},(_,i)=>[
+     'fixture-package-'+i,'1.0.0'
+   ]));
    await fs.writeFile(path.join(folder,'package.json'),JSON.stringify({
-     name:'synthetic-indizivo-benchmark',scripts:{dev:'next dev --port 32997'},
-     engines:{node:'>=20'}
+     name:'synthetic-indizivo-benchmark',scripts,dependencies,
+     engines:{node:'>=20'},packageManager:'npm@11.0.0'
    }));
-   await fs.writeFile(path.join(folder,'.env.example'),'API_KEY=synthetic\nPORT=32997');
-   await fs.writeFile(path.join(folder,'.env'),'PORT=32997');
+   const keys=Array.from({length:count},(_,i)=>'SYNTHETIC_KEY_'+i+'=placeholder');
+   await fs.writeFile(path.join(folder,'.env.example'),keys.join('\n')+'\n');
+   await fs.writeFile(path.join(folder,'.env'),keys.slice(0,Math.max(1,count-2)).join('\n')+'\n');
+   if(profile==='large'){
+     await fs.writeFile(path.join(folder,'go.mod'),
+       'module example.org/indizivo-benchmark\ngo 1.23\ntoolchain go1.24.0\n');
+     await fs.writeFile(path.join(folder,'pyproject.toml'),
+       '[project]\nname="indizivo-benchmark"\n');
+     await fs.writeFile(path.join(folder,'Dockerfile'),'FROM scratch\n');
+   }
    const elapsed=[];
    let peakRss=process.memoryUsage().rss;
    for(let i=0;i<rounds;i++){
@@ -32,14 +51,15 @@ async function main(){
    const result={
      schemaVersion:1,kind:'synthetic-local-benchmark',
      platform:process.platform,arch:process.arch,
-     node:process.version,rounds,
+     node:process.version,rounds,profile,declaredPorts:ports,
+     fixtureEnvNames:count,fixtureDependencies:deps,
      minMs:Math.min(...elapsed).toFixed(1),p50Ms:percentile(elapsed,50).toFixed(1),
      p95Ms:percentile(elapsed,95).toFixed(1),
      maxMs:Math.max(...elapsed).toFixed(1),
      peakRssMiB:(peakRss/1048576).toFixed(1),
      limitation:'Synthetic local fixture only, not a customer benchmark; runtime version probe and port check included.'
    };
-   console.log(JSON.stringify(result,null,2));
+   console.log(JSON.stringify(result,null,process.env.INDIZIVO_BENCH_JSONL==='1'?0:2));
  }finally{await fs.rm(folder,{recursive:true,force:true});}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
