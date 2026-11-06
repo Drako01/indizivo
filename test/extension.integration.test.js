@@ -262,3 +262,35 @@ test('reports and copied evidence redact synthetic secret values without mutatin
     'canonical in-memory evidence must remain unchanged');
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('recheck compares approved service evidence only after the second service probe',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-service-compare-'));
+ let responseStatus=200;
+ const server=http.createServer((_req,res)=>{res.writeHead(responseStatus);res.end();});
+ try{
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  const endpoint='http://127.0.0.1:'+server.address().port+'/health';
+  await controller.runDiagnosis();
+  await controller.addService({name:'API',url:endpoint});
+  await controller.prepareServices();
+  await controller.confirmServices();
+  assert.equal(controller.data.session.serviceChecks[0].status,'pass');
+  responseStatus=503;
+  await controller.runDiagnosis();
+  assert.equal(controller.data.session.serviceChecks.length,0);
+  await controller.prepareServices();
+  await controller.confirmServices();
+  const finding=controller.data.session.serviceChecks[0];
+  assert.equal(finding.status,'warn');
+  const result=controller.data.session.comparison?.observations.find(o=>o.id===finding.id);
+  assert.equal(result?.trend,'status-changed');
+  assert.equal(result?.before,'pass');
+  assert.equal(result?.after,'warn');
+ }finally{
+  if(server.listening)await new Promise(resolve=>server.close(resolve));
+  await fs.rm(root,{recursive:true,force:true});
+ }
+});

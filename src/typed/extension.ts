@@ -246,6 +246,13 @@ export class ControlCenter {
       if (signal.aborted) throw new Error(this.tr('host.serviceCancelled'));
       session.serviceChecks=result;
       session.completedAt=new Date().toISOString();
+      if(result.some(finding=>finding.id==='service-budget'))session.state='partial';
+      if('id' in session && session.state==='completed'){
+        // A comparison against the previous completed session is meaningful only
+        // after the approved service observations have actually been collected.
+        const previous=this.data.history[1]?.snapshot||null;
+        session.comparison=compareSessions(previous,session as DiagnosticSession);
+      }
       const recent=this.data.history[0];
       if(recent?.snapshot && 'id' in session &&
         recent.snapshot.id===session.id)
