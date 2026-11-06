@@ -7,7 +7,7 @@ import {execFile} from 'node:child_process';
 import {evaluateVersion} from './versions';
 import {inspectOwner} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
-import type {CheckStatus,SessionStatus} from './contracts';
+import type {CheckStatus,SessionStatus,CheckProvenance} from './contracts';
 import type {Comparison} from './comparison';
 export interface PackageManifest {
  scripts?:Record<string,string>;
@@ -28,9 +28,11 @@ export interface Evidence {id:string;fact:string;observedAt:string}
 export interface DiagnosticCheck {
  id:string;category:string;label:string;status:CheckStatus;
  detail:string;suggestion:string;evidence:Evidence[];i18n?:FindingTranslation;
+ provenance:CheckProvenance;
 }
 export interface DiagnosticSession {
  id:string;project:string;startedAt:string;completedAt:string;
+ schemaVersion:number;scopeId?:string;
  host:string;state:SessionStatus;checks:DiagnosticCheck[];discovery:Discovery;
  serviceChecks:DiagnosticCheck[];
  comparison?:Comparison|null;
@@ -51,11 +53,24 @@ function assertActive(signal?:AbortSignal):void {
 const msg=(key:Descriptor['key'],values?:Descriptor['values']):Descriptor=>
   values?{key,values}:{key};
 function createCheck(id:string,category:string,label:string,status:CheckStatus,
- detail:string,suggestion='',fact='',i18n?:FindingTranslation):DiagnosticCheck {
-  return { id, category, label, status, detail, suggestion: suggestion || '',
-    ...(i18n ? {i18n} : {}),
-    evidence: [{ id: crypto.randomBytes(6).toString('hex'), fact: String(fact || detail),
-      observedAt: new Date().toISOString() }] };
+ detail:string,suggestion='',fact='',i18n?:FindingTranslation,inferred=false):DiagnosticCheck {
+  const origin:CheckProvenance['origin']=inferred?'framework-convention':
+    category==='Runtime'?'runtime-tool':category==='Ports'?'tcp-loopback':
+    category==='Services'?'approved-http':category==='Discovery'?'discovery':'workspace-file';
+  const method=category==='Runtime'?'execFile':category==='Ports'?'TCP connect':
+    category==='Services'?'HTTP GET':category==='Discovery'?'workspace discovery':'bounded file read';
+  const provenance:CheckProvenance={
+    origin,method,host:process.platform,target:id,
+    confidence:status==='inconclusive'?'inconclusive':inferred?'inferred':'observed',
+    limitations:category==='Ports'?'A listener does not prove a process conflict.':
+      category==='Runtime'?'A runtime version does not guarantee project compatibility.':
+      category==='Services'?'HTTP status does not prove full service health.':
+      'Only supported configuration sources were inspected.'
+  };
+  return {id,category,label,status,detail,suggestion:suggestion||'',provenance,
+    ...(i18n?{i18n}:{}),
+    evidence:[{id:crypto.randomBytes(6).toString('hex'),fact:String(fact||detail),
+      observedAt:new Date().toISOString()}]};
 }
 export function parsePorts(scripts:Record<string,string>|null|undefined):number[] {
   const result = new Set<number>();
@@ -351,7 +366,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
           status==='cancelled'?'diag.portStateCancelled':'diag.portStateInconclusive'),
           ownership:owner?.i18nDetail||
           (owner?.detail||msg('diag.portOwnerNA'))})
-      }));
+      },inferred));
   }
   assertActive(signal);
   if (!checks.length) push(createCheck('none','Discovery','No applicable checks','info',
@@ -360,7 +375,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       detail:msg('diag.noneDetail')
     }));
   return { id: crypto.randomBytes(8).toString('hex'), project: d.project,
-    startedAt:start, completedAt:new Date().toISOString(), host:process.platform,
+    schemaVersion:2,startedAt:start, completedAt:new Date().toISOString(), host:process.platform,
     state:'completed', checks, discovery:d, serviceChecks:[] };
 }
 export async function verifyServices(services:ServiceTarget[],timeout:number,signal?:AbortSignal,

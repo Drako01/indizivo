@@ -14,7 +14,8 @@ export interface Comparison {
 export function compareSessions(previous:SessionSummary|null, current:SessionSummary|null):Comparison|null {
   if(!previous||!current||previous.state!=='completed'||current.state!=='completed'||
     previous.project!==current.project ||
-    (previous.host!==undefined && current.host!==undefined && previous.host!==current.host))return null;
+    (previous.host!==undefined && current.host!==undefined && previous.host!==current.host) ||
+    ((previous.scopeId!==undefined || current.scopeId!==undefined) && previous.scopeId!==current.scopeId))return null;
   const from=new Map((previous.checks||[]).concat(previous.serviceChecks||[]).map(c=>[c.id,c.status]));
   const to=new Map((current.checks||[]).concat(current.serviceChecks||[]).map(c=>[c.id,c.status]));
   const observations:Trend[]=[];

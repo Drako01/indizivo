@@ -20,3 +20,10 @@ test('observations from different Extension Host platforms cannot be compared',(
  const old={project:'demo',host:'linux',completedAt:'before',state:'completed',checks:[{id:'port-3000',status:'info'}]};
  assert.equal(compareSessions(old,{...old,host:'win32',completedAt:'after'}),null);
 });
+
+test('scope IDs prevent cross-workspace comparisons for identical project names',()=>{
+ const run={project:'app',host:'linux',scopeId:'workspace-a',state:'completed',completedAt:'before',
+  checks:[{id:'node',status:'pass'}]};
+ assert.equal(compareSessions(run,{...run,scopeId:'workspace-b'}),null);
+ assert.equal(compareSessions(run,{...run,scopeId:undefined}),null);
+});

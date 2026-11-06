@@ -183,6 +183,7 @@ export class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
+      session.scopeId=this.scopeKey();
       session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;
       this.data.history.unshift({ project:session.project, completedAt:session.completedAt,
