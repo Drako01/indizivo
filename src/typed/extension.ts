@@ -4,6 +4,8 @@ import * as crypto from 'node:crypto';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
 import {html} from './ui';
+import {restoreSession,restoreHistory} from './storage';
+import type {HistoryEntry} from './storage';
 import {compareSessions} from './comparison';
 import {validateUiMessage} from './messages';
 import {t, localizeFinding, localizeSession} from './i18n';
@@ -11,12 +13,6 @@ import type {I18nKey, Locale, Params} from './i18n';
 
 type RunningSession=Pick<DiagnosticSession,'project'|'startedAt'|'completedAt'|'state'|'checks'|'serviceChecks'>;
 type DisplaySession=DiagnosticSession|RunningSession;
-interface HistoryEntry {
-  project:string;
-  completedAt:string;
-  checks:Array<Pick<DiagnosticCheck,'id'|'status'>>;
-  snapshot?:DiagnosticSession;
-}
 interface ProjectData {
   session:DisplaySession|null;
   services:ServiceTarget[];
@@ -58,12 +54,16 @@ export class ControlCenter {
     return 'indizivo:v1:' + crypto.createHash('sha256').update(this.currentRoot?.toString() || 'none').digest('hex');
   }
   restore() {
-    const stored = this.context.workspaceState.get<Partial<ProjectData>>(this.scopeKey(), {});
+    const value=this.context.workspaceState.get<unknown>(this.scopeKey(), {});
+    const stored=value && typeof value==='object' && !Array.isArray(value)?
+      value as Partial<ProjectData>:{};
+    const timeout=typeof stored.timeoutMs==='number' && Number.isFinite(stored.timeoutMs) ?
+      stored.timeoutMs:2500;
     this.data = {
-      session: stored.session || null,
+      session: restoreSession(stored.session),
       services: (Array.isArray(stored.services) ? stored.services : []).map(validateService).filter((item):item is ServiceTarget=>item!==null).slice(0, 20),
-      history: (Array.isArray(stored.history) ? stored.history : []).slice(0, 10),
-      timeoutMs: Math.min(10000, Math.max(400, Number(stored.timeoutMs) || 2500)),
+      history: restoreHistory(stored.history),
+      timeoutMs: Math.min(10000, Math.max(400,timeout)),
       locale: (stored.locale==='es'||stored.locale==='en') ? stored.locale :
         (vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en')
     };
@@ -81,7 +81,8 @@ export class ControlCenter {
       reviewMode: this.selectedHistoryIndex!==null,
       selectedHistoryIndex: this.selectedHistoryIndex,
       project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
-      host: process.platform + ' · ' + this.tr('ui.hostCurrent'),
+      host: process.platform + (vscode.env.remoteName?' · '+vscode.env.remoteName:'')+
+        ' · ' + this.tr('ui.hostCurrent'),
       trusted: vscode.workspace.isTrusted,
       session: localizeSession(this.viewedSession(),this.data.locale),
       services: this.data.services,
@@ -182,7 +183,8 @@ export class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
-      session.scopeId=this.scopeKey();
+      session.scopeId=crypto.createHash('sha256').update(this.scopeKey()+'|'+
+        (vscode.env.remoteName||'local')).digest('hex');
       session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;
       this.data.history.unshift({ project:session.project, completedAt:session.completedAt,
