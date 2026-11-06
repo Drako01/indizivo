@@ -220,3 +220,22 @@ test('history navigation revokes pending active service consent',async()=>{
   await assert.rejects(()=>controller.confirmServices(),/Approval plan expired/);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('report export uses VS Code workspace.fs for a user-selected non-file URI',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-export-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  const app=fixture(root,true);
+  let output=null;
+  app.vscode.workspace.fs={writeFile:async(uri,bytes)=>{output={uri,data:Buffer.from(bytes).toString('utf8')};}};
+  app.vscode.window.showSaveDialog=async()=>({scheme:'memfs',path:'/reports/indizivo.json'});
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  await controller.export('json');
+  assert.equal(output.uri.scheme,'memfs');
+  const report=JSON.parse(output.data);
+  assert.equal(report.schemaVersion,2);
+  assert.equal(report.state,'completed');
+  assert.ok(report.checks.some(c=>c.id==='node'&&c.provenance.origin==='runtime-tool'));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

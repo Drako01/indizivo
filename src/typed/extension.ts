@@ -1,6 +1,5 @@
 // Indizivo 0.1.3: validate multi-registry release automation; runtime behavior unchanged.
 import * as vscode from 'vscode';
-import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
@@ -341,7 +340,8 @@ export class ControlCenter {
       }
       output=lines.join('\n');
     }
-    await fs.writeFile(uri.fsPath,output,'utf8');
+    await vscode.workspace.fs.writeFile(uri,Buffer.from(output,'utf8'));
+    // VS Code workspace.fs supports user-selected remote and virtual URI schemes.
     vscode.window.showInformationMessage(this.tr('host.reportExported'));
   }
   async message(m:unknown) {
