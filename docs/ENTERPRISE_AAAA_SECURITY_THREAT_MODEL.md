@@ -16,7 +16,7 @@
 |---|---|---|---|
 | SEC-01 | Repo scripts execute on scan | Explicit command allowlist, no shell; `tool-probes.ts` only fixed version args | Automated fixtures PASS; adversarial process-tree verification pending |
 | SEC-02 | Symlink traversal or oversized config | `diagnostics.ts` bounded open, lstat/realpath checks and no-follow where available | Windows/Linux/macOS CI PASS; TOCTOU and permissions matrix pending |
-| SEC-03 | External HTTP / SSRF / DNS rebinding | URL allowlist, pinned loopback, user approval, no redirects/body | Automated IPv4/IPv6 and rejected-target tests PASS; extensive manual attack corpus pending |
+| SEC-03 | External HTTP / SSRF / DNS rebinding | URL allowlist, pinned loopback, user approval, no redirects/body; invalid targets emit BLOCKED and never contact network | Automated IPv4/IPv6, rejected-target and secret-sentinel tests PASS on eaab0f5; extensive manual attack corpus pending |
 | SEC-04 | Webview XSS / arbitrary host command | Nonce CSP, inert text, runtime message validation | VM integration tests PASS; browser E2E and fuzzing pending |
 | SEC-05 | Secret value leakage | `.env` **names** only, version output sanitized, bounded reports, best-effort redaction at copy/export | Synthetic corpus PASS; redaction cannot guarantee coverage of unknown credential formats |
 | SEC-06 | Restored state denial-of-service | History/check-size limits; schema migration; i18n key and comparison validation | Automated tests; storage corruption + attack corpus needs expansion |

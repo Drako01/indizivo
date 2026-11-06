@@ -14,8 +14,8 @@
 - [PR #13](https://github.com/Drako01/indizivo/pull/13): audit/planning, **Draft; remains untouched and unmerged** by explicit owner decision.
 - [PR #14](https://github.com/Drako01/indizivo/pull/14): implementation of **all phases**, Draft, target main; branch `feat/indizivo-enterprise-aaaa`. No merge, release, tag, version bump or brand change authorized.
 - The [CTO audit](CTO_AUDIT_2026-11-06.md) and [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) define scope, statuses and acceptance evidence.
-- The last known quality verified implementation SHA is `b0972d3e3d93827e61dfd38d25bc86e6991d4d34`: [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42296016261) PASS on Windows/Linux/macOS and official Linux Extension Host E2E. New commits need their own focused or equivalent CI validation.
-- Code in #14 is **not** published; avoid presenting its improvements as features of 0.1.3.
+- The last verified source-code SHA is `eaab0f503d9a5562c71040eb8ad82f5f6a45f50f`: [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42307228576), 4/4 PASS on Windows/Linux/macOS and official Linux Extension Host E2E. Subsequent docs-only edits do not inherit a new PASS without diff/provenance review.
+- Code in #14 is **not** published; avoid presenting its improvements as features of 0.1.3. The proposed eventual release is **0.2.0**, still contingent on owner GO/NO-GO, tests and version approval. The manifest remains at 0.1.3.
 
 ## Enterprise AAAA is not certified
 - No full WSL/SSH/Containers topology matrix, Windows/macOS interactive UI E2E, NVDA/VoiceOver usability, external customer trial or security penetration test has been completed.

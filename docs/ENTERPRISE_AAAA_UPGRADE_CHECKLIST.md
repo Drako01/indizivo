@@ -1,7 +1,7 @@
 # INDIZIVO — Enterprise AAAA upgrade control checklist
 
 > Fecha de apertura: 2026-11-06 (ART). Baseline auditada: `main` @ `9bad7cca3c08dda4018dc3f6c98e22dffe80def1`, paquete `0.1.3`.
-> Estado: **AUDITADO / IMPLEMENTACION NO INICIADA**. Este documento es un plan de trabajo, no una certificacion.
+> Estado: **IMPLEMENTACION ACTIVA EN PR #14 (DRAFT)**; ver ledger mas abajo. Objetivo de version futura: **0.2.0**, sin bump ni publicacion autorizada. Este documento no es una certificacion.
 > Prioridad: correccion diagnostica > seguridad > confiabilidad > utilidad > cobertura > estetica.
 > CTO gate: no declarar "AAAA", "production ready" ni "essential" sin evidencias de pruebas reales y criterios de salida aprobados.
 
@@ -99,13 +99,13 @@
 
 **Rama:** `feat/indizivo-enterprise-aaaa`. **PR:** https://github.com/Drako01/indizivo/pull/14 (DRAFT; unico PR para todas las fases, sin merge). El PR #13 permanece Draft, sin fusionar ni cerrar.
 
-**Ultimo commit integral verificado ANTES de esta actualizacion documental:** `71dee0ff597b7159cfc8992453ca33298d691473`, [Quality Gate 42301331335](https://github.com/Drako01/indizivo/actions/runs/42301331335): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
+**Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `eaab0f503d9a5562c71040eb8ad82f5f6a45f50f`, [Quality Gate 42307228576](https://github.com/Drako01/indizivo/actions/runs/42307228576): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
 
 **Candidato VSIX empaquetado instalado:** `5a416aaed3d4f4017da012340a61dab51f4356f6`, [run 42300511256](https://github.com/Drako01/indizivo/actions/runs/42300511256), PASS en un Extension Host aislado Linux, checksum e inspeccion del inventario. Este PASS es del SHA indicado, **no** de todos los cambios posteriores.
 
 | ID | Estado basado en evidencia | Nota / criterio pendiente |
 |---|---|---|
-| D-01 | IMPLEMENTED_VERIFIED_SUBSET | Semver ~, ^, comparadores parciales, OR, wildcard, fail-closed: pruebas PASS; falta corpus de referencia npm semver ampliado |
+| D-01 | IMPLEMENTED_VERIFIED_SUBSET | Semver ~, ^, comparadores parciales, OR, wildcard (incl. ^0.0.x y 1.2.*), fail-closed, 35 casos contrastados con npm semver 7.6.3 en test/versions-reference.test.js; prerreleases/hyphen se mantienen INCONCLUSIVE y la equivalencia total con npm queda fuera de alcance |
 | D-02 | IMPLEMENTED_PARTIAL | `go` y `toolchain` diferenciados; falta matriz de versiones Go real |
 | D-03 | IMPLEMENTED_PARTIAL | HTTP loopback IPv4/IPv6, pruebas en CI; falta topologia completa de SO/host remoto |
 | D-04 | VERIFIED | Puerto declarado vs heuristica Next/Vite, tests y textos |
@@ -113,24 +113,25 @@
 | D-06 | VERIFIED | IDs por URL canonica, pruebas de reorder y comparacion posterior a service recheck |
 | D-07 | VERIFIED | Archivo ausente vs ilegible/bloqueado; no falsear ausencia de claves en .env |
 | D-08 | VERIFIED | README/ROADMAP/PRIVACY 0.1.3, CURRENT_STATE y notas historicas etiquetadas |
+| D-09 | IMPLEMENTED_PARTIAL | Corpus npm semver 7.6.3 con expectativas congeladas y tests adversariales; faltan fixtures externos de falsos positivos y negativos reales, con etiquetas y tasa medida |
 | S-01/S-04/S-08 | IMPLEMENTED_PARTIAL | Seleccion de subproyecto con realpath y trust existente; falta WSL/SSH/containers/TOCTOU adversarial |
 | S-02 | IMPLEMENTED_PARTIAL | Deadline monotónico por diagnóstico/servicios, resultados parciales; falta cancelacion process-tree real |
 | S-03 | IMPLEMENTED_UNIT_VERIFIED | Batch de owner OS, coincidencia exacta macOS; faltan pruebas con procesos reales en cada SO |
-| S-05 | IMPLEMENTED_PARTIAL | Historial acotado, contratos persistidos, migracion legacy, sanitizacion de comparacion/provenance/discovery; faltan fallos I/O adversariales |
-| S-06 | IMPLEMENTED_PARTIAL | Allowlist y consentimiento localhost; falta corpus avanzado de SSRF/DNS/redirect |
+| S-05 | IMPLEMENTED_PARTIAL | Historial acotado, migracion explicita de schema legacy v1, rechazo de schemas futuros desconocidos, sanitizacion de comparison/provenance/discovery; faltan fallos I/O adversariales |
+| S-06 | IMPLEMENTED_PARTIAL | Allowlist y consentimiento localhost; service targets rechazados generan BLOCKED sin solicitud HTTP ni eco de URL; regression test PASS. Pendiente corpus avanzado SSRF/DNS/redirect |
 | S-07 | IMPLEMENTED_UNIT_VERIFIED | Redaccion sintetica en export/copy y no leer valores de .env; no garantiza detectar todos los formatos de secretos |
 | P-02 | IMPLEMENTED_PARTIAL | Descubrimiento superficial limitado de monorepo/multi-root y seleccion explicita; falta UX real remoto |
 | P-03/P-04 | IMPLEMENTED_UNIT_VERIFIED | Versiones permitidas de Python/PHP/Java/Docker CLI; Node/Go y lockfile/packageManager read-only; sin afirmaciones de compatibilidad de dependencias |
 | P-05/P-06/P-07 | IMPLEMENTED_PARTIAL | Evidencia con confianza y limitaciones, diff post-recheck y filtros UI; faltan pruebas de usuario y navegacion real completa |
 | P-08 | IMPLEMENTED_UNIT_VERIFIED | JSON versionado y `vscode.workspace.fs` para URI remota, redaccion; falta corpus export amplio |
-| A-01/A-03 | IMPLEMENTED_PARTIAL | Modulos storage, tool-probes, budget, monorepo, redaction; tipado estricto y contratos; ControlCenter aun concentra responsabilidades |
+| A-01/A-03 | IMPLEMENTED_PARTIAL | Modulos storage, tool-probes, budget, monorepo, redaction; validacion estricta de campos Webview y schema historico; ControlCenter aun concentra responsabilidades |
 | A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unitarios, integracion Webview en VM, Extension Host Linux, estado PARTIAL; falta matriz UI/VSIX multi-SO |
 | R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft, Quality Gate 3-SO PASS y VSIX candidato Linux PASS de SHA anterior; no certifica release completo ni prueba UI real |
 | R-08/R-09/R-10 | OPEN/CONTROLLED | Matriz manual, GO/NO-GO y restricciones owner documentadas; no merge/tag/release ni cambios de branding |
 
 ### Handoff verificable (ultimo bloque)
 
-- **Ultimo codigo verificado:** `71dee0ff597b7159cfc8992453ca33298d691473` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42301331335).
+- **Ultimo codigo verificado:** `eaab0f503d9a5562c71040eb8ad82f5f6a45f50f` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42307228576).
 - **VSIX aislado verificado:** `5a416aaed3d4f4017da012340a61dab51f4356f6` — [Packaged VSIX PASS](https://github.com/Drako01/indizivo/actions/runs/42300511256), **commit anterior**.
 - **Ultimos cambios posteriores al checklist anterior:** monorepo/seleccion segura; sanitizacion de redaccion/copy/export; flujo CI de VSIX no publicador; restauracion segura de comparaciones; cambio de estado de servicios solo tras recheck aprobado; lockfiles/package manager; tests Webview; modelo de amenazas y matriz manual de aceptacion.
 - **Bugs de CI detectados y corregidos:** fixture de go.mod, allowlist de requisitos de versiones, test de enlace README empaquetado, inventario VSIX de modulos, contratos persistidos `lockfiles/packageManager`. Los runs fallidos historicos no se reetiquetan PASS; el run mas reciente del SHA de codigo es PASS.
@@ -138,19 +139,35 @@
 - **Proxima accion:** verificar si el cambio solo documental obliga a nuevo run, luego priorizar cobertura de contratos, threat fixtures, rendimiento y UX real. Para un nuevo candidato VSIX usar SHA exacto del ultimo codigo, sin publicar.
 - **Restricciones:** PR #13 y PR #14 siguen Draft; NO merge, NO close, NO release, NO tag, NO cambio de logos.
 
+
+### Iteracion 2026-11-06 — precision Node, contratos y rechazo HTTP (PR #14)
+
+| SHA de codigo | IDs / cambios focalizados | Comando automatizado y evidencia | Estado |
+|---|---|---|---|
+| [8db977f](https://github.com/Drako01/indizivo/commit/8db977f777210ac2576c0c48ca6c7b31e5b18739) | D-01/S-09/P-09: constraint desconocida de .nvmrc no desaparece; INCONCLUSIVE sin filtrar texto, i18n EN/ES | `npm run verify` 3 SO + `npm run test:e2e` Linux, [run 42306464537](https://github.com/Drako01/indizivo/actions/runs/42306464537) | PASS 4/4 |
+| [882d6a0](https://github.com/Drako01/indizivo/commit/882d6a07b5f9469a0c75d3aeaa736842ea40eea8) | S-05/A-03: schema v1 explicitamente migrado, futuros rechazados, mensajes Webview de forma exacta | Mismos gates afectados, [run 42306713171](https://github.com/Drako01/indizivo/actions/runs/42306713171) | PASS 4/4 |
+| [e144618](https://github.com/Drako01/indizivo/commit/e1446183d5169e3004ac21cd52f913ecca5d55e7) | D-01/D-09: corpus de 35 casos npm semver 7.6.3; ^0.0.x, ~1.x, wildcards *. Unsupported fail-closed | Mismos gates afectados, [run 42306970103](https://github.com/Drako01/indizivo/actions/runs/42306970103) | PASS 4/4 |
+| [eaab0f5](https://github.com/Drako01/indizivo/commit/eaab0f503d9a5562c71040eb8ad82f5f6a45f50f) | S-06/S-09: target HTTP invalidado => BLOCKED, ninguna solicitud y ninguna URL sensible en evidencia | Mismos gates afectados, [run 42307228576](https://github.com/Drako01/indizivo/actions/runs/42307228576) | PASS 4/4 |
+
+- **Codigo y pruebas nuevas:** solo los archivos de versiones, diagnostic, storage, mensajes, i18n y sus tests; los tres sistemas operativos se verificaron porque cambian contratos comunes. No se repitio manualmente npm ci/VSIX fuera de los gates.
+- **Evidencia de referencia externa:** comparacion del corpus con `semver@7.6.3` distribuido con npm en un entorno local Node 22, el 2026-11-06. El corpus queda congelado en `test/versions-reference.test.js`; no es prueba de semver total ni requiere descargar una dependencia nueva en CI.
+- **Sin cambio:** `package.json` permanece `0.1.3`; logos, publisher, permisos, reglas, main, PR #13, tags y registries intactos.
+- **Riesgos no cerrados:** P0/P1 que requieran pruebas reales y externa observacion permanecen abiertos. El candidato VSIX de HEAD y el UX/a11y/remote gate no quedan validados por esta actualizacion documental.
+- **Handoff exacto:** continuar desde `feat/indizivo-enterprise-aaaa`, inspeccionar la ejecucion `Indizivo / Enterprise VSIX Candidate Gate` para el SHA del siguiente commit, registrar hash del VSIX sin publicar, y despues ejecutar la matriz de [aceptacion manual](ENTERPRISE_AAAA_MANUAL_ACCEPTANCE.md). No reejecutar pruebas de SHA ya verificados cuando el diff sea solo documental.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
 |---|---|
 | Fecha / operador | 2026-11-06 / implementacion continua |
 | Rama de implementacion | feat/indizivo-enterprise-aaaa (PR #14 Draft) |
-| Ultimo commit inspeccionado | 71dee0ff597b7159cfc8992453ca33298d691473 (anterior a esta edicion documental) |
-| Ultimo commit con calidad verificada | 71dee0ff597b7159cfc8992453ca33298d691473 (run 42301331335, Windows/Linux/macOS + Linux E2E PASS) |
+| Ultimo commit inspeccionado | eaab0f503d9a5562c71040eb8ad82f5f6a45f50f (ultimo codigo, antes del commit documental) |
+| Ultimo commit con calidad verificada | eaab0f503d9a5562c71040eb8ad82f5f6a45f50f (run 42307228576, Windows/Linux/macOS + Linux E2E 4/4 PASS) |
 | Fase en curso | Fases 1–5 parcialmente desarrolladas en PR #14; hardening, matriz manual y certificacion pendientes |
 | Ultimo ID completado | D-08 (ademas D-04, D-06, D-07) |
 | IDs IN_PROGRESS | D-01, D-02, D-03, D-05, S-01/02/03/04/05/06/07/08, P-02/03/04/05/06/07/08, A-01/03/04/07, R-01/03/07 |
 | Bloqueos | UI real y accesibilidad, entornos remotos, pruebas con usuarios, seguridad adversarial y VSIX del HEAD final pendientes |
-| Proxima accion exacta | Continuar PR #14 con fixtures de seguridad, validacion de contratos y nuevo candidato VSIX del SHA final; no publicar |
+| Proxima accion exacta | Revisar Enterprise VSIX Candidate Gate del nuevo commit documental; luego pruebas reales UI/teclado, lector pantalla, WSL/SSH/Containers y medicion p50/p95/RSS. No publicar. |
 | Gates integrales pendientes | VSIX del HEAD final, browser UI real, a11y, WSL/SSH/containers, p95/RSS, false-positive corpus y QA externo |
 | Release decision | NO-GO para Enterprise AAAA |
 
