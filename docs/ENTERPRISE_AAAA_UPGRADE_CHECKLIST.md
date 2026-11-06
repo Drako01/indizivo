@@ -31,7 +31,7 @@
 ## Fase 1 — P0: veracidad del diagnostico y deuda critica
 
 - [ ] D-01 Sustituir/aislar parser de versiones Node por semantica npm compatible y testeada; casos `~1`, `~1.2`, `^0.0.x`, wildcard, OR, prerelease, engines y .nvmrc. Si no se puede interpretar, INCONCLUSIVE, nunca falsa incompatibilidad. Aceptacion: corpus de rangos comparado con referencia confiable y fixtures; sin regresiones.
-- [ ] D-02 Verificar version Go con ``go` y ``toolchain` en go.mod, sin confundir minimo con toolchain requerida. Aceptacion: casos validos, edge cases y evidencia exacta de origen.
+- [ ] D-02 Verificar version Go con `go` y `toolchain` en go.mod, sin confundir minimo con toolchain requerida. Aceptacion: casos validos, edge cases y evidencia exacta de origen.
 - [ ] D-03 Corregir contratos de red IPv4/IPv6: `localhost`, `127.0.0.1`, `[::1]`, bound addresses, host y namespace. El probe actual fuerza lookup a 127.0.0.1 aun cuando el usuario declaro IPv6. Aceptacion: tests contra servidores reales IPv4 y IPv6 en SO compatibles, con SKIP justificado cuando IPv6 no exista.
 - [ ] D-04 Dejar de inferir "puerto del proyecto" sin origen confiable; next:3000/vite:5173 deben estar marcados como sugerencias heuristicas, no como configuracion observada. Aceptacion: etiqueta observed/inferred + fuente.
 - [ ] D-05 Crear modelo canonico de Finding/Evidence: id estable, checkId, targetId, scope de host, metodo, timestamp, estado, severidad, confianza, origen, limitaciones y next step verificable. Aceptacion: schema versionado y migracion no destructiva.
