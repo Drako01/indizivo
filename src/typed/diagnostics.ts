@@ -4,6 +4,7 @@ import * as net from 'node:net';
 import * as http from 'node:http';
 import * as crypto from 'node:crypto';
 import {probeTool} from './tool-probes';
+import {DiagnosticBudget,DiagnosticBudgetExhausted} from './budget';
 import type {ToolName,ToolResult} from './tool-probes';
 import {evaluateVersion} from './versions';
 import {inspectOwner} from './port-owners';
@@ -236,12 +237,17 @@ function inspectService(service:ServiceTarget,timeout:number,signal?:AbortSignal
 export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
  progress?:(checks:DiagnosticCheck[])=>void):Promise<DiagnosticSession> {
   const start = new Date().toISOString();
+  const t=Math.min(10000,Math.max(400,Number(timeout)||2500));
+  const budget=new DiagnosticBudget(Math.min(45000,Math.max(5000,t*6)));
+  const timeLeft=()=>budget.remaining(t);
   assertActive(signal);
   const d = await discover(root);
   assertActive(signal);
   const checks:DiagnosticCheck[] = [];
   const push = (c:DiagnosticCheck):void => { checks.push(c); progress?.([...checks]); };
-  const t = Math.min(10000, Math.max(400, Number(timeout) || 2500));
+  let finalState:SessionStatus='completed';
+  try{
+  timeLeft();
   for(const [name,status] of Object.entries(d.fileStates)) {
     if(status!=='blocked' && status!=='unreadable')continue;
     const safeId=name.replace(/[^a-z0-9]/gi,'-');
@@ -261,7 +267,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     }));
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const result = await probeTool('node', t, signal);
+    const result = await probeTool('node', timeLeft(), signal);
     assertActive(signal);
     const localizedVersion=result.ok ? result.value :
       result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
@@ -288,7 +294,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const result = await probeTool('go',t,signal);
+    const result = await probeTool('go',timeLeft(),signal);
     assertActive(signal);
     const localizedVersion=result.ok ? result.value :
       result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
@@ -322,7 +328,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     if(!sources.length)continue;
     let observed:ToolResult={ok:false,missing:true,value:'Not installed / not on PATH'};
     for(const tool of tools){
-      observed=await probeTool(tool,t,signal);
+      observed=await probeTool(tool,timeLeft(),signal);
       assertActive(signal);
       if(!observed.missing)break;
     }
@@ -355,9 +361,9 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
   }
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const status = await inspectPort(port,t,signal);
+    const status = await inspectPort(port,timeLeft(),signal);
     assertActive(signal);
-    const owner = status==='listening' ? await inspectOwner(port,t,signal) : null;
+    const owner = status==='listening' ? await inspectOwner(port,timeLeft(),signal) : null;
     assertActive(signal);
     const ownerDetail=owner?.owners?.length ?
       ' Listening owner(s): '+owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')+'.' :
@@ -395,18 +401,45 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       label:msg('diag.label.none'),category:msg('diag.category.Discovery'),
       detail:msg('diag.noneDetail')
     }));
+  }catch(error){
+    if(!(error instanceof DiagnosticBudgetExhausted))throw error;
+    finalState='partial';
+    push(createCheck('budget','Discovery','Diagnosis time budget','inconclusive',
+      'The diagnostic time budget expired. Not all checks were executed.',
+      'Inspect completed evidence, then retry when the environment is responsive.',
+      'Some checks were not run and are not represented as PASS.',{
+        label:msg('diag.budgetLabel'),category:msg('diag.category.Discovery'),
+        detail:msg('diag.budgetReached'),suggestion:msg('diag.budgetNext'),
+        evidence:msg('diag.budgetEvidence')
+      }));
+  }
   return { id: crypto.randomBytes(8).toString('hex'), project: d.project,
     schemaVersion:2,startedAt:start, completedAt:new Date().toISOString(), host:process.platform,
-    state:'completed', checks, discovery:d, serviceChecks:[] };
+    state:finalState, checks, discovery:d, serviceChecks:[] };
 }
 export async function verifyServices(services:ServiceTarget[],timeout:number,signal?:AbortSignal,
  progress?:(checks:DiagnosticCheck[])=>void):Promise<DiagnosticCheck[]> {
   const checks:DiagnosticCheck[] = [];
+  const budget=new DiagnosticBudget(Math.min(45000,Math.max(5000,timeout*5)));
   for (let i=0;i<services.length;i++) {
     if (signal?.aborted) throw new Error('Cancelled');
     const svc = validateService(services[i]);
     if (!svc) continue;
-    const result = await inspectService(svc, Math.max(400, Math.min(10000, timeout)), signal);
+    let allowed:number;
+    try{allowed=budget.remaining(timeout);}
+    catch(error){
+      if(!(error instanceof DiagnosticBudgetExhausted))throw error;
+      checks.push(createCheck('service-budget','Services','Service time budget','inconclusive',
+        'The service verification budget was exhausted. Remaining endpoints were not contacted.',
+        'Review completed checks and retry when the service environment is responsive.','No additional HTTP requests were sent.',{
+          category:msg('diag.category.Services'),label:msg('diag.budgetLabel'),
+          detail:msg('diag.budgetReached'),suggestion:msg('diag.budgetNext'),
+          evidence:msg('diag.budgetEvidence')
+        }));
+      progress?.([...checks]);
+      break;
+    }
+    const result = await inspectService(svc, allowed, signal);
     assertActive(signal);
     const stableId='service-'+crypto.createHash('sha256').update(svc.url).digest('hex').slice(0,24);
     checks.push(createCheck(stableId,'Services',svc.name,

@@ -80,7 +80,7 @@ function finding(value:unknown):DiagnosticCheck|null {
 }
 export function restoreSession(value:unknown):DiagnosticSession|null {
   const raw=record(value);
-  if(!raw || raw.state!=='completed'||!str(raw.id,90)||
+  if(!raw || !['completed','partial'].includes(String(raw.state))||!str(raw.id,90)||
      !str(raw.project,160)||!str(raw.completedAt,60)||!str(raw.startedAt,60)||
      !str(raw.host,100)||!Array.isArray(raw.checks)||
      !Array.isArray(raw.serviceChecks)||
@@ -93,7 +93,7 @@ export function restoreSession(value:unknown):DiagnosticSession|null {
   const discovery=record(raw.discovery);
   if(!discovery)return null;
   const safe={
-    id:raw.id,project:raw.project,host:raw.host,state:'completed' as const,
+    id:raw.id,project:raw.project,host:raw.host,state:raw.state as 'completed'|'partial',
     startedAt:raw.startedAt,completedAt:raw.completedAt,
     ...(typeof raw.schemaVersion==='number' && Number.isInteger(raw.schemaVersion)?
       {schemaVersion:raw.schemaVersion}:{}),

@@ -44,3 +44,12 @@ test('history rejects invalid entries without losing valid ones',()=>{
  assert.equal(found.length,1);
  assert.equal(found[0].snapshot.schemaVersion,2);
 });
+
+test('partial sessions remain inspectable but are never promoted to completed',()=>{
+ const run=session();run.state='partial';
+ const restored=restoreSession(run);
+ assert.equal(restored.state,'partial');
+ const history=restoreHistory([{project:'example',completedAt:'2026-11-06',
+   checks:[{id:'budget',status:'inconclusive'}],snapshot:run}]);
+ assert.equal(history[0].snapshot.state,'partial');
+});
