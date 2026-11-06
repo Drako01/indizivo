@@ -15,8 +15,10 @@ export interface PackageManifest {
  devDependencies?:Record<string,string>;
  engines?:{node?:string};
 }
+export type FileReadState='present'|'missing'|'blocked'|'unreadable';
 export interface Discovery {
  project:string;node:boolean;go:boolean;malformedPackage:boolean;
+ fileStates:Record<string,FileReadState>;
  nodeRequirement:string;goRequirement:string;goToolchain:string;ports:number[];
   portOrigins:Record<string,'declared'|'heuristic'>;
  requiredEnv:string[];missingEnv:string[];
@@ -78,21 +80,28 @@ function safeVersionRequirement(input:unknown):string {
   const value=String(input||'').trim().slice(0,80);
   return /^[0-9v.^~<>=*xX|\s,]{1,80}$/.test(value)?value:'';
 }
-async function readBounded(root:string,name:string):Promise<string> {
+interface InputFile {state:FileReadState;data:string}
+function classifiedError(error:unknown):FileReadState {
+  const code=error && typeof error==='object' && 'code' in error ? String(error.code) : '';
+  return code==='ENOENT'?'missing':'unreadable';
+}
+async function readBounded(root:string,name:string):Promise<InputFile> {
   let handle:fs.FileHandle|undefined;
+  const fail=(state:FileReadState):InputFile=>({state,data:''});
   try {
     const base=await fs.realpath(root);
     const full=path.resolve(root,name);
-    if(!full.startsWith(path.resolve(root)+path.sep))return '';
-    const stat=await fs.lstat(full);
-    if(!stat.isFile() || stat.isSymbolicLink() || stat.size>262144)return '';
+    if(!full.startsWith(path.resolve(root)+path.sep))return fail('blocked');
+    let stat;
+    try { stat=await fs.lstat(full); } catch(error) {return fail(classifiedError(error));}
+    if(!stat.isFile() || stat.isSymbolicLink() || stat.size>262144)return fail('blocked');
     const real=await fs.realpath(full);
-    if(!real.startsWith(base+path.sep))return '';
+    if(!real.startsWith(base+path.sep))return fail('blocked');
     // No shell, no traversal and no following a replaced final symlink.
     const flags=require('node:fs').constants;
     handle=await fs.open(full,flags.O_RDONLY|(flags.O_NOFOLLOW||0));
     const fileStat=await handle.stat();
-    if(!fileStat.isFile() || fileStat.size>262144)return '';
+    if(!fileStat.isFile() || fileStat.size>262144)return fail('blocked');
     const limit=262145;
     const buffer=Buffer.alloc(limit);
     let total=0;
@@ -101,9 +110,9 @@ async function readBounded(root:string,name:string):Promise<string> {
       if(!chunk.bytesRead)break;
       total+=chunk.bytesRead;
     }
-    if(total>262144)return '';
-    return buffer.subarray(0,total).toString('utf8');
-  } catch { return ''; }
+    if(total>262144)return fail('blocked');
+    return {state:'present',data:buffer.subarray(0,total).toString('utf8')};
+  } catch(error) {return fail(classifiedError(error));}
   finally { if(handle)await handle.close(); }
 }
 export function validateService(input:unknown):ServiceTarget|null {
@@ -120,11 +129,15 @@ export function validateService(input:unknown):ServiceTarget|null {
   } catch { return null; }
 }
 export async function discover(root:string):Promise<Discovery> {
-  const packageText = await readBounded(root, 'package.json');
-  const goMod = await readBounded(root, 'go.mod');
-  const example = await readBounded(root, '.env.example');
-  const env = await readBounded(root, '.env');
-  const nvm = safeVersionRequirement(await readBounded(root, '.nvmrc'));
+  const fileNames=['package.json','go.mod','.env.example','.env','.nvmrc'] as const;
+  const files=await Promise.all(fileNames.map(name=>readBounded(root,name)));
+  const [packageFile,goFile,exampleFile,envFile,nvmFile]=files;
+  const packageText=packageFile?.data||'',goMod=goFile?.data||'';
+  const example=exampleFile?.data||'',env=envFile?.data||'';
+  const nvm=safeVersionRequirement(nvmFile?.data);
+  const fileStates:Record<string,FileReadState>={};
+  for(const [index,name] of fileNames.entries())
+    fileStates[name]=files[index]?.state||'unreadable';
   let pkg:PackageManifest|null=null;
   try {
     const parsed:unknown=packageText?JSON.parse(packageText):null;
@@ -140,13 +153,14 @@ export async function discover(root:string):Promise<Discovery> {
   if (!ports.length && deps.vite){ports.push(5173);portOrigins['5173']='heuristic';}
   const required = parseKeys(example);
   const provided = new Set(parseKeys(env));
-  return { project: path.basename(root), node: Boolean(packageText), go: Boolean(goMod),
-    malformedPackage: Boolean(packageText && !pkg),
+  const envInspectable=envFile?.state==='present'||envFile?.state==='missing';
+  return { project: path.basename(root), node: packageFile?.state==='present', go: goFile?.state==='present',
+    malformedPackage: packageFile?.state==='present' && !pkg, fileStates,
     nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
     goToolchain: /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)/m.exec(goMod)?.[1] || '',
-    ports,portOrigins, requiredEnv: required, missingEnv: required.filter(key => !provided.has(key)),
-    hasEnvExample: !!example, hasEnvFile: !!env };
+    ports,portOrigins, requiredEnv: required, missingEnv: envInspectable?required.filter(key => !provided.has(key)):[],
+    hasEnvExample: exampleFile?.state==='present', hasEnvFile: envFile?.state==='present' };
 }
 function runVersion(command:string,args:string[],timeout:number,signal?:AbortSignal):
  Promise<VersionResult> {
@@ -219,6 +233,19 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
   const checks:DiagnosticCheck[] = [];
   const push = (c:DiagnosticCheck):void => { checks.push(c); progress?.([...checks]); };
   const t = Math.min(10000, Math.max(400, Number(timeout) || 2500));
+  for(const [name,status] of Object.entries(d.fileStates)) {
+    if(status!=='blocked' && status!=='unreadable')continue;
+    const safeId=name.replace(/[^a-z0-9]/gi,'-');
+    push(createCheck('file-'+safeId,'Configuration',name,'inconclusive',
+      'Configuration source could not be inspected ('+status+').',
+      'Review file permissions, size and symlinks before relying on missing configuration conclusions.',
+      'Source '+name+' was '+status+'; contents were not retained.', {
+        category:msg('diag.category.Configuration'),
+        detail:msg('diag.fileUnavailable',{source:name}),
+        suggestion:msg('diag.fileNext'),
+        evidence:msg('diag.fileEvidence',{source:name,status})
+      }));
+  }
   if (d.malformedPackage) push(createCheck('package','Configuration','package.json','warn',
     'Invalid JSON; Node.js project metadata cannot be inspected.','','', {
       category:msg('diag.category.Configuration'),detail:msg('diag.invalidPackage')
@@ -277,7 +304,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
         evidence:msg('diag.outputVersion',{value:localizedVersion})
       }));
   }
-  if (d.hasEnvExample) {
+  if (d.hasEnvExample && ['present','missing'].includes(d.fileStates['.env']||'')) {
     const missing = d.missingEnv;
     push(createCheck('env','Configuration','Environment key presence',missing.length?'warn':'pass',
       missing.length ? 'Missing in .env: ' + missing.join(', ') :

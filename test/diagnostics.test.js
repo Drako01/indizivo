@@ -61,3 +61,17 @@ test('explicit ports and Go toolchain remain separately attributed',async()=>{
   assert.equal(d.goToolchain,'1.24.5');
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('unreadable or blocked config becomes inconclusive, never a false missing-key claim',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-blocked-'));
+ try{
+  await fs.writeFile(path.join(root,'.env.example'),'API_KEY=placeholder');
+  await fs.mkdir(path.join(root,'.env'));
+  const d=await discover(root);
+  assert.equal(d.fileStates['.env'],'blocked');
+  assert.deepEqual(d.missingEnv,[]);
+  const run=await diagnose(root,500);
+  assert.equal(run.checks.find(c=>c.id==='file--env').status,'inconclusive');
+  assert.ok(!run.checks.some(c=>c.id==='env'));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

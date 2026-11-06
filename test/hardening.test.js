@@ -29,7 +29,8 @@ test('symlinks are not read, including symlinks to sensitive outside files',asyn
   }
   await fs.writeFile(path.join(root,'.env.example'),'PRIVATE=placeholder');
   const result=await discover(root);
-  assert.deepEqual(result.missingEnv,['PRIVATE']);
+  assert.deepEqual(result.missingEnv,[],'unreadable env never implies a missing key');
+  assert.equal(result.fileStates['.env'],'blocked');
   assert.doesNotMatch(JSON.stringify(result),/secret-value/);
  }finally{await fs.rm(root,{recursive:true,force:true});await fs.rm(outside,{recursive:true,force:true});}
 });
