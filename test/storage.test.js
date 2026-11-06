@@ -18,12 +18,14 @@ test('valid v2 session and a legacy session with absent schema remain navigable'
  assert.equal(current.checks.length,1);
  assert.ok(localizeFinding(current.checks[0],'es').detail.includes('v24'));
  const older=session();delete older.schemaVersion;
- assert.ok(restoreSession(older));
+ assert.equal(restoreSession(older).schemaVersion,1);
 });
 test('corrupt or oversized state cannot masquerade as a complete session',()=>{
  const invalid=[null,'unsafe',{state:'completed'},{...session(),state:'running'},
    {...session(),checks:Array.from({length:151},()=>session().checks[0])},
-   {...session(),checks:[{...session().checks[0],detail:'x'.repeat(6000)}]}];
+   {...session(),checks:[{...session().checks[0],detail:'x'.repeat(6000)}]},
+   {...session(),schemaVersion:0},{...session(),schemaVersion:3},
+   {...session(),schemaVersion:'2'},{...session(),schemaVersion:-1}];
  for(const candidate of invalid)assert.equal(restoreSession(candidate),null);
 });
 test('history is capped, validates schema and drops malformed translation descriptors',()=>{
@@ -76,4 +78,14 @@ test('valid comparison is preserved, hostile provenance and arbitrary discovery 
  assert.equal(restored.comparison.observations.length,1);
  assert.equal(restored.discovery.extraSecret,undefined);
  assert.equal(restored.checks[0].provenance,undefined);
+});
+
+test('future snapshot schemas are ignored without suppressing safe history summaries',()=>{
+ const unknown={...session(),schemaVersion:200};
+ assert.equal(restoreSession(unknown),null);
+ const history=restoreHistory([{project:'example',completedAt:'2026-11-06',
+   checks:[{id:'node',status:'warn'}],snapshot:unknown}]);
+ assert.equal(history.length,1);
+ assert.equal(history[0].snapshot,undefined);
+ assert.deepEqual(history[0].checks,[{id:'node',status:'warn'}]);
 });

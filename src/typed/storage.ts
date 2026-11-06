@@ -144,7 +144,11 @@ function safeDiscovery(value:unknown):DiagnosticSession['discovery']|null {
 }
 export function restoreSession(value:unknown):DiagnosticSession|null {
   const raw=record(value);
-  if(!raw || !['completed','partial'].includes(String(raw.state))||!str(raw.id,90)||
+  // Legacy snapshots without a version are schema v1; unknown future schemas
+  // must never be interpreted as successful current diagnostics.
+  const schemaVersion=raw?.schemaVersion===undefined?1:raw.schemaVersion;
+  if((schemaVersion!==1 && schemaVersion!==2) ||
+     !raw || !['completed','partial'].includes(String(raw.state))||!str(raw.id,90)||
      !str(raw.project,160)||!str(raw.completedAt,60)||!str(raw.startedAt,60)||
      !str(raw.host,100)||!Array.isArray(raw.checks)||
      !Array.isArray(raw.serviceChecks)||
@@ -160,8 +164,7 @@ export function restoreSession(value:unknown):DiagnosticSession|null {
   const safe={
     id:raw.id,project:raw.project,host:raw.host,state:raw.state as 'completed'|'partial',
     startedAt:raw.startedAt,completedAt:raw.completedAt,
-    ...(typeof raw.schemaVersion==='number' && Number.isInteger(raw.schemaVersion)?
-      {schemaVersion:raw.schemaVersion}:{}),
+    schemaVersion,
     ...(str(raw.scopeId,100)?{scopeId:raw.scopeId}:{}),
     checks:checks as DiagnosticCheck[],serviceChecks:serviceChecks as DiagnosticCheck[],
     discovery,
