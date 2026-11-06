@@ -1,6 +1,8 @@
 // Indizivo 0.1.3: validate multi-registry release automation; runtime behavior unchanged.
 import * as vscode from 'vscode';
 import * as crypto from 'node:crypto';
+import * as path from 'node:path';
+import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
 import {html} from './ui';
@@ -80,7 +82,10 @@ export class ControlCenter {
       locale: this.data.locale,
       reviewMode: this.selectedHistoryIndex!==null,
       selectedHistoryIndex: this.selectedHistoryIndex,
-      project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
+      project: this.currentRoot ?
+        (vscode.workspace.getWorkspaceFolder(this.currentRoot)?.uri.toString()===this.currentRoot.toString() ?
+         vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : path.basename(this.currentRoot.fsPath)):'',
+
       host: process.platform + (vscode.env.remoteName?' · '+vscode.env.remoteName:'')+
         ' · ' + this.tr('ui.hostCurrent'),
       trusted: vscode.workspace.isTrusted,
@@ -131,28 +136,37 @@ export class ControlCenter {
   }
   async selectProject() {
     if (this.running) throw new Error(this.tr('host.cancelProject'));
-    const folders = vscode.workspace.workspaceFolders || [];
-    if (!folders.length) { this.error=this.tr('host.openFolder'); this.broadcast(); return; }
-    const selectedFolder = folders.length===1 ? folders[0] :
-      (await vscode.window.showQuickPick(
-        folders.map(folder=>({label:folder.name,description:folder.uri.fsPath,folder})),
-        {placeHolder:this.tr('host.selectProject')}))?.folder;
-    if (!selectedFolder) return;
-    this.currentRoot = selectedFolder.uri;
+    const folders=vscode.workspace.workspaceFolders||[];
+    if(!folders.length){this.error=this.tr('host.openFolder');this.broadcast();return;}
+    const options:{label:string;description:string;detail?:string;uri:vscode.Uri}[]=[];
+    for(const folder of folders){
+      options.push({label:folder.name,description:folder.uri.fsPath,uri:folder.uri});
+      if(folder.uri.scheme!=='file')continue;
+      // Explicit, shallow, bounded user-initiated discovery; never recursively scan.
+      for(const project of await discoverProjectRoots(folder.uri.fsPath)){
+        options.push({label:project.label,description:folder.name,
+          detail:project.marker,uri:vscode.Uri.file(project.path)});
+      }
+    }
+    const selected=options.length===1?options[0]:
+      await vscode.window.showQuickPick(options,{placeHolder:this.tr('host.selectProject')});
+    if(!selected)return;
+    this.currentRoot=selected.uri;
     this.selectedHistoryIndex=null;
     this.pendingApproval=null;
     this.error='';
     this.restore();
     this.broadcast();
   }
-  ensureReady() {
+  async ensureReady() {
     if (!vscode.workspace.isTrusted) throw new Error(this.tr('host.trust'));
-    if (!this.currentRoot) throw new Error(this.tr('host.projectFirst'));
-    const folders = vscode.workspace.workspaceFolders || [];
     const selectedRoot=this.currentRoot;
-    if (!folders.some(folder=>folder.uri.toString()===selectedRoot.toString()))
+    if (!selectedRoot) throw new Error(this.tr('host.projectFirst'));
+    if (selectedRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
+    const roots=(vscode.workspace.workspaceFolders||[])
+      .filter(folder=>folder.uri.scheme==='file').map(folder=>folder.uri.fsPath);
+    if(!(await isInsideWorkspace(selectedRoot.fsPath,roots)))
       throw new Error(this.tr('host.workspaceClosed'));
-    if (this.currentRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
     if (this.running) throw new Error(this.tr('host.alreadyRunning'));
   }
   cancel() {
@@ -160,7 +174,7 @@ export class ControlCenter {
     this.pendingApproval=null;
   }
   async runDiagnosis() {
-    this.ensureReady();
+    await this.ensureReady();
     this.error='';
     this.selectedHistoryIndex=null;
     const root=this.currentRoot;
@@ -176,7 +190,7 @@ export class ControlCenter {
     try {
       const session=await diagnose(root.fsPath,this.data.timeoutMs,signal,checks=>{
         this.data.session = {
-          project: vscode.workspace.getWorkspaceFolder(root)?.name || this.tr('ui.projectDefault'),
+          project: path.basename(root.fsPath) || this.tr('ui.projectDefault'),
           startedAt:new Date().toISOString(), completedAt:this.tr('ui.progress'),
           state:'running', checks, serviceChecks:[]
         };
@@ -203,7 +217,7 @@ export class ControlCenter {
     }
   }
   async prepareServices() {
-    this.ensureReady();
+    await this.ensureReady();
     if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
     if (!this.data.session) throw new Error(this.tr('host.diagnoseFirst'));
     if (!this.data.services.length) throw new Error(this.tr('host.addEndpointFirst'));
@@ -212,7 +226,7 @@ export class ControlCenter {
     this.broadcast();
   }
   async confirmServices() {
-    this.ensureReady();
+    await this.ensureReady();
     if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
     const session=this.data.session;
     if (!this.pendingApproval || !session) throw new Error(this.tr('host.approvalExpired'));
@@ -393,8 +407,10 @@ export function activate(context:vscode.ExtensionContext) {
   }
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{
     const folders=vscode.workspace.workspaceFolders || [];
-    const selected=controller.currentRoot?.toString();
-    if(selected && !folders.some(folder=>folder.uri.toString()===selected)) {
+    const selected=controller.currentRoot;
+    if(selected && !folders.some(folder=>folder.uri.scheme==='file' &&
+       (folder.uri.toString()===selected.toString() ||
+        selected.fsPath.startsWith(folder.uri.fsPath+path.sep)))) {
       controller.cancel();
       controller.currentRoot=folders.length===1 ? folders[0]?.uri ?? null : null;
       controller.restore();
