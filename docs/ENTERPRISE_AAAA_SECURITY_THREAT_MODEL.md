@@ -19,7 +19,7 @@
 | SEC-03 | External HTTP / SSRF / DNS rebinding | URL allowlist, pinned loopback, user approval, no redirects/body; invalid targets emit BLOCKED and never contact network | Automated IPv4/IPv6, rejected-target and secret-sentinel tests PASS on eaab0f5; extensive manual attack corpus pending |
 | SEC-04 | Webview XSS / arbitrary host command | Nonce CSP, inert text, runtime message validation | VM integration tests PASS; browser E2E and fuzzing pending |
 | SEC-05 | Secret value leakage | `.env` **names** only, version output sanitized, bounded reports, best-effort redaction at copy/export | Synthetic corpus PASS; redaction cannot guarantee coverage of unknown credential formats |
-| SEC-06 | Restored state denial-of-service | History/check-size limits; schema migration; i18n key and comparison validation | Automated tests; storage corruption + attack corpus needs expansion |
+| SEC-06 | Restored state denial-of-service | History/check-size limits; schema migration; i18n key and comparison validation; workspaceState get/update exceptions are caught and surfaced without corrupting current findings | Automated failure-injection tests PASS on 0c97ed0; attack corpus and real OS/remote persistence failures pending |
 | SEC-07 | False root-cause confidence | Labels observed/inferred/inconclusive, scope and target IDs, no automatic resolution | Unit tests PASS; externally labelled false-positive corpus pending |
 | SEC-08 | Remote host confusion | Extension-kind workspace; remote name and realpath scoped root checks | WSL/SSH/Dev Containers E2E not certified |
 | SEC-09 | Process-owner inspection | Read-only OS commands with bounded timeout/output and one batched snapshot | Platform parser fixtures PASS; real owner + cancellation matrix pending |

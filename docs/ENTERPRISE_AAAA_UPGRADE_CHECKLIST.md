@@ -99,7 +99,7 @@
 
 **Rama:** `feat/indizivo-enterprise-aaaa`. **PR:** https://github.com/Drako01/indizivo/pull/14 (DRAFT; unico PR para todas las fases, sin merge). El PR #13 permanece Draft, sin fusionar ni cerrar.
 
-**Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `eaab0f503d9a5562c71040eb8ad82f5f6a45f50f`, [Quality Gate 42307228576](https://github.com/Drako01/indizivo/actions/runs/42307228576): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
+**Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `0c97ed06a458666254109dfd14c877adfadbccf5`, [Quality Gate 42307778143](https://github.com/Drako01/indizivo/actions/runs/42307778143): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
 
 **Candidato VSIX empaquetado instalado:** `5a416aaed3d4f4017da012340a61dab51f4356f6`, [run 42300511256](https://github.com/Drako01/indizivo/actions/runs/42300511256), PASS en un Extension Host aislado Linux, checksum e inspeccion del inventario. Este PASS es del SHA indicado, **no** de todos los cambios posteriores.
 
@@ -117,7 +117,7 @@
 | S-01/S-04/S-08 | IMPLEMENTED_PARTIAL | Seleccion de subproyecto con realpath y trust existente; falta WSL/SSH/containers/TOCTOU adversarial |
 | S-02 | IMPLEMENTED_PARTIAL | Deadline monotónico por diagnóstico/servicios, resultados parciales; falta cancelacion process-tree real |
 | S-03 | IMPLEMENTED_UNIT_VERIFIED | Batch de owner OS, coincidencia exacta macOS; faltan pruebas con procesos reales en cada SO |
-| S-05 | IMPLEMENTED_PARTIAL | Historial acotado, migracion explicita de schema legacy v1, rechazo de schemas futuros desconocidos, sanitizacion de comparison/provenance/discovery; faltan fallos I/O adversariales |
+| S-05 | IMPLEMENTED_PARTIAL | Historial acotado, migracion explicita de schema legacy v1, rechazo de schemas futuros desconocidos y sanitizacion. Lectura/escritura workspaceState fallida: fallback seguro, mensaje EN/ES, sin falsear el diagnostico, con regresiones verificadas. Falta matriz real de fallos de disco y storage remoto |
 | S-06 | IMPLEMENTED_PARTIAL | Allowlist y consentimiento localhost; service targets rechazados generan BLOCKED sin solicitud HTTP ni eco de URL; regression test PASS. Pendiente corpus avanzado SSRF/DNS/redirect |
 | S-07 | IMPLEMENTED_UNIT_VERIFIED | Redaccion sintetica en export/copy y no leer valores de .env; no garantiza detectar todos los formatos de secretos |
 | P-02 | IMPLEMENTED_PARTIAL | Descubrimiento superficial limitado de monorepo/multi-root y seleccion explicita; falta UX real remoto |
@@ -125,13 +125,13 @@
 | P-05/P-06/P-07 | IMPLEMENTED_PARTIAL | Evidencia con confianza y limitaciones, diff post-recheck y filtros UI; faltan pruebas de usuario y navegacion real completa |
 | P-08 | IMPLEMENTED_UNIT_VERIFIED | JSON versionado y `vscode.workspace.fs` para URI remota, redaccion; falta corpus export amplio |
 | A-01/A-03 | IMPLEMENTED_PARTIAL | Modulos storage, tool-probes, budget, monorepo, redaction; validacion estricta de campos Webview y schema historico; ControlCenter aun concentra responsabilidades |
-| A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unitarios, integracion Webview en VM, Extension Host Linux, estado PARTIAL; falta matriz UI/VSIX multi-SO |
-| R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft, Quality Gate 3-SO PASS y VSIX candidato Linux PASS de SHA anterior; no certifica release completo ni prueba UI real |
+| A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unitarios, Webview en VM, Extension Host Linux, estado PARTIAL, storage I/O fallido sin diagnostico falso; falta matriz UI/VSIX multi-SO |
+| R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft; Quality Gate 3-SO PASS. VSIX de 6977fb6 instalable Linux y SHA256 verificados (run 42307501547), pero era anterior a storage I/O; nuevo VSIX HEAD pendiente. No equivale a UI real ni release |
 | R-08/R-09/R-10 | OPEN/CONTROLLED | Matriz manual, GO/NO-GO y restricciones owner documentadas; no merge/tag/release ni cambios de branding |
 
 ### Handoff verificable (ultimo bloque)
 
-- **Ultimo codigo verificado:** `eaab0f503d9a5562c71040eb8ad82f5f6a45f50f` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42307228576).
+- **Ultimo codigo verificado:** `0c97ed06a458666254109dfd14c877adfadbccf5` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42307778143).
 - **VSIX aislado verificado:** `5a416aaed3d4f4017da012340a61dab51f4356f6` — [Packaged VSIX PASS](https://github.com/Drako01/indizivo/actions/runs/42300511256), **commit anterior**.
 - **Ultimos cambios posteriores al checklist anterior:** monorepo/seleccion segura; sanitizacion de redaccion/copy/export; flujo CI de VSIX no publicador; restauracion segura de comparaciones; cambio de estado de servicios solo tras recheck aprobado; lockfiles/package manager; tests Webview; modelo de amenazas y matriz manual de aceptacion.
 - **Bugs de CI detectados y corregidos:** fixture de go.mod, allowlist de requisitos de versiones, test de enlace README empaquetado, inventario VSIX de modulos, contratos persistidos `lockfiles/packageManager`. Los runs fallidos historicos no se reetiquetan PASS; el run mas reciente del SHA de codigo es PASS.
@@ -155,19 +155,33 @@
 - **Riesgos no cerrados:** P0/P1 que requieran pruebas reales y externa observacion permanecen abiertos. El candidato VSIX de HEAD y el UX/a11y/remote gate no quedan validados por esta actualizacion documental.
 - **Handoff exacto:** continuar desde `feat/indizivo-enterprise-aaaa`, inspeccionar la ejecucion `Indizivo / Enterprise VSIX Candidate Gate` para el SHA del siguiente commit, registrar hash del VSIX sin publicar, y despues ejecutar la matriz de [aceptacion manual](ENTERPRISE_AAAA_MANUAL_ACCEPTANCE.md). No reejecutar pruebas de SHA ya verificados cuando el diff sea solo documental.
 
+
+### Iteracion 2026-11-06 — resiliencia de workspaceState y nuevo candidato
+
+| SHA de codigo | Control / outcome | Evidencia |
+|---|---|---|
+| [f6cfeab](https://github.com/Drako01/indizivo/commit/f6cfeab5808e137b5d09b78ad8b966a04c79873b) | S-05/A-07: guardas de read/write para almacenamiento no disponible, conservando evidencia en memoria. | Run 42307750774 CANCELLED por commit sucesivo: **NO PASS**. |
+| [0c97ed0](https://github.com/Drako01/indizivo/commit/0c97ed06a458666254109dfd14c877adfadbccf5) | S-05/P-09: mensaje de lectura fallida se localiza luego de resolver idioma; tests de storage read/write con fallas sintéticas, sin falsos FAILED ni fugas del error. | [Quality Gate 42307778143](https://github.com/Drako01/indizivo/actions/runs/42307778143): 4/4 PASS (Linux, Windows, macOS, Extension Host Linux). |
+| [6977fb6](https://github.com/Drako01/indizivo/commit/6977fb6fa274ba97c552f897f84c46865bdf45d7) | Candidato de código anterior a storage: VSIX instalado Linux, inspección, smoke y checksum. | [Enterprise VSIX Candidate Gate 42307501547](https://github.com/Drako01/indizivo/actions/runs/42307501547) PASS; `indizivo-0.1.3.vsix` SHA-256 `bcbf7f1f33e987002358832afccb5f1043baff609d4f9acd8e1fadd5749559c3`; [artifact 13547350577](https://github.com/Drako01/indizivo/actions/runs/42307501547/artifacts/13547350577). **No valida cambios storage posteriores.** |
+
+- Esta revisión documental cambia el marker `docs/ENTERPRISE_AAAA_RELEASE_CANDIDATE.md` para ejecutar un nuevo VSIX Candidate Gate sobre el SHA del commit documental, ahora con el código storage. **PENDING** hasta registrar la ejecución exacta y el checksum.
+- No se reinstalaron dependencias ni se repitió un test manualmente para los cambios solo documentales: el workflow de candidato contiene los gates de empaquetado requeridos por contrato.
+- Sigue bloqueado el GO AAAA/10-10 por UI real con lectores de pantalla y 200% zoom, matriz remota WSL/SSH/Dev Containers, test de cancelación de process-tree real en cada OS y estudio externo 10–15 devs.
+- Próximo operador: comprobar [acciones de PR #14](https://github.com/Drako01/indizivo/actions), guardar SHA del candidato HEAD, inspeccionar findings manuales y actualizar decisiones de aceptación sin fusionar, versionar o publicar.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
 |---|---|
 | Fecha / operador | 2026-11-06 / implementacion continua |
 | Rama de implementacion | feat/indizivo-enterprise-aaaa (PR #14 Draft) |
-| Ultimo commit inspeccionado | eaab0f503d9a5562c71040eb8ad82f5f6a45f50f (ultimo codigo, antes del commit documental) |
-| Ultimo commit con calidad verificada | eaab0f503d9a5562c71040eb8ad82f5f6a45f50f (run 42307228576, Windows/Linux/macOS + Linux E2E 4/4 PASS) |
+| Ultimo commit inspeccionado | 0c97ed06a458666254109dfd14c877adfadbccf5 (ultimo codigo antes de esta actualizacion documental) |
+| Ultimo commit con calidad verificada | 0c97ed06a458666254109dfd14c877adfadbccf5 (run 42307778143, Windows/Linux/macOS + Linux E2E 4/4 PASS) |
 | Fase en curso | Fases 1–5 parcialmente desarrolladas en PR #14; hardening, matriz manual y certificacion pendientes |
 | Ultimo ID completado | D-08 (ademas D-04, D-06, D-07) |
 | IDs IN_PROGRESS | D-01, D-02, D-03, D-05, S-01/02/03/04/05/06/07/08, P-02/03/04/05/06/07/08, A-01/03/04/07, R-01/03/07 |
 | Bloqueos | UI real y accesibilidad, entornos remotos, pruebas con usuarios, seguridad adversarial y VSIX del HEAD final pendientes |
-| Proxima accion exacta | Revisar Enterprise VSIX Candidate Gate del nuevo commit documental; luego pruebas reales UI/teclado, lector pantalla, WSL/SSH/Containers y medicion p50/p95/RSS. No publicar. |
+| Proxima accion exacta | Verificar Enterprise VSIX Candidate Gate del nuevo HEAD (código storage incluido); registrar SHA-256 del VSIX y evitar liberar hasta gates UI/remote/UX. |
 | Gates integrales pendientes | VSIX del HEAD final, browser UI real, a11y, WSL/SSH/containers, p95/RSS, false-positive corpus y QA externo |
 | Release decision | NO-GO para Enterprise AAAA |
 

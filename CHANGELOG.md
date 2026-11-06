@@ -5,6 +5,7 @@
 - More precise Node/npm compatibility evaluation including wildcard caret/tilde cases and a frozen corpus of expectations cross-checked against semver 7.6.3.
 - Unsupported .nvmrc requirements remain explicitly inconclusive; unknown workspace text is never copied into diagnostics.
 - Reject unknown future history schemas and unexpected Webview message fields; preserve legacy v1 history safely.
+- Fail gracefully when VS Code workspaceState cannot be read/written: preserve the current diagnosis in memory, report persistence limitations clearly in EN/ES, and never invent stored history.
 - Rejected HTTP health targets create explicit BLOCKED evidence without requests or credential-bearing URL disclosure.
 - Additional unreleased PR #14 engineering: monorepo selection, evidence provenance, explicit port inference, stable service identities, optional toolchain checks, safer exports and consent.
 - This is **not** published. The package version remains 0.1.3 pending the owner's future 0.2.0 GO decision. Manual accessibility/remote/platform and external usability gates remain open.
