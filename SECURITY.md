@@ -1,6 +1,6 @@
 # Security Policy — Indizivo
 
-Indizivo 0.1.0 is a preview for local developer-environment diagnostics, not an OS sandbox. Security-sensitive behavior depends on VS Code Workspace Trust and the permissions of the extension host.
+Indizivo is a preview for local developer-environment diagnostics, not an OS sandbox. Security-sensitive behavior depends on VS Code Workspace Trust and the permissions of the extension host.
 
 ## Threat model
 
@@ -14,8 +14,8 @@ Use the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/) a
 
 ## Supported versions
 
-The first supported preview is `0.1.0` once published. During release-candidate testing, no publicly supported build is implied.
+Security fixes target the latest published release (currently `0.1.3` on the Visual Studio Marketplace and Open VSX). Unreleased work in pull requests is not a supported build and is not presented as security-certified.
 
 ## Dependencies
 
-The last Windows pre-release test reported no production dependency vulnerabilities and three moderate development-tool advisories. The development audit must be repeated for the final release commit; the public preview is not presented as security-certified.
+The production dependency audit (`npm audit --omit=dev`) is part of the Quality Gate and currently reports no vulnerabilities; the extension ships no runtime dependencies. Moderate advisories in development-only tooling (for example the packaging CLI's `minimatch`) are tracked as warnings and re-evaluated for exploitability before each release. The preview is not presented as security-certified.
