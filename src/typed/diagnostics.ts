@@ -6,7 +6,7 @@ import * as crypto from 'node:crypto';
 import {probeTool} from './tool-probes';
 import {DiagnosticBudget,DiagnosticBudgetExhausted} from './budget';
 import type {ToolName,ToolResult} from './tool-probes';
-import {evaluateVersion} from './versions';
+import {evaluateVersion,parseVersion,compare} from './versions';
 import {inspectOwners} from './port-owners';
 import type {OwnerInspection} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
@@ -26,6 +26,8 @@ export interface Discovery {
  fileStates:Record<string,FileReadState>;
  lockfiles:string[];packageManager:string;
  nodeRequirement:string;goRequirement:string;goToolchain:string;ports:number[];
+ goRequirementOrigin:'declared'|'implicit'|'invalid'|'none';
+ goToolchainOrigin:'declared'|'invalid'|'none';
   portOrigins:Record<string,'declared'|'heuristic'>;
  requiredEnv:string[];missingEnv:string[];
  hasEnvExample:boolean;hasEnvFile:boolean;
@@ -170,6 +172,62 @@ function safeManager(value:unknown):string {
  if(typeof value!=='string'||value.length>64)return '';
  return /^(?:npm|pnpm|yarn|bun)@[0-9][0-9A-Za-z.+-]{0,40}$/.test(value)?value:'';
 }
+/** Bounded go.mod directive inspection: never echo untrusted directive values.
+ * Per go.dev/ref/mod: absent go directive means an implicit Go 1.16 minimum,
+ * while toolchain is a suggestion, NOT a second hard minimum.
+ * This is deliberately not a full go.mod parser: unsupported inputs fail closed.
+ */
+export function parseGoDirectives(content:string):{
+ minimum:string;toolchain:string;
+ minimumOrigin:'declared'|'implicit'|'invalid';
+ toolchainOrigin:'declared'|'invalid'|'none'
+} {
+ const lines=content.split(/\r?\n/);
+ const directives:{go:string[];toolchain:string[];module:string[]}={
+  go:[],toolchain:[],module:[]
+ };
+ for(const raw of lines){
+  const line=raw.trim();
+  if(!line||line.startsWith('//'))continue;
+  const match=/^(go|toolchain|module)(?=\s|$)/.exec(line);
+  if(match){
+   const kind=match[1] as keyof typeof directives;
+   directives[kind].push(line.slice(kind.length).trim());
+  }
+ }
+ const clean=(value:string):string=>value.replace(/\s+\/\/.*$/,'').trim();
+ const goLine=directives.go.length===1?clean(directives.go[0]):'';
+ const toolLine=directives.toolchain.length===1?clean(directives.toolchain[0]):'';
+ const validGo=(value:string):boolean=>/^\d{1,3}\.\d{1,3}(?:\.\d{1,3})?$/.test(value);
+ const validModule=directives.module.length===1 &&
+  directives.module[0].length>0 && directives.module[0]!=='(';
+ let minimum='[unrecognized]';
+ let minimumOrigin:'declared'|'implicit'|'invalid'='invalid';
+ if(validModule && directives.go.length===0){
+  minimum='1.16';minimumOrigin='implicit';
+ }else if(validModule && directives.go.length===1 && validGo(goLine)){
+  minimum=goLine;minimumOrigin='declared';
+ }
+ let toolchain='';
+ let toolchainOrigin:'declared'|'invalid'|'none'='none';
+ if(directives.toolchain.length){
+  toolchainOrigin='invalid';toolchain='[unrecognized]';
+  if(directives.toolchain.length===1 && minimumOrigin!=='invalid'){
+   if(toolLine==='default'){
+    toolchain='default';toolchainOrigin='declared';
+   }else{
+    const name=/^go(\d{1,3}\.\d{1,3}(?:\.\d{1,3})?)$/.exec(toolLine)?.[1];
+    const v=name?parseVersion(name):null;
+    const min=parseVersion(minimum);
+    // Go 1.21+ release toolchain names require an explicit patch version.
+    if(v && min && compare(v,min)>=0 && (v.minor<21 || v.precision===3)){
+     toolchain=name;toolchainOrigin='declared';
+    }
+   }
+  }
+ }
+ return {minimum,toolchain,minimumOrigin,toolchainOrigin};
+}
 export async function discover(root:string):Promise<Discovery> {
   const fileNames=['package.json','go.mod','.env.example','.env','.nvmrc',
     'pyproject.toml','requirements.txt','Pipfile','.python-version',
@@ -178,6 +236,7 @@ export async function discover(root:string):Promise<Discovery> {
   const files=await Promise.all(fileNames.map(name=>readBounded(root,name)));
   const [packageFile,goFile,exampleFile,envFile,nvmFile]=files;
   const packageText=packageFile?.data||'',goMod=goFile?.data||'';
+  const goDirectives=goFile?.state==='present'?parseGoDirectives(goMod):null;
   const example=exampleFile?.data||'',env=envFile?.data||'';
   const nvm=safeVersionRequirement(nvmFile?.data);
   const fileStates:Record<string,FileReadState>={};
@@ -214,8 +273,10 @@ export async function discover(root:string):Promise<Discovery> {
     malformedPackage: packageFile?.state==='present' && !pkg, fileStates,optionalRuntimes,
     lockfiles,packageManager,
     nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
-    goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
-    goToolchain: /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)/m.exec(goMod)?.[1] || '',
+    goRequirement:goDirectives?.minimum||'',
+    goToolchain:goDirectives?.toolchain||'',
+    goRequirementOrigin:goDirectives?.minimumOrigin||'none',
+    goToolchainOrigin:goDirectives?.toolchainOrigin||'none',
     ports,portOrigins, requiredEnv: required, missingEnv: envInspectable?required.filter(key => !provided.has(key)):[],
     hasEnvExample: exampleFile?.state==='present', hasEnvFile: envFile?.state==='present' };
 }
@@ -354,20 +415,41 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       msg('diag.runtimeUnknown');
     const actual = /^go version go([\d.]+)/.exec(result.value)?.[1];
     const verdict = actual ? evaluateVersion(actual,d.goRequirement,'go') : null;
-    const goStatus = !result.ok || verdict?.status==='incompatible'?'warn':
+    const installedGo=actual?parseVersion(actual):null;
+    const suggestedGo=d.goToolchainOrigin==='declared'?parseVersion(d.goToolchain):null;
+    const prefersNewer=Boolean(installedGo && suggestedGo && compare(installedGo,suggestedGo)<0);
+    const unknownDirective=d.goRequirementOrigin==='invalid'||d.goToolchainOrigin==='invalid';
+    const goStatus:CheckStatus=!result.ok?'inconclusive':
+      verdict?.status==='incompatible'?'warn':
+      unknownDirective||verdict?.status==='inconclusive'?'inconclusive':
+      prefersNewer||d.goRequirementOrigin==='implicit'?'info':
       verdict?.status==='compatible'?'pass':'info';
     push(createCheck('go','Runtime','Go',goStatus,
       result.value + (d.goRequirement ? ' — module requirement: '+d.goRequirement : '') +
-      (d.goToolchain ? ' — preferred toolchain: go'+d.goToolchain : '') +
-      (verdict ? '. '+verdict.detail : ''),
-      goStatus==='warn'?'Check the declared Go toolchain minimum.':'Only validated constraints are considered compatible.',
+      (d.goToolchain ? ' — suggested toolchain: '+
+        (d.goToolchain==='default'?'default':d.goToolchain==='[unrecognized]'?
+         '[unrecognized]':'go'+d.goToolchain) : '') +
+      (verdict ? '. '+verdict.detail : '') +
+      (prefersNewer?' Toolchain selection was not verified; Go may switch automatically.':'') +
+      (d.goRequirementOrigin==='implicit'?' No go directive; implicit minimum Go 1.16.':'') +
+      (unknownDirective?' go.mod contains unsupported or inconsistent version directives.':''),
+      goStatus==='warn'?'Check the declared Go minimum and effective toolchain.':
+        unknownDirective?'Inspect go.mod syntax; do not infer compatibility from an unrecognized directive.':
+        prefersNewer?'Inspect go env GOTOOLCHAIN and the effective Go version before assuming the suggested toolchain is active.':
+        'Only the declared module minimum was checked; suggested toolchain selection was not verified.',
       'Runtime output: '+result.value, {
         category:msg('diag.category.Runtime'),
         detail:msg('diag.goDetail',{version:localizedVersion,
-          toolchain:d.goToolchain?msg('diag.goToolchain',{version:d.goToolchain}):'',
-          required:d.goRequirement?msg('diag.goRequired',{requirement:d.goRequirement}):'',
-          verdict:verdict ? (verdict.translation||verdict.detail):''}),
-        suggestion:msg(goStatus==='warn'?'diag.goWarn':'diag.goChecked'),
+          toolchain:d.goToolchain==='[unrecognized]'?msg('diag.goInvalidToolchain'):
+            d.goToolchain==='default'?msg('diag.goDefaultToolchain'):
+            d.goToolchain?msg('diag.goToolchain',{version:d.goToolchain}):'',
+          required:d.goRequirementOrigin==='invalid'?msg('diag.goInvalidRequirement'):
+            d.goRequirementOrigin==='implicit'?msg('diag.goImplicitMinimum'):
+            d.goRequirement?msg('diag.goRequired',{requirement:d.goRequirement}):'',
+          verdict:verdict?.translation||''}),
+        suggestion:msg(goStatus==='warn'?'diag.goWarn':
+          unknownDirective?'diag.goInvalidNext':
+          prefersNewer?'diag.goSuggestedNext':'diag.goChecked'),
         evidence:msg('diag.outputVersion',{value:localizedVersion})
       }));
   }

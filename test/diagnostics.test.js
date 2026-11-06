@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const {discover,diagnose,parsePorts,parseKeys,validateService}=require('../src/diagnostics');
+const {discover,diagnose,parsePorts,parseKeys,validateService,parseGoDirectives}=require('../src/diagnostics');
 test('ports parse only explicit settings',()=>{
  assert.deepEqual(parsePorts({dev:'next dev --port 3100'}),[3100]);
  assert.deepEqual(parsePorts({dev:'echo 9999'}),[]);
@@ -113,4 +113,42 @@ test('root lockfile evidence flags ambiguity without reading sensitive lockfile 
   assert.doesNotMatch(JSON.stringify(run),/DO_NOT_INSPECT_THIS_VALUE/);
   assert.equal(finding.i18n.detail.key,'diag.lockfilesDetail');
  }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('Go directives parse exact tokens, preserve implicit semantics and never echo hostile input',()=>{
+ const fixtures=[
+  ['module example.org/demo\ngo 1.23.0\ntoolchain go1.24.5\n',
+   {minimum:'1.23.0',toolchain:'1.24.5',minimumOrigin:'declared',toolchainOrigin:'declared'}],
+  ['module example.org/demo\n', {minimum:'1.16',toolchain:'',minimumOrigin:'implicit',toolchainOrigin:'none'}],
+  ['module example.org/demo\ngo 1.23\ntoolchain default\n',
+   {minimum:'1.23',toolchain:'default',minimumOrigin:'declared',toolchainOrigin:'declared'}],
+  ['module example.org/demo\ngo 1.23BAD\n',
+   {minimum:'[unrecognized]',toolchain:'',minimumOrigin:'invalid',toolchainOrigin:'none'}],
+  ['module example.org/demo\ngo 1.23\ngo 1.24\n',
+   {minimum:'[unrecognized]',toolchain:'',minimumOrigin:'invalid',toolchainOrigin:'none'}],
+  ['module example.org/demo\ngo 1.23\ntoolchain go1.24.5BAD\n',
+   {minimum:'1.23',toolchain:'[unrecognized]',minimumOrigin:'declared',toolchainOrigin:'invalid'}],
+  ['module example.org/demo\ngo 1.24\ntoolchain go1.23.1\n',
+   {minimum:'1.24',toolchain:'[unrecognized]',minimumOrigin:'declared',toolchainOrigin:'invalid'}],
+  ['module example.org/demo\ngo 1.24\ntoolchain go1.25\n',
+   {minimum:'1.24',toolchain:'[unrecognized]',minimumOrigin:'declared',toolchainOrigin:'invalid'}],
+  ['go 1.24\n', {minimum:'[unrecognized]',toolchain:'',minimumOrigin:'invalid',toolchainOrigin:'none'}]
+ ];
+ for(const [raw,expected] of fixtures)assert.deepEqual(parseGoDirectives(raw),expected,raw);
+ const hostile=parseGoDirectives('module example.org/demo\ngo API_TOKEN=NEVER_EXPORT\n');
+ assert.doesNotMatch(JSON.stringify(hostile),/NEVER_EXPORT|API_TOKEN/);
+});
+test('Go malformed directives cannot generate a PASS from the installed toolchain',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-bad-go-'));
+ try {
+  await fs.writeFile(path.join(root,'go.mod'),'module example.org/demo\ngo 1.23oops\n');
+  const d=await discover(root);
+  assert.equal(d.goRequirementOrigin,'invalid');
+  const session=await diagnose(root,900);
+  const go=session.checks.find(x=>x.id==='go');
+  assert.ok(go);
+  assert.notEqual(go.status,'pass');
+  assert.equal(go.i18n.detail.values.required.key,'diag.goInvalidRequirement');
+  assert.doesNotMatch(JSON.stringify(session),/1.23oops/);
+ } finally {await fs.rm(root,{recursive:true,force:true});}
 });

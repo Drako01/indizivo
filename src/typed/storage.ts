@@ -132,6 +132,10 @@ function safeDiscovery(value:unknown):DiagnosticSession['discovery']|null {
   nodeRequirement:typeof raw.nodeRequirement==='string'?raw.nodeRequirement.slice(0,80):'',
   goRequirement:typeof raw.goRequirement==='string'?raw.goRequirement.slice(0,80):'',
   goToolchain:typeof raw.goToolchain==='string'?raw.goToolchain.slice(0,80):'',
+  goRequirementOrigin:['declared','implicit','invalid','none'].includes(String(raw.goRequirementOrigin))?
+    raw.goRequirementOrigin as 'declared'|'implicit'|'invalid'|'none':'none',
+  goToolchainOrigin:['declared','invalid','none'].includes(String(raw.goToolchainOrigin))?
+    raw.goToolchainOrigin as 'declared'|'invalid'|'none':'none',
   ports,portOrigins:origins,fileStates,optionalRuntimes:optional,
   packageManager:typeof raw.packageManager==='string' &&
     /^(?:npm|pnpm|yarn|bun)@[0-9][0-9A-Za-z.+-]{0,40}$/.test(raw.packageManager)?
