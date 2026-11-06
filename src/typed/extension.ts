@@ -6,7 +6,8 @@ import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
 import {html} from './ui';
-import {redactSensitiveText,redactReport} from './redaction';
+import {redactSensitiveText} from './redaction';
+import {renderReport} from './reports';
 import {restoreSession,restoreHistory} from './storage';
 import type {HistoryEntry} from './storage';
 import {compareSessions} from './comparison';
@@ -360,33 +361,7 @@ export class ControlCenter {
       filters: format==='md'?{'Markdown':['md']}:{'JSON':['json']}
     });
     if (!uri) return;
-    let output='';
-    if (format==='json') output=JSON.stringify(redactReport({
-      ...session,reportFormatVersion:1,reportGeneratedAt:new Date().toISOString()
-    }),null,2)+'\n';
-    else {
-      const lines=['# '+this.tr('report.heading'),'',this.tr('report.project')+': '+session.project,
-        this.tr('report.date')+': '+session.completedAt,
-        this.tr('report.state')+': '+this.tr(`state.${session.state}`),
-        ...('host' in session && session.host?
-          [this.tr('report.host')+': '+session.host]:[]),
-        ...('scopeId' in session && session.scopeId?
-          [this.tr('report.scope')+': '+session.scopeId]:[]),
-        '', '> '+this.tr('report.disclaimer'),''];
-      for (const c of [...(session.checks||[]),...(session.serviceChecks||[])]) {
-        lines.push('## '+c.label,'','**'+this.tr(`status.${c.status}`)+'** — '+c.detail,
-          '',c.suggestion||'','');
-        if(c.provenance){
-          lines.push('- '+this.tr('ui.source')+': '+this.tr(`origin.${c.provenance.origin}`),
-            '- '+this.tr('ui.method')+': '+c.provenance.method,
-            '- '+this.tr('ui.confidence')+': '+this.tr(`confidence.${c.provenance.confidence}`),
-            '- '+this.tr('ui.limitations')+': '+c.provenance.limitations);
-        }
-        for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
-        lines.push('');
-      }
-      output=redactSensitiveText(lines.join('\n'));
-    }
+    const output=renderReport(session,format,key=>this.tr(key));
     await vscode.workspace.fs.writeFile(uri,Buffer.from(output,'utf8'));
     // VS Code workspace.fs supports user-selected remote and virtual URI schemes.
     vscode.window.showInformationMessage(this.tr('host.reportExported'));
