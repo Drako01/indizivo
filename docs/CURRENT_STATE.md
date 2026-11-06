@@ -14,7 +14,7 @@
 - [PR #13](https://github.com/Drako01/indizivo/pull/13): audit/planning, **Draft; remains untouched and unmerged** by explicit owner decision.
 - [PR #14](https://github.com/Drako01/indizivo/pull/14): implementation of **all phases**, Draft, target main; branch `feat/indizivo-enterprise-aaaa`. No merge, release, tag, version bump or brand change authorized.
 - The [CTO audit](CTO_AUDIT_2026-11-06.md) and [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) define scope, statuses and acceptance evidence.
-- The last verified source-code SHA is `0c97ed06a458666254109dfd14c877adfadbccf5`: [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42307778143), 4/4 PASS on Windows/Linux/macOS and official Linux Extension Host E2E. Subsequent docs-only edits do not inherit a new PASS without diff/provenance review.
+- The last verified source-code SHA is `e40ceee3961b64589b1ff68a6663c8083adfcf67`: [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42309898474), 4/4 PASS on Windows/Linux/macOS and official Linux Extension Host E2E. Subsequent docs-only edits do not inherit a new PASS without diff/provenance review.
 - Code in #14 is **not** published; avoid presenting its improvements as features of 0.1.3. The proposed eventual release is **0.2.0**, still contingent on owner GO/NO-GO, tests and version approval. The manifest remains at 0.1.3.
 
 ## Enterprise AAAA is not certified

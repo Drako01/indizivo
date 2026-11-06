@@ -7,6 +7,10 @@
 - Reject unknown future history schemas and unexpected Webview message fields; preserve legacy v1 history safely.
 - Fail gracefully when VS Code workspaceState cannot be read/written: preserve the current diagnosis in memory, report persistence limitations clearly in EN/ES, and never invent stored history.
 - Rejected HTTP health targets create explicit BLOCKED evidence without requests or credential-bearing URL disclosure.
+- Strict Go module minimum and recommended toolchain handling, including implicit Go 1.16 and invalid-directive detection; Go CLI version probe disables automatic toolchain downloads.
+- File-descriptor identity and final file mutation checks, plus expanded SSRF and synthetic credential redaction cases.
+- Additive JSON report format metadata and evidence/provenance-rich Markdown exports.
+- Explicit localized limited Workspace Trust and virtual-workspace declarations in the extension manifest.
 - Additional unreleased PR #14 engineering: monorepo selection, evidence provenance, explicit port inference, stable service identities, optional toolchain checks, safer exports and consent.
 - This is **not** published. The package version remains 0.1.3 pending the owner's future 0.2.0 GO decision. Manual accessibility/remote/platform and external usability gates remain open.
 
