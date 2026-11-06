@@ -45,3 +45,14 @@ export function renderReport(session:ReportSession,format:ReportFormat,
  }
  return redactSensitiveText(lines.join('\n'));
 }
+
+/** Clipboard text for one finding; pure so it shares redaction and wording with exports. */
+export function renderEvidenceCopy(finding:DiagnosticCheck,tr:(key:I18nKey)=>string):string {
+ const lines=[tr('report.copiedTitle'),finding.label,
+  tr('report.status')+': '+tr(`status.${finding.status}`),
+  tr('report.observation')+': '+finding.detail,
+  tr('report.next')+': '+(finding.suggestion||tr('report.none'))];
+ for(const record of finding.evidence||[])
+  lines.push(tr('report.evidence')+': '+record.fact+' · '+record.observedAt);
+ return redactSensitiveText(lines.join('\n'));
+}

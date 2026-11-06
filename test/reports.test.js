@@ -34,3 +34,14 @@ test('Spanish Markdown exports include scope, provenance, limitations and safe r
  assert.doesNotMatch(text,/YWxhZGRpb|SECRET_SENTINEL_12345/);
  assert.match(text,/Node.js/);
 });
+
+test('evidence copy shares localization and redaction with exports',()=>{
+ const { renderEvidenceCopy } = require('../dist/typed/reports.js');
+ const tr=key=>key;
+ const text=renderEvidenceCopy({id:'x',label:'Node',status:'warn',
+  detail:'token=ghp_abcdefghijklmnopqrstuvwxyz0123456789',suggestion:'',
+  evidence:[{fact:'fact',observedAt:'t'}]},tr);
+ assert.match(text,/report\.copiedTitle\nNode/);
+ assert.match(text,/report\.next: report\.none/);
+ assert.doesNotMatch(text,/ghp_abcdefghijklmnopqrstuvwxyz0123456789/);
+});

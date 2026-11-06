@@ -7,7 +7,7 @@ import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
 import {html} from './ui';
 import {redactSensitiveText} from './redaction';
-import {renderReport} from './reports';
+import {renderReport,renderEvidenceCopy} from './reports';
 import {restoreSession,restoreHistory} from './storage';
 import type {HistoryEntry} from './storage';
 import {compareSessions} from './comparison';
@@ -182,6 +182,19 @@ export class ControlCenter {
       throw new Error(this.tr('host.workspaceClosed'));
     if (this.running) throw new Error(this.tr('host.alreadyRunning'));
   }
+  /** Marks the controller busy and returns the signal that cancels this run. */
+  beginRun():AbortSignal {
+    this.running=true;
+    this.pendingApproval=null;
+    this.abort=new AbortController();
+    this.broadcast();
+    return this.abort.signal;
+  }
+  endRun() {
+    this.running=false;
+    this.abort=null;
+    this.broadcast();
+  }
   cancel() {
     if (this.abort) this.abort.abort();
     this.pendingApproval=null;
@@ -195,11 +208,7 @@ export class ControlCenter {
     const previousCompleted = this.data.session && this.data.session.state==='completed' &&
       'discovery' in this.data.session ? this.data.session : null;
     this.data.session=null;
-    this.running=true;
-    this.pendingApproval=null;
-    this.abort=new AbortController();
-    const signal=this.abort.signal;
-    this.broadcast();
+    const signal=this.beginRun();
     try {
       const session=await diagnose(root.fsPath,this.data.timeoutMs,signal,checks=>{
         this.data.session = {
@@ -224,9 +233,7 @@ export class ControlCenter {
         this.tr('host.failed',{reason:errorMessage(e) || this.tr('host.unknown')});
       if (this.data.session) this.data.session.state=signal.aborted?'cancelled':'failed';
     } finally {
-      this.running=false;
-      this.abort=null;
-      this.broadcast();
+      this.endRun();
     }
   }
   async prepareServices() {
@@ -245,11 +252,7 @@ export class ControlCenter {
     if (!this.pendingApproval || !session) throw new Error(this.tr('host.approvalExpired'));
     const plan=this.pendingApproval.map(validateService).filter((item):item is ServiceTarget=>item!==null);
     if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error(this.tr('host.targetsChanged'));
-    this.pendingApproval=null;
-    this.running=true;
-    this.abort=new AbortController();
-    const signal=this.abort.signal;
-    this.broadcast();
+    const signal=this.beginRun();
     try {
       const result=await verifyServices(plan,this.data.timeoutMs,signal,partial=>{
         session.serviceChecks=partial;
@@ -273,9 +276,7 @@ export class ControlCenter {
     } catch(e) {
       this.error=signal.aborted?this.tr('host.serviceCancelled'):this.tr('host.serviceFailed',{reason:errorMessage(e)||this.tr('host.unknown')});
     } finally {
-      this.running=false;
-      this.abort=null;
-      this.broadcast();
+      this.endRun();
     }
   }
   async addService(message:unknown) {
@@ -304,14 +305,8 @@ export class ControlCenter {
     const checks=[...(viewed?.checks||[]),...(viewed?.serviceChecks||[])];
     const finding=checks.find(check=>check.id===id);
     if (!finding) throw new Error(this.tr('host.findingUnavailable'));
-    const localized=localizeFinding(finding,this.data.locale);
-    const lines=[this.tr('report.copiedTitle'),localized.label,
-      this.tr('report.status')+': '+this.tr(`status.${localized.status}`),
-      this.tr('report.observation')+': '+localized.detail,
-      this.tr('report.next')+': '+(localized.suggestion||this.tr('report.none'))];
-    for(const record of localized.evidence||[])
-      lines.push(this.tr('report.evidence')+': '+record.fact+' · '+record.observedAt);
-    await vscode.env.clipboard.writeText(redactSensitiveText(lines.join('\n')));
+    await vscode.env.clipboard.writeText(renderEvidenceCopy(
+      localizeFinding(finding,this.data.locale),key=>this.tr(key)));
     vscode.window.showInformationMessage(this.tr('host.copied'));
   }
   async selectHistory(index:number) {
