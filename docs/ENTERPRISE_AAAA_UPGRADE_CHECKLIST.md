@@ -33,11 +33,11 @@
 - [ ] D-01 Sustituir/aislar parser de versiones Node por semantica npm compatible y testeada; casos `~1`, `~1.2`, `^0.0.x`, wildcard, OR, prerelease, engines y .nvmrc. Si no se puede interpretar, INCONCLUSIVE, nunca falsa incompatibilidad. Aceptacion: corpus de rangos comparado con referencia confiable y fixtures; sin regresiones.
 - [ ] D-02 Verificar version Go con `go` y `toolchain` en go.mod, sin confundir minimo con toolchain requerida. Aceptacion: casos validos, edge cases y evidencia exacta de origen.
 - [ ] D-03 Corregir contratos de red IPv4/IPv6: `localhost`, `127.0.0.1`, `[::1]`, bound addresses, host y namespace. El probe actual fuerza lookup a 127.0.0.1 aun cuando el usuario declaro IPv6. Aceptacion: tests contra servidores reales IPv4 y IPv6 en SO compatibles, con SKIP justificado cuando IPv6 no exista.
-- [ ] D-04 Dejar de inferir "puerto del proyecto" sin origen confiable; next:3000/vite:5173 deben estar marcados como sugerencias heuristicas, no como configuracion observada. Aceptacion: etiqueta observed/inferred + fuente.
+- [x] D-04 Dejar de inferir "puerto del proyecto" sin origen confiable; next:3000/vite:5173 deben estar marcados como sugerencias heuristicas, no como configuracion observada. Aceptacion: etiqueta observed/inferred + fuente.
 - [ ] D-05 Crear modelo canonico de Finding/Evidence: id estable, checkId, targetId, scope de host, metodo, timestamp, estado, severidad, confianza, origen, limitaciones y next step verificable. Aceptacion: schema versionado y migracion no destructiva.
-- [ ] D-06 Identidad estable de endpoints para diff: no usar indice de array `service-0` como identidad persistente. Aceptacion: reordenar/eliminar servicio no atribuye estados de otro.
-- [ ] D-07 Lecturas inconclusas: permisos, archivos grandes, symlink o errores deben distinguir ausencia real de dato no inspeccionable. Aceptacion: fixtures fail-closed, no falso PASS.
-- [ ] D-08 Reconstruir docs desactualizados: README anuncia 0.1.0, ROADMAP y docs de handoff/rulesets mencionan estados antiguos. Conservar historia fechada; agregar una unica fuente de estado CURRENT_STATE. Aceptacion: todos los claims vigentes coinciden con main y release.
+- [x] D-06 Identidad estable de endpoints para diff: no usar indice de array `service-0` como identidad persistente. Aceptacion: reordenar/eliminar servicio no atribuye estados de otro.
+- [x] D-07 Lecturas inconclusas: permisos, archivos grandes, symlink o errores deben distinguir ausencia real de dato no inspeccionable. Aceptacion: fixtures fail-closed, no falso PASS.
+- [x] D-08 Reconstruir docs desactualizados: README anuncia 0.1.0, ROADMAP y docs de handoff/rulesets mencionan estados antiguos. Conservar historia fechada; agregar una unica fuente de estado CURRENT_STATE. Aceptacion: todos los claims vigentes coinciden con main y release.
 - [ ] D-09 Registrar un conjunto de falsos positivos/falsos negativos con fixtures reproducibles; cada fix agrega regresion especifica.
 - [ ] D-10 Ejecutar gate de fase 1: tests impactados + TypeScript + seguridad + integracion del flujo modificado. Evidencia vinculada al SHA.
 
@@ -94,20 +94,48 @@
 - [ ] R-09 Cierre de riesgos y decisión GO/NO-GO explicita del owner ANTES de tag/publicacion.
 - [ ] R-10 No modificar reglas de branch, iconos ni politica de versionado sin autorizacion.
 
+
+## Implementacion en PR #14 — control por evidencia, 2026-11-06
+
+**Rama:** `feat/indizivo-enterprise-aaaa`. **PR:** https://github.com/Drako01/indizivo/pull/14 (DRAFT, unico PR de implementacion; NO merge). PR #13 sigue Draft y no se toca.
+
+**Ultimo QA confirmado**: `4c119aad55762d2bf6e09a8896f0a19239c88bf0`, Quality Gate Windows/macOS/Linux + Extension Host Linux PASS: https://github.com/Drako01/indizivo/actions/runs/42299078932. No acredita pruebas visuales, WSL, SSH, containers, pentest ni usuarios externos.
+
+| ID | Estado basado en evidencia | Nota |
+|---|---|---|
+| D-01 | IMPLEMENTED_VERIFIED_SUBSET | ~, ^, comparadores parciales, OR, wildcard y prerelease fail-closed; pruebas nuevas CI PASS. Falta corpus comparativo npm/semver de referencia amplio |
+| D-02 | IMPLEMENTED_PARTIAL | Separada la directiva `go` del `toolchain`; falta matriz real multi-version |
+| D-03 | IMPLEMENTED_PARTIAL | HTTP IPv4/IPv6 preserva familia loopback; pruebas reales CI, falta matriz host/namespace/IPv6 completo |
+| D-04 | VERIFIED | Origen declarado frente a puerto heuristico Next/Vite, EN/ES y tests |
+| D-05 | IMPLEMENTED_PARTIAL | `schemaVersion:2`, provenance y `scopeId`; falta severidad objetiva, validacion/report schema exhaustivo |
+| D-06 | VERIFIED | ID hash URL canonica y test de reordenamiento con comparacion estable |
+| D-07 | VERIFIED | Archivo faltante vs blocked/unreadable, sin afirmar variables faltantes si no pudo leer `.env` |
+| D-08 | VERIFIED | README, ROADMAP, PRIVACY 0.1.3 y `docs/CURRENT_STATE.md`; documentos historicos claramente rotulados |
+| S-02 | IMPLEMENTED_PARTIAL | Presupuesto monotónico para diagnostico y servicios, resultados PARTIAL; falta test real de arbol de procesos en cada SO |
+| S-03 | IMPLEMENTED_UNIT_VERIFIED | Snapshot batched para 12 puertos, parser macOS exacto, tests CI; falta exercitar owner real en cada SO |
+| S-05 | IMPLEMENTED_PARTIAL | Storage schema, historial acotado, validacion de descriptores y migracion legacy; faltan fallos de I/O inyectados |
+| P-03/P-04 | IMPLEMENTED_UNIT_VERIFIED | Deteccion de Python/PHP/Java/Docker CLI desde archivos root y comandos allowlisted de version; no afirman compatibilidad |
+| P-05/P-07 | IMPLEMENTED_UNIT_VERIFIED | UI presenta fuente/confianza/limitaciones y filtros; falta UX real/NVDA/VoiceOver |
+| P-08 | IMPLEMENTED_UNIT_VERIFIED | JSON versionado y export usando `vscode.workspace.fs`; falta corpus export adversarial |
+| A-01/A-03 | IMPLEMENTED_PARTIAL | Separados tool-probes, storage y budget con TS strict y test; falta descomponer ControlCenter |
+| R-01/R-10 | IN_PROGRESS | PR14 Draft, commits incrementales, logo/version/rulesets intactos, CI automatico; NO merge/publish |
+
+**Siguiente bloque:** proyectos monorepo y proteccion de scope, redaccion/reportes, fixtures de amenaza, VSIX E2E empaquetado sin publicacion, CI eficiente. Registrar SHA nuevo y run; no usar este PASS para commits posteriores.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
 |---|---|
-| Fecha / operador | 2026-11-06 / auditoria inicial |
-| Rama de implementacion | NO CREADA |
-| Ultimo commit inspeccionado | 9bad7cca3c08dda4018dc3f6c98e22dffe80def1 |
-| Ultimo commit con calidad verificada | 9bad7cca3c08dda4018dc3f6c98e22dffe80def1 (GitHub Actions; ver B-03 a B-05) |
-| Fase en curso | Sin implementar: Fase 1 / D-01 |
-| Ultimo ID completado | B-07 (solo baseline) |
-| IDs IN_PROGRESS | ninguno |
-| Bloqueos | ninguno documentado |
-| Proxima accion exacta | Abrir PR de upgrade desde main; implementar D-01 con corpus comparativo; test de regresion focalizado |
-| Gates integrales pendientes | toda implementacion nueva, E2E UI real, certificacion multi SO |
+| Fecha / operador | 2026-11-06 / implementacion continua |
+| Rama de implementacion | feat/indizivo-enterprise-aaaa (PR #14 Draft) |
+| Ultimo commit inspeccionado | 4c119aad55762d2bf6e09a8896f0a19239c88bf0 |
+| Ultimo commit con calidad verificada | 4c119aad55762d2bf6e09a8896f0a19239c88bf0 (Quality Gate 42299078932, Windows/Linux/macOS + Linux E2E PASS) |
+| Fase en curso | Fases 1/2/3/4 integradas parcialmente; seguimiento D-01, S-01, P-02, R-07 |
+| Ultimo ID completado | D-08 (ademas D-04, D-06, D-07) |
+| IDs IN_PROGRESS | D-01, D-02, D-03, D-05, S-01, S-02, S-03, S-05, P-02, P-03, P-04, A-01/A-03, R-07 |
+| Bloqueos | Matrices UI real/remote, pruebas con usuarios externos, pentest y evidencia release candidate aun pendientes |
+| Proxima accion exacta | Continuar en PR #14 con P-02 monorepo, S-07 redaction y R-07 packaged VSIX QA (sin merge/publicacion) |
+| Gates integrales pendientes | packaged VSIX de PR14, UI browser real, a11y, WSL/SSH/containers, false-positive corpus y QA externo |
 | Release decision | NO-GO para Enterprise AAAA |
 
 ### Plantilla de handoff por sesion
