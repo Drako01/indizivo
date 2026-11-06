@@ -1,4 +1,4 @@
-import {execFile} from 'node:child_process';
+import {runBoundedCommand} from './process-control';
 
 export type ToolName='node'|'go'|'python3'|'python'|'py'|'php'|'java'|'docker';
 export interface ToolResult {ok:boolean;value:string;missing:boolean}
@@ -48,25 +48,16 @@ export function parseToolVersion(tool:ToolName,output:unknown):string|null {
 /** Fixed command allowlist; no repo scripts, user-provided args or shells. */
 export function probeTool(tool:ToolName,timeout:number,signal?:AbortSignal):Promise<ToolResult> {
  const spec=SPECS[tool];
- return new Promise(resolve=>{
-  if(signal?.aborted)return resolve({ok:false,value:'Cancelled',missing:false});
-  let settled=false;
-  const child=execFile(spec.command,[...spec.args],{
-   shell:false,windowsHide:true,
-   env:toolEnvironment(tool),
-   timeout:Math.min(10000,Math.max(400,timeout)),
-   maxBuffer:16384
-  },(error,stdout,stderr)=>{
-   if(settled)return;
-   settled=true;
-   signal?.removeEventListener('abort',cancel);
-   const version=parseToolVersion(tool,String(stdout||stderr));
-   const missing=Boolean(error && error.code==='ENOENT');
-   resolve({ok:!error && !!version,
-     missing,value:error?(missing?'Not installed / not on PATH':'Could not inspect runtime'):
-       (version||'Unrecognized runtime version output')});
-  });
-  function cancel():void{try{child.kill();}catch{/* no permission or already exited */}}
-  signal?.addEventListener('abort',cancel,{once:true});
+ return runBoundedCommand(spec.command,spec.args,{
+  timeoutMs:timeout,maxBuffer:16384,env:toolEnvironment(tool)
+ },signal).then(out=>{
+  if(out.cancelled)return {ok:false,missing:false,value:'Cancelled'};
+  const error=out.error as (Error & {code?:string})|null;
+  const missing=error?.code==='ENOENT';
+  const version=out.timedOut?null:parseToolVersion(tool,out.stdout||out.stderr);
+  return {ok:!error&&!out.timedOut&&Boolean(version),missing,
+   value:missing?'Not installed / not on PATH':
+    error||out.timedOut?'Could not inspect runtime':
+    version||'Unrecognized runtime version output'};
  });
 }

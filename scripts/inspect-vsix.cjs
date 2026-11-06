@@ -17,6 +17,7 @@ const MANDATORY=[
  'extension/dist/typed/budget.js',
  'extension/dist/typed/monorepo.js',
  'extension/dist/typed/redaction.js',
+ 'extension/dist/typed/process-control.js',
  'extension/media/indizivo-icon-128.png',
  'extension/readme.md','extension/LICENSE.txt','extension/PRIVACY.md'
 ];
