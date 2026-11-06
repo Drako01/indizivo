@@ -53,6 +53,11 @@ test('file handle identity comparisons reject replaced or unverifiable sources',
  assert.equal(sameFileIdentity({dev:1,ino:100},{dev:2,ino:100}),false);
  assert.equal(sameFileIdentity({dev:1,ino:0},{dev:1,ino:0}),false,
    'An unknown inode cannot prove identity');
+ const ntfsId=19140298419437390n;
+ assert.equal(sameFileIdentity({dev:1n,ino:ntfsId},{dev:1n,ino:ntfsId}),true,
+   'NTFS file IDs above 2^53 stay exact as bigint');
+ assert.equal(sameFileIdentity({dev:1n,ino:ntfsId},{dev:1n,ino:ntfsId+1n}),false);
+ assert.equal(sameFileIdentity({dev:1n,ino:0n},{dev:1n,ino:0n}),false);
 });
 test('normal bounded project files remain readable by file descriptor',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-fileid-'));

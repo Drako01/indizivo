@@ -121,10 +121,12 @@ function safeVersionRequirement(input:unknown):string {
 }
 interface InputFile {state:FileReadState;data:string}
 /** Compare OS-backed identities, not paths, to detect replacement after lstat. */
+type FileId=number|bigint;
 export function sameFileIdentity(
- before:{dev:number;ino:number},after:{dev:number;ino:number}):boolean {
- return Number.isSafeInteger(before.dev) && Number.isSafeInteger(before.ino) &&
-  before.ino>0 && before.dev===after.dev && before.ino===after.ino;
+ before:{dev:FileId;ino:FileId},after:{dev:FileId;ino:FileId}):boolean {
+ // NTFS file IDs exceed 2^53: callers pass bigint stats so they stay exact.
+ const known=(value:FileId)=>typeof value==='bigint'?value>0n:Number.isSafeInteger(value) && value>0;
+ return known(before.ino) && before.dev===after.dev && before.ino===after.ino;
 }
 function classifiedError(error:unknown):FileReadState {
   const code=error && typeof error==='object' && 'code' in error ? String(error.code) : '';
@@ -138,17 +140,17 @@ async function readBounded(root:string,name:string):Promise<InputFile> {
     const full=path.resolve(root,name);
     if(!full.startsWith(path.resolve(root)+path.sep))return fail('blocked');
     let stat;
-    try { stat=await fs.lstat(full); } catch(error) {return fail(classifiedError(error));}
-    if(!stat.isFile() || stat.isSymbolicLink() || stat.size>262144)return fail('blocked');
+    try { stat=await fs.lstat(full,{bigint:true}); } catch(error) {return fail(classifiedError(error));}
+    if(!stat.isFile() || stat.isSymbolicLink() || stat.size>262144n)return fail('blocked');
     const real=await fs.realpath(full);
     if(!real.startsWith(base+path.sep))return fail('blocked');
     // No shell, no traversal and no following a replaced final symlink.
     const flags=require('node:fs').constants;
     handle=await fs.open(full,flags.O_RDONLY|(flags.O_NOFOLLOW||0));
-    const fileStat=await handle.stat();
+    const fileStat=await handle.stat({bigint:true});
     // fstat operates on the opened descriptor. An attacker replacing the
     // filename between lstat() and open() cannot silently change our source.
-    if(!fileStat.isFile() || fileStat.size>262144 ||
+    if(!fileStat.isFile() || fileStat.size>262144n ||
       !sameFileIdentity(stat,fileStat))return fail('blocked');
     const limit=262145;
     const buffer=Buffer.alloc(limit);
@@ -159,11 +161,11 @@ async function readBounded(root:string,name:string):Promise<InputFile> {
       total+=chunk.bytesRead;
     }
     if(total>262144)return fail('blocked');
-    const after=await handle.stat();
+    const after=await handle.stat({bigint:true});
     // A concurrent in-place write can invalidate a coherent file snapshot.
     // We do not claim to protect against every nanosecond-scale mutation.
     if(!sameFileIdentity(fileStat,after) || after.size!==fileStat.size ||
-      after.mtimeMs!==fileStat.mtimeMs)return fail('blocked');
+      after.mtimeNs!==fileStat.mtimeNs)return fail('blocked');
     return {state:'present',data:buffer.subarray(0,total).toString('utf8')};
   } catch(error) {return fail(classifiedError(error));}
   finally { if(handle)await handle.close(); }
