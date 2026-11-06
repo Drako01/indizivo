@@ -14,6 +14,7 @@ const MANDATORY=[
  'extension/dist/typed/diagnostics.js','extension/dist/typed/ui.js','extension/dist/typed/extension.js',
  'extension/dist/typed/storage.js',
  'extension/dist/typed/tool-probes.js',
+ 'extension/dist/typed/budget.js',
  'extension/media/indizivo-icon-128.png',
  'extension/readme.md','extension/LICENSE.txt','extension/PRIVACY.md'
 ];
