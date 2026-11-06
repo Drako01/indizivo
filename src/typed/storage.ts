@@ -133,7 +133,13 @@ function safeDiscovery(value:unknown):DiagnosticSession['discovery']|null {
   goRequirement:typeof raw.goRequirement==='string'?raw.goRequirement.slice(0,80):'',
   goToolchain:typeof raw.goToolchain==='string'?raw.goToolchain.slice(0,80):'',
   ports,portOrigins:origins,fileStates,optionalRuntimes:optional,
-  requiredEnv:stringList(raw.requiredEnv,100),missingEnv:stringList(raw.missingEnv,100),
+  packageManager:typeof raw.packageManager==='string' &&
+    /^(?:npm|pnpm|yarn|bun)@[0-9][0-9A-Za-z.+-]{0,40}$/.test(raw.packageManager)?
+    raw.packageManager:'',
+  lockfiles:stringList(raw.lockfiles,6).filter(name=>
+    ['package-lock.json','npm-shrinkwrap.json','pnpm-lock.yaml','yarn.lock','bun.lock','bun.lockb'].includes(name)),
+  requiredEnv:stringList(raw.requiredEnv,100).filter(name=>/^[A-Za-z_][A-Za-z0-9_]{0,79}$/.test(name)),
+  missingEnv:stringList(raw.missingEnv,100).filter(name=>/^[A-Za-z_][A-Za-z0-9_]{0,79}$/.test(name)),
   hasEnvExample:raw.hasEnvExample===true,hasEnvFile:raw.hasEnvFile===true};
 }
 export function restoreSession(value:unknown):DiagnosticSession|null {
