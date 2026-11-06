@@ -3,7 +3,8 @@ import * as path from 'node:path';
 import * as net from 'node:net';
 import * as http from 'node:http';
 import * as crypto from 'node:crypto';
-import {execFile} from 'node:child_process';
+import {probeTool} from './tool-probes';
+import type {ToolName,ToolResult} from './tool-probes';
 import {evaluateVersion} from './versions';
 import {inspectOwner} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
@@ -18,6 +19,7 @@ export interface PackageManifest {
 export type FileReadState='present'|'missing'|'blocked'|'unreadable';
 export interface Discovery {
  project:string;node:boolean;go:boolean;malformedPackage:boolean;
+ optionalRuntimes:Record<string,string[]>;
  fileStates:Record<string,FileReadState>;
  nodeRequirement:string;goRequirement:string;goToolchain:string;ports:number[];
   portOrigins:Record<string,'declared'|'heuristic'>;
@@ -38,7 +40,6 @@ export interface DiagnosticSession {
  comparison?:Comparison|null;
 }
 export interface ServiceTarget {name:string;url:string}
-type VersionResult={ok:boolean;value:string};
 type PortState='cancelled'|'listening'|'timeout'|'not-listening'|'inconclusive';
 type ServiceResult={ok:boolean;detail:string};
 
@@ -144,7 +145,10 @@ export function validateService(input:unknown):ServiceTarget|null {
   } catch { return null; }
 }
 export async function discover(root:string):Promise<Discovery> {
-  const fileNames=['package.json','go.mod','.env.example','.env','.nvmrc'] as const;
+  const fileNames=['package.json','go.mod','.env.example','.env','.nvmrc',
+    'pyproject.toml','requirements.txt','Pipfile','.python-version',
+    'composer.json','.php-version','pom.xml','build.gradle','build.gradle.kts',
+    'Dockerfile','compose.yaml','compose.yml','docker-compose.yml'] as const;
   const files=await Promise.all(fileNames.map(name=>readBounded(root,name)));
   const [packageFile,goFile,exampleFile,envFile,nvmFile]=files;
   const packageText=packageFile?.data||'',goMod=goFile?.data||'';
@@ -169,34 +173,24 @@ export async function discover(root:string):Promise<Discovery> {
   const required = parseKeys(example);
   const provided = new Set(parseKeys(env));
   const envInspectable=envFile?.state==='present'||envFile?.state==='missing';
+  const candidates:Record<string,readonly string[]>={
+    python:['pyproject.toml','requirements.txt','Pipfile','.python-version'],
+    php:['composer.json','.php-version'],
+    java:['pom.xml','build.gradle','build.gradle.kts'],
+    docker:['Dockerfile','compose.yaml','compose.yml','docker-compose.yml']
+  };
+  const optionalRuntimes:Record<string,string[]>={};
+  for(const [runtime,names] of Object.entries(candidates))
+    optionalRuntimes[runtime]=names.filter(name=>fileStates[name]==='present');
   return { project: path.basename(root), node: packageFile?.state==='present', go: goFile?.state==='present',
-    malformedPackage: packageFile?.state==='present' && !pkg, fileStates,
+    malformedPackage: packageFile?.state==='present' && !pkg, fileStates,optionalRuntimes,
     nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
     goToolchain: /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)/m.exec(goMod)?.[1] || '',
     ports,portOrigins, requiredEnv: required, missingEnv: envInspectable?required.filter(key => !provided.has(key)):[],
     hasEnvExample: exampleFile?.state==='present', hasEnvFile: envFile?.state==='present' };
 }
-function runVersion(command:string,args:string[],timeout:number,signal?:AbortSignal):
- Promise<VersionResult> {
-  return new Promise<VersionResult>(resolve => {
-    if (signal?.aborted) return resolve({ ok: false, value: 'Cancelled' });
-    let finished = false;
-    const child = execFile(command, args, { shell: false, timeout, maxBuffer: 16384,
-      windowsHide: true }, (err, stdout, stderr) => {
-      if (finished) return;
-      finished = true;
-      signal?.removeEventListener('abort', cancel);
-      const raw=String(stdout || stderr).trim();
-      const safeVersion = command === 'node' ? /^v\d+\.\d+\.\d+/.exec(raw)?.[0] :
-        /^go version go\d+\.\d+(?:\.\d+)?/.exec(raw)?.[0];
-      resolve({ ok: !err && !!safeVersion, value: err ? (err.code === 'ENOENT' ? 'Not installed / not on PATH' :
-        'Could not inspect runtime') : (safeVersion || 'Unrecognized runtime version output') });
-    });
-    function cancel() { try { child.kill(); } catch { /* ignore */ } }
-    signal?.addEventListener('abort', cancel, { once: true });
-  });
-}
+
 function inspectPort(port:number,timeout:number,signal?:AbortSignal):Promise<PortState> {
   return new Promise<PortState>(resolve => {
     if (signal?.aborted) return resolve('cancelled');
@@ -267,7 +261,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     }));
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const result = await runVersion('node',['--version'], t, signal);
+    const result = await probeTool('node', t, signal);
     assertActive(signal);
     const localizedVersion=result.ok ? result.value :
       result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
@@ -294,7 +288,7 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
   }
   if (d.go) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const result = await runVersion('go',['version'],t,signal);
+    const result = await probeTool('go',t,signal);
     assertActive(signal);
     const localizedVersion=result.ok ? result.value :
       result.value==='Not installed / not on PATH' ? msg('diag.notInstalled') :
@@ -317,6 +311,33 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
           verdict:verdict ? (verdict.translation||verdict.detail):''}),
         suggestion:msg(goStatus==='warn'?'diag.goWarn':'diag.goChecked'),
         evidence:msg('diag.outputVersion',{value:localizedVersion})
+      }));
+  }
+  const optional:[string,string,ToolName[]][]=[
+    ['python','Python',process.platform==='win32'?['py','python','python3']:['python3','python']],
+    ['php','PHP',['php']],['java','Java',['java']],['docker','Docker CLI',['docker']]
+  ];
+  for(const [id,label,tools] of optional){
+    const sources=d.optionalRuntimes[id]||[];
+    if(!sources.length)continue;
+    let observed:ToolResult={ok:false,missing:true,value:'Not installed / not on PATH'};
+    for(const tool of tools){
+      observed=await probeTool(tool,t,signal);
+      assertActive(signal);
+      if(!observed.missing)break;
+    }
+    const status:CheckStatus=observed.ok?'info':observed.missing?'warn':'inconclusive';
+    const local=observed.ok?observed.value:
+      observed.missing?msg('diag.notInstalled'):msg('diag.runtimeUnavailable');
+    push(createCheck(id,'Runtime',label,status,
+      label+' markers: '+sources.join(', ')+'. Version probe: '+observed.value+
+      '. This does not establish project or dependency compatibility.',
+      'Verify toolchain requirements and lockfiles before changing the environment.',
+      'Read-only runtime version probe ('+label+'); project scripts were not executed.',{
+        category:msg('diag.category.Runtime'),
+        detail:msg('diag.optionalDetail',{runtime:label,sources:sources.join(', '),version:local}),
+        suggestion:msg('diag.optionalNext'),
+        evidence:msg('diag.optionalEvidence',{runtime:label})
       }));
   }
   if (d.hasEnvExample && ['present','missing'].includes(d.fileStates['.env']||'')) {

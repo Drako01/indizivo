@@ -75,3 +75,25 @@ test('unreadable or blocked config becomes inconclusive, never a false missing-k
   assert.ok(!run.checks.some(c=>c.id==='env'));
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('Python, PHP, Java and Docker workspace markers trigger bounded read-only tool observations',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-adapters-'));
+ try{
+  await fs.writeFile(path.join(root,'pyproject.toml'),'[project]\nname="demo"\n');
+  await fs.writeFile(path.join(root,'composer.json'),'{"require":{"php":"^8.2","token":"DO_NOT_STORE_VALUE"}}');
+  await fs.writeFile(path.join(root,'pom.xml'),'<project></project>');
+  await fs.writeFile(path.join(root,'Dockerfile'),'FROM scratch\n');
+  const d=await discover(root);
+  for(const [id,marker] of [['python','pyproject.toml'],['php','composer.json'],
+    ['java','pom.xml'],['docker','Dockerfile']])
+    assert.ok(d.optionalRuntimes[id].includes(marker),id);
+  assert.doesNotMatch(JSON.stringify(d),/DO_NOT_STORE_VALUE/);
+  const result=await diagnose(root,1000);
+  for(const id of ['python','php','java','docker']){
+    const finding=result.checks.find(c=>c.id===id);
+    assert.ok(finding,id);
+    assert.ok(['info','warn','inconclusive'].includes(finding.status),id);
+    assert.equal(finding.provenance.origin,'runtime-tool');
+  }
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
