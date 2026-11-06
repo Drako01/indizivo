@@ -7,7 +7,8 @@ import {probeTool} from './tool-probes';
 import {DiagnosticBudget,DiagnosticBudgetExhausted} from './budget';
 import type {ToolName,ToolResult} from './tool-probes';
 import {evaluateVersion} from './versions';
-import {inspectOwner} from './port-owners';
+import {inspectOwners} from './port-owners';
+import type {OwnerInspection} from './port-owners';
 import type {FindingTranslation,Descriptor} from './i18n';
 import type {CheckStatus,SessionStatus,CheckProvenance} from './contracts';
 import type {Comparison} from './comparison';
@@ -359,11 +360,14 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
         suggestion:msg('diag.envNext'),evidence:msg('diag.envEvidence')
       }));
   }
+  let ownerSnapshot:Map<number,OwnerInspection>|null=null;
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
     const status = await inspectPort(port,timeLeft(),signal);
     assertActive(signal);
-    const owner = status==='listening' ? await inspectOwner(port,timeLeft(),signal) : null;
+    if(status==='listening' && ownerSnapshot===null)
+      ownerSnapshot=await inspectOwners(d.ports,timeLeft(),signal);
+    const owner=status==='listening'?ownerSnapshot?.get(port)||null:null;
     assertActive(signal);
     const ownerDetail=owner?.owners?.length ?
       ' Listening owner(s): '+owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')+'.' :

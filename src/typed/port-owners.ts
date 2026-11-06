@@ -34,9 +34,10 @@ export function parseOwners(platform:string,output:unknown,port:number):PortOwne
       pid=Number(/\bpid=(\d+)\b/.exec(line)?.[1]);
       name=safeLabel(/users:\(\("([^"]{1,100})"/.exec(line)?.[1]);
     }else if(platform==='darwin'){
-      if(!line.includes('(LISTEN)')||!line.includes('TCP')||!line.includes(':'+port))continue;
+      const exact=/\bTCP\s+\S+:(\d+)\s+\(LISTEN\)\s*$/.exec(line);
+      if(!exact || Number(exact[1])!==port)continue;
       pid=Number(cols[1]);name=safeLabel(cols[0]);
-      if(!/[:\]]\d+\s+\(LISTEN\)$/.test(line)&&!line.includes(':'+port+' (LISTEN)'))continue;
+
     }else continue;
     if(Number.isSafeInteger(pid)&&pid>0&&pid<=2147483647&&
       !owners.some(owner=>owner.pid===pid))owners.push({pid,name:safeLabel(name),observed:true});
@@ -82,4 +83,47 @@ export function inspectOwner(port:number,timeoutMs:number,signal?:AbortSignal,
     function cancel():void{try{child.kill();}catch{/* best effort */}}
     signal?.addEventListener('abort',cancel,{once:true});
   });
+}
+
+/** One bounded read-only platform snapshot for all declared TCP ports. */
+export function inspectionBatchArgs(platform:string):InspectionCommand|null {
+ if(platform==='win32')return {command:'netstat',args:['-ano','-p','tcp']};
+ if(platform==='linux')return {command:'ss',args:['-ltnp']};
+ if(platform==='darwin')return {command:'lsof',args:['-nP','-iTCP','-sTCP:LISTEN']};
+ return null;
+}
+export function inspectOwners(ports:number[],timeoutMs:number,signal?:AbortSignal,
+ platform:string=process.platform):Promise<Map<number,OwnerInspection>> {
+ const requested=[...new Set(ports)].filter(x=>Number.isInteger(x)&&x>=1&&x<=65535).slice(0,12);
+ const unavailable=(status:InspectionStatus,detail:string,key:Descriptor['key'])=>{
+  const map=new Map<number,OwnerInspection>();
+  for(const port of requested)map.set(port,{status,owners:[],detail,i18nDetail:{key}});
+  return map;
+ };
+ const spec=inspectionBatchArgs(platform);
+ if(!spec)return Promise.resolve(unavailable('unsupported','Unsupported host inspection.', 'diag.ownerUnsupported'));
+ return new Promise(resolve=>{
+  if(signal?.aborted)return resolve(unavailable('cancelled','Cancelled','diag.cancelled'));
+  let finished=false;
+  const child=execFile(spec.command,spec.args,{shell:false,windowsHide:true,
+   timeout:Math.min(5000,Math.max(400,timeoutMs||2000)),maxBuffer:131072},
+   (error,stdout)=>{
+    if(finished)return;
+    finished=true;signal?.removeEventListener('abort',cancel);
+    if(signal?.aborted)return resolve(unavailable('cancelled','Cancelled','diag.cancelled'));
+    if(error)return resolve(unavailable('inconclusive','Ownership unavailable or permission denied.',
+      'diag.ownerNotAvailable'));
+    const map=new Map<number,OwnerInspection>();
+    for(const port of requested){
+      const owners=parseOwners(platform,stdout,port);
+      map.set(port,{status:owners.length?'observed':'inconclusive',owners,
+        detail:owners.length?'Process IDs observed in host tool output.':
+          'No visible process owner; permission or namespace may limit inspection.',
+        i18nDetail:{key:owners.length?'diag.ownerObserved':'diag.ownerUnknown'}});
+    }
+    resolve(map);
+   });
+  function cancel():void{try{child.kill();}catch{/* best effort */}}
+  signal?.addEventListener('abort',cancel,{once:true});
+ });
 }

@@ -23,3 +23,16 @@ test('does not make up owners from missing permission/port',()=>{
  assert.deepEqual(parseOwners('win32','TCP 0.0.0.0:3000 0.0.0.0:0 LISTENING 5020',3001),[]);
  assert.equal(inspectionArgs('unknown',3000),null);
 });
+
+test('batch inspection uses one bounded OS-specific command per run',()=>{
+ const {inspectionBatchArgs}=require('../src/port-owners');
+ assert.deepEqual(inspectionBatchArgs('win32'),{command:'netstat',args:['-ano','-p','tcp']});
+ assert.deepEqual(inspectionBatchArgs('linux'),{command:'ss',args:['-ltnp']});
+ assert.deepEqual(inspectionBatchArgs('darwin'),{command:'lsof',args:['-nP','-iTCP','-sTCP:LISTEN']});
+ assert.equal(inspectionBatchArgs('unknown'),null);
+});
+test('macOS process-owner evidence must match the exact requested port',()=>{
+ const line='node 3821 dev 20u IPv4 8123 0t0 TCP 127.0.0.1:30001 (LISTEN)';
+ assert.deepEqual(parseOwners('darwin',line,3000),[]);
+ assert.equal(parseOwners('darwin',line,30001)[0].pid,3821);
+});
