@@ -54,7 +54,7 @@ test('explicit ports and Go toolchain remain separately attributed',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-toolchain-'));
  try {
   await fs.writeFile(path.join(root,'package.json'),JSON.stringify({scripts:{dev:'next dev --port 3301'}}));
-  await fs.writeFile(path.join(root,'go.mod'),'module example.org/demo\\ngo 1.23\\ntoolchain go1.24.5\\n');
+  await fs.writeFile(path.join(root,'go.mod'),'module example.org/demo\ngo 1.23\ntoolchain go1.24.5\n');
   const d=await discover(root);
   assert.equal(d.portOrigins['3301'],'declared');
   assert.equal(d.goRequirement,'1.23');

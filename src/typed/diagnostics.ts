@@ -76,7 +76,7 @@ export function parseKeys(data:string|undefined|null):string[] {
 }
 function safeVersionRequirement(input:unknown):string {
   const value=String(input||'').trim().slice(0,80);
-  return /^[0-9A-Za-z .^~<>=*xX|,_+\-]{1,80}$/.test(value)?value:'';
+  return /^[0-9v.^~<>=*xX|\s,]{1,80}$/.test(value)?value:'';
 }
 async function readBounded(root:string,name:string):Promise<string> {
   let handle:fs.FileHandle|undefined;
