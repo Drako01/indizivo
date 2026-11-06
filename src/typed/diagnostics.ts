@@ -81,8 +81,13 @@ function createCheck(id:string,category:string,label:string,status:CheckStatus,
     schemaVersion:1,checkId,targetId:id,
     severity:status==='pass'||status==='info'?'none':'unassessed'
   };
+  const limitationsKey:Descriptor['key']=category==='Ports'?'diag.limitationPorts':
+    category==='Runtime'?'diag.limitationRuntime':
+    category==='Services'?'diag.limitationServices':
+    category==='Discovery'?'diag.limitationDiscovery':'diag.limitationConfiguration';
+  const localized:FindingTranslation={...(i18n||{}),limitations:msg(limitationsKey)};
   return {id,category,label,status,detail,suggestion:suggestion||'',provenance,metadata,
-    ...(i18n?{i18n}:{}),
+    i18n:localized,
     evidence:[{id:crypto.randomBytes(6).toString('hex'),fact:String(fact||detail),
       observedAt:new Date().toISOString()}]};
 }

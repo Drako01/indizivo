@@ -162,6 +162,11 @@ export const en = {
   "diag.nodeUnrecognizedNext": "Check the .nvmrc alias or use an explicit supported Node.js semver range before assuming compatibility.",
   "diag.goWarn": "Check the declared Go toolchain minimum.",
   "diag.goChecked": "Only the module minimum is assessed. Suggested toolchain selection is not verified.",
+  "diag.limitationPorts": "A TCP listener does not establish a process conflict.",
+  "diag.limitationRuntime": "A runtime version does not guarantee project compatibility.",
+  "diag.limitationServices": "An HTTP status does not establish complete service health.",
+  "diag.limitationDiscovery": "Only supported project markers were inspected.",
+  "diag.limitationConfiguration": "Only supported and readable configuration sources were inspected.",
   "diag.goImplicitMinimum": " — no go directive; Go assumes an implicit minimum of 1.16",
   "diag.goInvalidRequirement": " — unrecognized or inconsistent go.mod minimum directive",
   "diag.goInvalidToolchain": " — unrecognized or inconsistent toolchain directive",
@@ -410,6 +415,11 @@ export const es: Record<I18nKey,string> = {
   "diag.nodeUnrecognizedNext": "Comprobá el alias de .nvmrc o usá un rango semver de Node.js admitido antes de asumir compatibilidad.",
   "diag.goWarn": "Comprobá la versión mínima declarada del compilador Go.",
   "diag.goChecked": "Solo se evalúa la versión mínima del módulo; no se confirma la selección de toolchain.",
+  "diag.limitationPorts": "Una escucha TCP no demuestra que exista un conflicto entre procesos.",
+  "diag.limitationRuntime": "La versión detectada del entorno no garantiza compatibilidad con el proyecto.",
+  "diag.limitationServices": "El estado de una respuesta HTTP no demuestra la salud completa del servicio.",
+  "diag.limitationDiscovery": "Solo se inspeccionaron los marcadores de proyecto admitidos.",
+  "diag.limitationConfiguration": "Solo se inspeccionaron las fuentes de configuración admitidas y legibles.",
   "diag.goImplicitMinimum": " — no hay directiva go; Go presupone la versión mínima 1.16",
   "diag.goInvalidRequirement": " — directiva mínima de go.mod inconsistente o no reconocida",
   "diag.goInvalidToolchain": " — directiva toolchain inconsistente o no reconocida",
@@ -506,8 +516,8 @@ export function t(locale:string|undefined,key:I18nKey,values:Params={}):string {
    return part===undefined?'{'+name+'}':typeof part==='object'?t(locale,part.key,part.values):String(part);
  });
 }
-export interface FindingTranslation {label?:Descriptor;category?:Descriptor;detail?:Descriptor;suggestion?:Descriptor;evidence?:Descriptor}
-export interface Finding {id:string;label:string;category:string;detail:string;suggestion?:string;status:string;evidence?:{fact:string;observedAt:string;id?:string}[];i18n?:FindingTranslation}
+export interface FindingTranslation {label?:Descriptor;category?:Descriptor;detail?:Descriptor;suggestion?:Descriptor;evidence?:Descriptor;limitations?:Descriptor}
+export interface Finding {id:string;label:string;category:string;detail:string;suggestion?:string;status:string;evidence?:{fact:string;observedAt:string;id?:string}[];i18n?:FindingTranslation;provenance?:{limitations:string}}
 export function localizeFinding<F extends Finding>(finding:F,locale:string|undefined):F {
  const tr=finding.i18n;
  if(!tr)return {...finding};
@@ -516,7 +526,9 @@ export function localizeFinding<F extends Finding>(finding:F,locale:string|undef
  };
  return {...finding,label:field('label',finding.label),category:field('category',finding.category),
    detail:field('detail',finding.detail),suggestion:field('suggestion',finding.suggestion||''),
-   evidence:finding.evidence?.map(e=>({...e,fact:field('evidence',e.fact)}))} as F;
+   evidence:finding.evidence?.map(e=>({...e,fact:field('evidence',e.fact)})),
+   ...(finding.provenance?{provenance:{...finding.provenance,
+     limitations:field('limitations',finding.provenance.limitations)}}:{})} as F;
 }
 export interface Session {checks?:Finding[];serviceChecks?:Finding[];comparison?:{note:string;observations?:unknown[]}|null}
 export function localizeSession<S extends Session>(session:S|null|undefined,locale:string|undefined):S|null {

@@ -53,7 +53,7 @@ function finding(value:unknown):DiagnosticCheck|null {
   }
   const localized:FindingTranslation={};
   const translations=record(item.i18n);
-  for(const key of ['label','category','detail','suggestion','evidence'] as const){
+  for(const key of ['label','category','detail','suggestion','evidence','limitations'] as const){
     if(translations?.[key]===undefined)continue;
     const translated=descriptor(translations[key]);
     if(translated)localized[key]=translated;
