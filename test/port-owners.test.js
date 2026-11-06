@@ -36,3 +36,19 @@ test('macOS process-owner evidence must match the exact requested port',()=>{
  assert.deepEqual(parseOwners('darwin',line,3000),[]);
  assert.equal(parseOwners('darwin',line,30001)[0].pid,3821);
 });
+
+test('real listening socket: owner is this PID when observed, never invented otherwise',async()=>{
+ const net=require('node:net');
+ const {inspectOwners}=require('../dist/typed/port-owners');
+ const server=net.createServer();
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+ const port=server.address().port;
+ try{
+  const result=(await inspectOwners([port,port===65535?65534:port+1],4000)).get(port);
+  assert.ok(['observed','inconclusive'].includes(result.status),result.status);
+  if(result.status==='observed')
+   assert.ok(result.owners.some(owner=>owner.pid===process.pid),
+    'the observed owner of our own listener must be this process');
+  else assert.deepEqual(result.owners,[]);
+ }finally{await new Promise(resolve=>server.close(resolve));}
+});

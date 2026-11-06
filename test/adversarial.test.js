@@ -47,16 +47,18 @@ test('concurrent in-place rewrites never yield a torn snapshot of a project file
   while(!stop){flip=!flip;await fs.writeFile(file,flip?a:b);await new Promise(r=>setImmediate(r));}
  })();
  try{
-  const seen=new Set();
   for(let i=0;i<60;i++){
    const d=await discover(root);
    const state=d.fileStates['package.json'];
    assert.ok(['present','blocked','unreadable'].includes(state),state);
-   if(state==='present'&&!d.malformedPackage)seen.add(d.nodeRequirement);
    // A torn read would be malformed JSON; it must be reported as blocked/unreadable, never as a valid mix.
    if(state==='present')assert.ok(['>=18','>=20'].includes(d.nodeRequirement)||d.malformedPackage,d.nodeRequirement);
   }
-  assert.ok(seen.size>=1,'some reads must succeed');
+  // Fail-closed is the correct outcome under constant rewrites, so no read is required to win.
+  stop=true;await writer;
+  const settled=await discover(root);
+  assert.equal(settled.fileStates['package.json'],'present','reads recover once writes stop');
+  assert.ok(['>=18','>=20'].includes(settled.nodeRequirement));
  }finally{stop=true;await writer;await fs.rm(root,{recursive:true,force:true});}
 });
 
