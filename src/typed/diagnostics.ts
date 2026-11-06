@@ -479,7 +479,25 @@ export async function verifyServices(services:ServiceTarget[],timeout:number,sig
   for (let i=0;i<services.length;i++) {
     if (signal?.aborted) throw new Error('Cancelled');
     const svc = validateService(services[i]);
-    if (!svc) continue;
+    if (!svc) {
+      // Invalid targets are observed as BLOCKED, not silently omitted. Never
+      // include untrusted URL text (which may contain credentials) in evidence.
+      const raw=services[i];
+      const identifier=typeof raw?.url==='string'?raw.url.slice(0,600):'';
+      const id='service-rejected-'+crypto.createHash('sha256').update(identifier).digest('hex').slice(0,24);
+      const blocked=createCheck(id,'Services','Rejected service target','blocked',
+        'Only explicitly approved loopback HTTP URLs can be checked.',
+        'Review the target URL and remove credentials, queries, fragments or non-loopback hosts.',
+        'Target failed local URL validation; no HTTP request was sent.',{
+          category:msg('diag.category.Services'),detail:msg('diag.blockedTarget'),
+          suggestion:msg('diag.serviceNext'),evidence:msg('diag.serviceRejectedEvidence')
+        });
+      blocked.provenance={...blocked.provenance,origin:'discovery',
+        method:'local URL validation (no HTTP request)',target:id};
+      checks.push(blocked);
+      progress?.([...checks]);
+      continue;
+    }
     let allowed:number;
     try{allowed=budget.remaining(timeout);}
     catch(error){

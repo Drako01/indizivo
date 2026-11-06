@@ -59,3 +59,20 @@ test('service finding IDs stay attached to the same URL after reordering',async(
   assert.equal(diff.observations.filter(c=>c.trend!=='unchanged').length,0);
  }finally{await new Promise(resolve=>server.close(resolve));}
 });
+
+test('rejected service targets return BLOCKED evidence without network access or secret leakage',async()=>{
+ let hits=0;
+ const server=http.createServer((req,res)=>{hits++;res.writeHead(200);res.end('ok');});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const port=server.address().port;
+  const targets=[{name:'Unsafe',url:'http://127.0.0.1:'+port+'/health?token=SECRET_SENTINEL_NEVER_EXPORT'}];
+  const findings=await verifyServices(targets,1000);
+  assert.equal(findings.length,1);
+  assert.equal(findings[0].status,'blocked');
+  assert.equal(findings[0].provenance.method,'local URL validation (no HTTP request)');
+  assert.equal(findings[0].i18n.evidence.key,'diag.serviceRejectedEvidence');
+  assert.equal(hits,0);
+  assert.ok(!JSON.stringify(findings).includes('SECRET_SENTINEL_NEVER_EXPORT'));
+ }finally{await new Promise(resolve=>server.close(resolve));}
+});
