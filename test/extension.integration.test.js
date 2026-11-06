@@ -239,3 +239,26 @@ test('report export uses VS Code workspace.fs for a user-selected non-file URI',
   assert.ok(report.checks.some(c=>c.id==='node'&&c.provenance.origin==='runtime-tool'));
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('reports and copied evidence redact synthetic secret values without mutating a session',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-redact-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  const app=fixture(root,true);
+  let exported='';
+  app.vscode.workspace.fs={writeFile:async(_uri,bytes)=>{exported=Buffer.from(bytes).toString('utf8');}};
+  app.vscode.window.showSaveDialog=async()=>({scheme:'memfs',path:'/reports/report.json'});
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  controller.data.session.serviceChecks.push({id:'service-synthetic',category:'Services',
+    label:'synthetic',status:'warn',detail:'client_secret=NEVER_EXPORT_12345',
+    suggestion:'',evidence:[{id:'evidence',fact:'password=NEVER_EXPORT_12345',
+      observedAt:'2026-11-06T00:00:00Z'}]});
+  await controller.export('json');
+  assert.doesNotMatch(exported,/NEVER_EXPORT_12345/);
+  await controller.copyEvidence('service-synthetic');
+  assert.doesNotMatch(app.getClipboard(),/NEVER_EXPORT_12345/);
+  assert.match(controller.data.session.serviceChecks[0].detail,/NEVER_EXPORT_12345/,
+    'canonical in-memory evidence must remain unchanged');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

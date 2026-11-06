@@ -6,6 +6,7 @@ import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
 import {html} from './ui';
+import {redactSensitiveText,redactReport} from './redaction';
 import {restoreSession,restoreHistory} from './storage';
 import type {HistoryEntry} from './storage';
 import {compareSessions} from './comparison';
@@ -291,7 +292,7 @@ export class ControlCenter {
       this.tr('report.next')+': '+(localized.suggestion||this.tr('report.none'))];
     for(const record of localized.evidence||[])
       lines.push(this.tr('report.evidence')+': '+record.fact+' · '+record.observedAt);
-    await vscode.env.clipboard.writeText(lines.join('\n'));
+    await vscode.env.clipboard.writeText(redactSensitiveText(lines.join('\n')));
     vscode.window.showInformationMessage(this.tr('host.copied'));
   }
   async selectHistory(index:number) {
@@ -342,7 +343,7 @@ export class ControlCenter {
     });
     if (!uri) return;
     let output='';
-    if (format==='json') output=JSON.stringify(session,null,2)+'\n';
+    if (format==='json') output=JSON.stringify(redactReport(session),null,2)+'\n';
     else {
       const lines=['# '+this.tr('report.heading'),'',this.tr('report.project')+': '+session.project,
         this.tr('report.date')+': '+session.completedAt,
@@ -354,7 +355,7 @@ export class ControlCenter {
         for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
         lines.push('');
       }
-      output=lines.join('\n');
+      output=redactSensitiveText(lines.join('\n'));
     }
     await vscode.workspace.fs.writeFile(uri,Buffer.from(output,'utf8'));
     // VS Code workspace.fs supports user-selected remote and virtual URI schemes.
