@@ -28,7 +28,7 @@ function upperBound(op:'^'|'~',base:Version):Version {
   return at(0,0,base.patch+1);
 }
 function requirement(raw:string):{version:Version;wildcard:boolean}|null {
-  const clean=raw.replace(/^v/,'').replace(/\.X/g,'.x');
+  const clean=raw.replace(/^v/,'').replace(/\.X/g,'.x').replace(/\.\*/g,'.x');
   const match=/^(\d+)(?:\.(\d+|x))?(?:\.(\d+|x))?$/.exec(clean);
   if(!match)return null;
   const parts=match.slice(1);
@@ -42,12 +42,14 @@ function requirement(raw:string):{version:Version;wildcard:boolean}|null {
 }
 function satisfiesToken(installed:Version,token:string):Match {
   if(/^(?:\*|x|X)$/.test(token))return 'yes';
-  const match=/^(>=|<=|>|<|=|\^|~)?(v?\d+(?:\.(?:\d+|x|X)){0,2})$/.exec(token);
+  const match=/^(>=|<=|>|<|=|\^|~)?(v?\d+(?:\.(?:\d+|x|X|\*)){0,2})$/.exec(token);
   if(!match)return 'unknown';
   const op=match[1]||'=',spec=requirement(match[2]||'');
   if(!spec)return 'unknown';
   const base=spec.version,order=compare(installed,base);
-  if(spec.wildcard && !['='].includes(op))return 'unknown';
+  // npm caret/tilde x-ranges have the same bounded semantics as partials.
+  // Unsupported wildcard comparators still fail closed.
+  if(spec.wildcard && !['=','^','~'].includes(op))return 'unknown';
   if(op==='^'||op==='~')return order>=0 && compare(installed,upperBound(op,base))<0?'yes':'no';
   if(op==='>=')return order>=0?'yes':'no';
   // Partial comparator bounds differ from exact versions in npm semantics:

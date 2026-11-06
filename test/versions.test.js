@@ -36,7 +36,7 @@ test('npm range precision: major-only tilde and caret zero semantics',()=>{
 });
 
 test('unsupported npm forms and prereleases fail closed rather than guessing',()=>{
- for(const range of ['>=20.0.0-rc.1','1.2.3 - 2.1.0','>=20 || not-semver','>22.x','^0.0.x']){
+ for(const range of ['>=20.0.0-rc.1','1.2.3 - 2.1.0','>=20 || not-semver','>22.x','>=20.x']){
    assert.equal(evaluateVersion('22.5.1',range,'node').status,'inconclusive',range);
  }
  assert.equal(evaluateVersion('22.0.0-rc.1','>=20','node').status,'inconclusive');
