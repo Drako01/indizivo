@@ -60,8 +60,9 @@ export class ControlCenter {
     // Broken or inaccessible VS Code workspaceState must not prevent activation.
     // Do not treat failed restoration as evidence of a previous successful check.
     let value:unknown={};
+    let restorationFailed=false;
     try {value=this.context.workspaceState.get<unknown>(this.scopeKey(), {});}
-    catch {this.error=this.tr('host.storageReadFailed');}
+    catch {restorationFailed=true;}
     const stored=value && typeof value==='object' && !Array.isArray(value)?
       value as Partial<ProjectData>:{};
     const timeout=typeof stored.timeoutMs==='number' && Number.isFinite(stored.timeoutMs) ?
@@ -74,6 +75,7 @@ export class ControlCenter {
       locale: (stored.locale==='es'||stored.locale==='en') ? stored.locale :
         (vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en')
     };
+    if(restorationFailed)this.error=this.tr('host.storageReadFailed');
   }
   async save() {
     try {await this.context.workspaceState.update(this.scopeKey(), this.data);}
