@@ -11,6 +11,10 @@
 - File-descriptor identity and final file mutation checks, plus expanded SSRF and synthetic credential redaction cases.
 - Additive JSON report format metadata and evidence/provenance-rich Markdown exports.
 - Explicit localized limited Workspace Trust and virtual-workspace declarations in the extension manifest.
+- Additive versioned Finding v1 check/target identifiers and conservative unassessed severity, with safe history migration and EN/ES provenance limitations.
+- Bounded subprocess orchestration and real child-tree cancellation tested on Linux, macOS and Windows. Replaced execFile with spawn after an adversarial test exposed leaked descendants.
+- Extracted pure JSON/Markdown report rendering from the Control Center, with per-format redaction and contract tests.
+- Added opt-in, non-publishing VSIX candidate measurements for synthetic small/medium/large fixtures (p50/p95/RSS), explicitly not customer SLO evidence.
 - Additional unreleased PR #14 engineering: monorepo selection, evidence provenance, explicit port inference, stable service identities, optional toolchain checks, safer exports and consent.
 - This is **not** published. The package version remains 0.1.3 pending the owner's future 0.2.0 GO decision. Manual accessibility/remote/platform and external usability gates remain open.
 

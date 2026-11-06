@@ -99,7 +99,7 @@
 
 **Rama:** `feat/indizivo-enterprise-aaaa`. **PR:** https://github.com/Drako01/indizivo/pull/14 (DRAFT; unico PR para todas las fases, sin merge). El PR #13 permanece Draft, sin fusionar ni cerrar.
 
-**Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `e40ceee3961b64589b1ff68a6663c8083adfcf67`, [Quality Gate 42309898474](https://github.com/Drako01/indizivo/actions/runs/42309898474): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
+**Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `225d7079b311d878455a90c2b35ff739ecc85a5f`, [Quality Gate 42311892097](https://github.com/Drako01/indizivo/actions/runs/42311892097): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
 
 **Candidato VSIX empaquetado instalado más reciente:** `00276c964fd40329468716ecdccd2fd9c37ac1b8` — [Enterprise VSIX Candidate Gate 42307975194](https://github.com/Drako01/indizivo/actions/runs/42307975194), PASS; instalación y smoke en Extension Host Linux; 39 archivos, 62,5 KB, SHA-256 `ae9370f9a418c1b8b3487f5bbc8e47958d828572bcd0023824fbe93bda2990f5`, [artefacto 13546719713](https://github.com/Drako01/indizivo/actions/runs/42307975194/artifacts/13546719713). No es prueba de UI interactiva ni de WSL/SSH/containers.
 
@@ -109,7 +109,7 @@
 | D-02 | IMPLEMENTED_UNIT_VERIFIED / REAL_MATRIX_PENDING | Parser go.mod fail-closed, implicit go1.16, directivas duplicadas/malformadas, go minimo vs sugerencia toolchain, test adversarial. Go version forzado GOTOOLCHAIN=local para no descargar compiladores. Falta matriz real de versiones Go, prerelease y toolchains personalizados |
 | D-03 | IMPLEMENTED_PARTIAL | HTTP loopback IPv4/IPv6, pruebas en CI; falta topologia completa de SO/host remoto |
 | D-04 | VERIFIED | Puerto declarado vs heuristica Next/Vite, tests y textos |
-| D-05 | IMPLEMENTED_PARTIAL | `schemaVersion:2`, provenance y scope; export JSON agrega `reportFormatVersion:1` sin romper los campos anteriores y Markdown muestra metodo/confianza/origen/limites. Falta modelo de severidad/target formal completo |
+| D-05 | IMPLEMENTED_VERIFIED_SUBSET / HOST_MATRIX_PENDING | Session schema v2; Finding metadata v1 (`checkId`, `targetId`, severidad conservadora `unassessed`), timestamps/evidence/provenance, restauración legacy no destructiva y reporte JSON v1. Testeado por CI 3 SO. Falta validación de host/namespace remoto y revisión UX de severidad |
 | D-06 | VERIFIED | IDs por URL canonica, pruebas de reorder y comparacion posterior a service recheck |
 | D-07 | VERIFIED | Archivo ausente vs ilegible/bloqueado; no falsear ausencia de claves en .env |
 | D-08 | VERIFIED | README/ROADMAP/PRIVACY 0.1.3, CURRENT_STATE y notas historicas etiquetadas |
@@ -117,7 +117,7 @@
 | S-01 | IMPLEMENTED_PARTIAL | Seleccion de proyecto/subproyecto con realpath y alcance del Extension Host; pruebas WSL/SSH/Dev Containers pendientes |
 | S-04 | IMPLEMENTED_UNIT_VERIFIED / TOCTOU_PENDING | Bounded file reads, symlink block y verificacion de identidad inode/dev del descriptor y mtime/size final en 3 SO. Falta ataque real concurrente y archivos remotos/virtuales |
 | S-08 | IMPLEMENTED_UNIT_VERIFIED / MANUAL_PENDING | Manifest declara `untrustedWorkspaces` y `virtualWorkspaces` como `limited` con textos EN/ES, runtime bloquea diagnosticos activos sin confianza. Falta matriz real de cambios trust y remotos |
-| S-02 | IMPLEMENTED_PARTIAL | Deadline monotónico por diagnostico/servicios y resultados parciales; Go version probe fija GOTOOLCHAIN=local para evitar downloads. Falta cancelacion real de arbol de procesos en cada SO |
+| S-02 | IMPLEMENTED_VERIFIED_SYNTHETIC / REMOTE_PENDING | Deadline monotónico, salida acotada, runtime y owners por spawn/allowlist; cancelación del proceso e hijo real testada en Linux/macOS/Windows. FIX del fallo original execFile/descendiente, 7e9360b PASS. Falta matriz real WSL/SSH/Containers y procesos terceros adversariales (nunca matar procesos del proyecto) |
 | S-03 | IMPLEMENTED_UNIT_VERIFIED | Batch de owner OS, coincidencia exacta macOS; faltan pruebas con procesos reales en cada SO |
 | S-05 | IMPLEMENTED_PARTIAL | Historial acotado, migracion explicita de schema legacy v1, rechazo de schemas futuros desconocidos y sanitizacion. Lectura/escritura workspaceState fallida: fallback seguro, mensaje EN/ES, sin falsear el diagnostico, con regresiones verificadas. Falta matriz real de fallos de disco y storage remoto |
 | S-06 | IMPLEMENTED_UNIT_VERIFIED / ADVERSARIAL_PENDING | Allowlist localhost/IPv4/IPv6, target invalidado => BLOCKED y sin request/URL sensible; corpus 15 URLs maliciosas y redirects PASS. Falta fuzz DNS/redirect y prueba monitorizada en hosts reales |
@@ -125,15 +125,15 @@
 | P-02 | IMPLEMENTED_PARTIAL | Descubrimiento superficial limitado de monorepo/multi-root y seleccion explicita; falta UX real remoto |
 | P-03/P-04 | IMPLEMENTED_UNIT_VERIFIED | Versiones permitidas de Python/PHP/Java/Docker CLI; Node/Go y lockfile/packageManager read-only; sin afirmaciones de compatibilidad de dependencias |
 | P-05/P-06/P-07 | IMPLEMENTED_PARTIAL | Evidencia con confianza y limitaciones, diff post-recheck y filtros UI; faltan pruebas de usuario y navegacion real completa |
-| P-08 | IMPLEMENTED_UNIT_VERIFIED / REAL_URI_PENDING | JSON compatible con `reportFormatVersion:1`, `reportGeneratedAt`; Markdown EN/ES con host/scope, origen, metodo, confianza, limites, evidencia, redaccion y `workspace.fs`. Faltan formatos de secretos desconocidos y URI remotas reales |
-| A-01/A-03 | IMPLEMENTED_PARTIAL | Modulos storage, tool-probes, budget, monorepo, redaction; validacion estricta de campos Webview y schema historico; ControlCenter aun concentra responsabilidades |
-| A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unitarios, Webview en VM, Extension Host Linux, estado PARTIAL, storage I/O fallido sin diagnostico falso; falta matriz UI/VSIX multi-SO |
-| R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft, Quality Gate de codigo mas reciente e40ceee PASS 4/4. VSIX candidato 00276c9 PASS en Linux es anterior al nuevo codigo; nuevo paquete y pruebas reales de UI/a11y/remote pendientes. No release |
+| P-08 | IMPLEMENTED_VERIFIED_CI / REAL_URI_PENDING | Renderer puro `reports.ts`, JSON `reportFormatVersion:1`, Markdown EN/ES, método/confianza/alcance/limitaciones, redacción y `workspace.fs`; contratos/regresión 3 SO. Falta URI remota real y formatos de secreto desconocidos |
+| A-01/A-03 | IMPLEMENTED_PARTIAL | Extracción gradual de `reports.ts`, `process-control.ts`, storage, tool-probes, budget, monorepo y redaction; metadata Finding v1 y validación runtime de historial/Webview. ControlCenter y UI aún concentran responsabilidades, refactor gradual pendiente |
+| A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unit/contract/adversarial, proceso descendiente real y cancelación en los 3 SO, Webview VM, E2E Extension Host Linux y estados parciales; faltan clicks reales y a11y/VSIX multi-SO |
+| R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft, código 225d707 PASS 4/4; VSIX anterior 00276c9 no cubre código actual. Nuevo candidate gate se dispara con actualización documental, empaquetado exacto/hash e installed smoke pendientes de run. Sin release ni manual UX |
 | R-08/R-09/R-10 | OPEN/CONTROLLED | Matriz manual, GO/NO-GO y restricciones owner documentadas; no merge/tag/release ni cambios de branding |
 
 ### Handoff verificable (ultimo bloque)
 
-- **Ultimo codigo verificado:** `e40ceee3961b64589b1ff68a6663c8083adfcf67` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42309898474).
+- **Ultimo codigo verificado:** `225d7079b311d878455a90c2b35ff739ecc85a5f` — [Quality Gate PASS, 4/4](https://github.com/Drako01/indizivo/actions/runs/42311892097).
 - **VSIX aislado verificado:** `00276c964fd40329468716ecdccd2fd9c37ac1b8` — [Packaged VSIX PASS](https://github.com/Drako01/indizivo/actions/runs/42307975194), SHA-256 `ae9370f9a418c1b8b3487f5bbc8e47958d828572bcd0023824fbe93bda2990f5`, [artefacto](https://github.com/Drako01/indizivo/actions/runs/42307975194/artifacts/13546719713).
 - **Ultimos cambios posteriores al checklist anterior:** monorepo/seleccion segura; sanitizacion de redaccion/copy/export; flujo CI de VSIX no publicador; restauracion segura de comparaciones; cambio de estado de servicios solo tras recheck aprobado; lockfiles/package manager; tests Webview; modelo de amenazas y matriz manual de aceptacion.
 - **Bugs de CI detectados y corregidos:** fixture de go.mod, allowlist de requisitos de versiones, test de enlace README empaquetado, inventario VSIX de modulos, contratos persistidos `lockfiles/packageManager`. Los runs fallidos historicos no se reetiquetan PASS; el run mas reciente del SHA de codigo es PASS.
@@ -201,20 +201,38 @@
 
 **Handoff:** la próxima IA debe partir del HEAD actual de PR #14, verificar el diff respecto a e40ceee, implementar el siguiente ID sin rehacer lo que ya pasó, actualizar este mismo ledger y generar un nuevo VSIX candidato (sin publicar) al finalizar la siguiente integración relevante.
 
+### Iteración 2026-11-06 — Finding v1, cancelación real y renderer/baselines
+
+| SHA de código | IDs y alcance | Evidencia exacta | Resultado |
+|---|---|---|---|
+| [e3cc246](https://github.com/Drako01/indizivo/commit/e3cc24605c8ea55eb22826c9d41159d6f0dca712) | D-05/A-03: metadata Finding v1: checkId/targetId/severity y restauración histórica segura | [Quality Gate 42310486981](https://github.com/Drako01/indizivo/actions/runs/42310486981) | **PASS 4/4** |
+| [b3d7679](https://github.com/Drako01/indizivo/commit/b3d76791cf3c11a1d3f587bbd8fede84ac337435) | P-09/P-05: limitaciones de provenance localizadas EN/ES, persistibles y sin mutar hechos canónicos | [Quality Gate 42310716249](https://github.com/Drako01/indizivo/actions/runs/42310716249) | **PASS 4/4** |
+| [ddfc104](https://github.com/Drako01/indizivo/commit/ddfc1045bd6a0af99434da227791c72b91751e01) | S-02: ejecutor inicial bounded e integración tool probes/owner snapshots | [Quality Gate 42311043750](https://github.com/Drako01/indizivo/actions/runs/42311043750) | **PASS 4/4** en tests disponibles; NO prueba del descendiente real |
+| [fc5b80c](https://github.com/Drako01/indizivo/commit/fc5b80c8e2073b87d3461a5f87ec38f6e3b610b5) | S-02 test con proceso descendiente real, detectó error de cancelación; execFile no propagaba detached | [Quality Gate 42311198057](https://github.com/Drako01/indizivo/actions/runs/42311198057) | **FAIL histórico real**, reproducido y corregido |
+| [7e9360b](https://github.com/Drako01/indizivo/commit/7e9360bc94d6d0d4f163d3895ca1125c0e555797) | S-02: spawn con grupo POSIX, taskkill /T PID propio en Win, límite de salida y pruebas de nieto real | [Quality Gate 42311358286](https://github.com/Drako01/indizivo/actions/runs/42311358286) | **PASS 4/4**, incluida prueba de proceso descendiente real en 3 SO |
+| [dcae02e](https://github.com/Drako01/indizivo/commit/dcae02e80a5802899523eb0ad24c05d328a5ce38) | A-01/P-08: extraído `reports.ts`, export versión 1 con test de compatibilidad/localización/redacción | [Quality Gate 42311637048](https://github.com/Drako01/indizivo/actions/runs/42311637048) | **PASS 4/4** |
+| [225d707](https://github.com/Drako01/indizivo/commit/225d7079b311d878455a90c2b35ff739ecc85a5f) | B-08/A-06: fixtures sintéticos pequeños, medianos y grandes, p50/p95/RSS, solo en gate VSIX candidato | [Quality Gate 42311892097](https://github.com/Drako01/indizivo/actions/runs/42311892097) | **PASS 4/4** estático/unit; mediciones **PENDING** hasta correr candidate gate |
+
+**Validez y límites:** la matriz 3 SO confirma cancelación de procesos y descendientes sintéticos propios; no es un pentest, no acredita SSH/WSL/Containers, ni procesos ajenos a Indizivo. Los benchmarks etiquetados `synthetic-local-benchmark` no son SLO ni sustituyen mediciones sobre repositorios de usuarios. La evaluación del producto con 10–15 developers sigue pendiente.
+
+**Evidencia reutilizada:** no se repitió manualmente la matriz cuando el código y entorno no cambiaron; los runs automáticos de cada SHA y su contrato están enlazados. El VSIX verificado de `00276c9` es **histórico y NO acredita el nuevo runtime**. La modificación del marker de candidato en esta iteración dispara un run separado de empaquetado/hashes/performance; sin publicar.
+
+**Handoff siguiente:** revisar `Indizivo / Enterprise VSIX Candidate Gate` del commit de esta documentación; guardar run/artefacto/hash/perfiles JSONL. Después investigar a11y real, Windows/macOS UI, remote WSL/SSH/containers, seguridad adversarial y benchmark real, dejando cada criterio NO-GO hasta evidencia completa. PR #14 y #13 continúan Draft.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
 |---|---|
 | Fecha / operador | 2026-11-06 / implementacion continua |
 | Rama de implementacion | feat/indizivo-enterprise-aaaa (PR #14 Draft) |
-| Ultimo commit inspeccionado | e40ceee3961b64589b1ff68a6663c8083adfcf67 (ultimo codigo antes de esta actualizacion documental) |
-| Ultimo commit con calidad verificada | e40ceee3961b64589b1ff68a6663c8083adfcf67 (run 42309898474, Windows/Linux/macOS + Linux E2E 4/4 PASS) |
+| Ultimo commit inspeccionado | 225d7079b311d878455a90c2b35ff739ecc85a5f (último código antes de esta actualización documental) |
+| Ultimo commit con calidad verificada | 225d7079b311d878455a90c2b35ff739ecc85a5f (run 42311892097, Windows/Linux/macOS + Linux E2E 4/4 PASS) |
 | Fase en curso | Fases 1–5 parcialmente desarrolladas en PR #14; hardening, matriz manual y certificacion pendientes |
 | Ultimo ID completado | D-08 (ademas D-04, D-06, D-07) |
 | IDs IN_PROGRESS | D-01, D-02, D-03, D-05, S-01/02/03/04/05/06/07/08, P-02/03/04/05/06/07/08, A-01/03/04/07, R-01/03/07 |
-| Bloqueos | UI real/a11y, entornos remotos, cancelacion process-tree por SO, pruebas externas, seguridad adversarial y rendimiento real. VSIX 00276c9 valido solo para codigo anterior a e40ceee |
-| Proxima accion exacta | Continuar D-05 modelo Finding/Evidence canonico y A-01 refactor no disruptivo; luego generar VSIX del candidato exacto HEAD y validar soporte real UI/a11y/remote antes de decidir GO. |
-| Gates integrales pendientes | VSIX del siguiente cambio de runtime si lo hubiera; UI real, a11y, WSL/SSH/containers, p95/RSS, false-positive corpus y QA externo |
+| Bloqueos | UI real/a11y, entornos remotos, cancelación process-tree de topologías remotas, pruebas con 10–15 usuarios, security/TOCTOU adversarial externo y rendimiento en proyectos reales; VSIX anterior no cubre código nuevo |
+| Proxima accion exacta | Validar Enterprise VSIX Candidate Gate disparado por este commit con hash + baseline sintético small/medium/large; después ejecutar UI real/a11y, remote y estudio externo antes de decisión owner GO/NO-GO |
+| Gates integrales pendientes | VSIX de último código con hash, baseline sintético p50/p95/RSS, UI real y lector pantalla, WSL/SSH/containers, p95/RSS en proyectos reales, falsos positivos externos y QA con usuarios |
 | Release decision | NO-GO para Enterprise AAAA |
 
 ### Plantilla de handoff por sesion

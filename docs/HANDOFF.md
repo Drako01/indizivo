@@ -1,7 +1,7 @@
 # Indizivo — Technical handoff / current engineering state
 
 > **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
-> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. The authoritative active implementation ledger and exact-SHA handoff are in [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md), updated with the Go/TOCTOU/privacy/trust evidence ledger at e40ceee (2026-11-06). Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. The authoritative active implementation ledger and exact-SHA handoff are in [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md), updated with the Finding v1 / real process-tree / report renderer evidence ledger at 225d707 (2026-11-06). Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
 
 
 ### Icono Activity Bar + QA final Windows (2026-11-05 17:27 ART)
