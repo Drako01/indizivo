@@ -1,6 +1,6 @@
 # Indizivo — Manual, accessibility and external validation matrix
 
-**Status:** OPEN / NOT YET VERIFIED. This document defines work that automated CI and a Linux packaged-VSIX smoke cannot certify. Keep all unchecked until someone tests the **exact immutable VSIX hash** from the active candidate workflow.
+**Status:** OPEN / NOT YET VERIFIED. Automated candidate baseline: [run 42312161308](https://github.com/Drako01/indizivo/actions/runs/42312161308), commit `6a738a3b8b26c633cae14ed4dc66df9fa23f2dd9`, VSIX SHA-256 `023a9c475505826bfb6d9a6fdfb7d7a5b697f578535766a35ef6930815344a73`. Synthetic process-tree cancellation passed in 3 OS ([run 42311358286](https://github.com/Drako01/indizivo/actions/runs/42311358286)), but manual/remote tests below remain unchecked. This document defines work that automated CI and a Linux packaged-VSIX smoke cannot certify. Keep all unchecked until someone tests the **exact immutable VSIX hash** from the active candidate workflow.
 
 ## Capture an evidence row for each test
 

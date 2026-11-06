@@ -101,7 +101,7 @@
 
 **Ultimo commit de codigo verificado ANTES de esta actualizacion documental:** `225d7079b311d878455a90c2b35ff739ecc85a5f`, [Quality Gate 42311892097](https://github.com/Drako01/indizivo/actions/runs/42311892097): Windows, Linux, macOS y VS Code Extension Host Linux, todos PASS. La nueva revision de este checklist es un cambio solo documental; no declarar que su SHA fue probado hasta confirmar un run propio o aplicar la regla de reutilizacion de evidencia con el diff documentado.
 
-**Candidato VSIX empaquetado instalado más reciente:** `00276c964fd40329468716ecdccd2fd9c37ac1b8` — [Enterprise VSIX Candidate Gate 42307975194](https://github.com/Drako01/indizivo/actions/runs/42307975194), PASS; instalación y smoke en Extension Host Linux; 39 archivos, 62,5 KB, SHA-256 `ae9370f9a418c1b8b3487f5bbc8e47958d828572bcd0023824fbe93bda2990f5`, [artefacto 13546719713](https://github.com/Drako01/indizivo/actions/runs/42307975194/artifacts/13546719713). No es prueba de UI interactiva ni de WSL/SSH/containers.
+**Candidato VSIX empaquetado instalado más reciente:** `6a738a3b8b26c633cae14ed4dc66df9fa23f2dd9` — [Enterprise VSIX Candidate Gate 42312161308](https://github.com/Drako01/indizivo/actions/runs/42312161308), **PASS**; instalación y smoke en Extension Host aislado Linux, 41 archivos, 67,99 KB, SHA-256 `023a9c475505826bfb6d9a6fdfb7d7a5b697f578535766a35ef6930815344a73`, [artefacto 13549101833](https://github.com/Drako01/indizivo/actions/runs/42312161308/artifacts/13549101833). Contiene `indizivo.synthetic-benchmarks.jsonl` con perfiles small/medium/large (12 corridas cada uno); medidas sintéticas, no proyectos reales ni SLO. El Quality Gate del mismo SHA pasó [4/4 en intento #2](https://github.com/Drako01/indizivo/actions/runs/42312166879) tras un fallo inicial de red al descargar VS Code.
 
 | ID | Estado basado en evidencia | Nota / criterio pendiente |
 |---|---|---|
@@ -128,7 +128,7 @@
 | P-08 | IMPLEMENTED_VERIFIED_CI / REAL_URI_PENDING | Renderer puro `reports.ts`, JSON `reportFormatVersion:1`, Markdown EN/ES, método/confianza/alcance/limitaciones, redacción y `workspace.fs`; contratos/regresión 3 SO. Falta URI remota real y formatos de secreto desconocidos |
 | A-01/A-03 | IMPLEMENTED_PARTIAL | Extracción gradual de `reports.ts`, `process-control.ts`, storage, tool-probes, budget, monorepo y redaction; metadata Finding v1 y validación runtime de historial/Webview. ControlCenter y UI aún concentran responsabilidades, refactor gradual pendiente |
 | A-04/A-07 | IMPLEMENTED_PARTIAL | Tests unit/contract/adversarial, proceso descendiente real y cancelación en los 3 SO, Webview VM, E2E Extension Host Linux y estados parciales; faltan clicks reales y a11y/VSIX multi-SO |
-| R-01/R-03/R-07 | IMPLEMENTED_PARTIAL | PR14 Draft, código 225d707 PASS 4/4; VSIX anterior 00276c9 no cubre código actual. Nuevo candidate gate se dispara con actualización documental, empaquetado exacto/hash e installed smoke pendientes de run. Sin release ni manual UX |
+| R-01/R-03/R-07 | IMPLEMENTED_VERIFIED_CI / REAL_UX_PENDING | PR14 Draft; QA del SHA candidato 6a738a3 4/4 PASS tras rerun focalizado; VSIX inmutable Linux smoke PASS (42312161308), checksum SHA256 y artifact con benchmark sintético. No certifica clicks reales, a11y ni remote; no release |
 | R-08/R-09/R-10 | OPEN/CONTROLLED | Matriz manual, GO/NO-GO y restricciones owner documentadas; no merge/tag/release ni cambios de branding |
 
 ### Handoff verificable (ultimo bloque)
@@ -219,6 +219,16 @@
 
 **Handoff siguiente:** revisar `Indizivo / Enterprise VSIX Candidate Gate` del commit de esta documentación; guardar run/artefacto/hash/perfiles JSONL. Después investigar a11y real, Windows/macOS UI, remote WSL/SSH/containers, seguridad adversarial y benchmark real, dejando cada criterio NO-GO hasta evidencia completa. PR #14 y #13 continúan Draft.
 
+
+### Verificación de candidato final de esta iteración — SHA exacto `6a738a3`
+
+- **Código de implementación evaluado:** `225d7079b311d878455a90c2b35ff739ecc85a5f` — [Quality Gate 42311892097](https://github.com/Drako01/indizivo/actions/runs/42311892097), **PASS 4/4** Linux, Windows, macOS, VS Code Extension Host Linux.
+- **Commit documental marcador que incluye exactamente ese código:** `6a738a3b8b26c633cae14ed4dc66df9fa23f2dd9` — [Quality Gate 42312166879](https://github.com/Drako01/indizivo/actions/runs/42312166879), **PASS 4/4 (segundo intento)**. El intento inicial tuvo un fallo externo `ETIMEDOUT` / `ENETUNREACH` descargando VS Code en Linux; solo se reejecutó el job fallido. No reinterpretar el fallo previo como PASS.
+- **VSIX de 0.1.3 interno, destino futuro 0.2.0:** [Candidate Gate 42312161308](https://github.com/Drako01/indizivo/actions/runs/42312161308) **PASS** (no publica), `indizivo-0.1.3.vsix`, 41 archivos, 67,99 KB, SHA-256 `023a9c475505826bfb6d9a6fdfb7d7a5b697f578535766a35ef6930815344a73`, [artefacto GitHub Actions 13549101833](https://github.com/Drako01/indizivo/actions/runs/42312161308/artifacts/13549101833).
+- **Métricas:** el artefacto incluye `indizivo.synthetic-benchmarks.jsonl` con perfiles small/medium/large y 12 diagnósticos por perfil, p50/p95 y peak RSS. No se copiaron métricas numéricas sin leer el archivo, no se declararon umbrales/SLO. B-08 y A-06 permanecen **PARCIAL / real-project baseline pendiente**.
+- **No repetir:** este checkpoint modifica únicamente documentación fuera del VSIX según `.vscodeignore`; QA automatizada del candidato 6a738a3 se reutiliza exclusivamente cuando el diff no altera runtime/manifest/lockfile ni superficie empaquetada. No disparar otro VSIX Gate por modificar solo el checklist.
+- **Release:** `main` sigue en 0.1.3; ninguna publicación de 0.2.0, no tag, no merge, no cambios de logos, secrets o branch rules. PR #13 y #14 continúan Draft. **NO-GO** para declaración AAAA/10-10 hasta QA y aprobación explícita.
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
@@ -230,9 +240,9 @@
 | Fase en curso | Fases 1–5 parcialmente desarrolladas en PR #14; hardening, matriz manual y certificacion pendientes |
 | Ultimo ID completado | D-08 (ademas D-04, D-06, D-07) |
 | IDs IN_PROGRESS | D-01, D-02, D-03, D-05, S-01/02/03/04/05/06/07/08, P-02/03/04/05/06/07/08, A-01/03/04/07, R-01/03/07 |
-| Bloqueos | UI real/a11y, entornos remotos, cancelación process-tree de topologías remotas, pruebas con 10–15 usuarios, security/TOCTOU adversarial externo y rendimiento en proyectos reales; VSIX anterior no cubre código nuevo |
-| Proxima accion exacta | Validar Enterprise VSIX Candidate Gate disparado por este commit con hash + baseline sintético small/medium/large; después ejecutar UI real/a11y, remote y estudio externo antes de decisión owner GO/NO-GO |
-| Gates integrales pendientes | VSIX de último código con hash, baseline sintético p50/p95/RSS, UI real y lector pantalla, WSL/SSH/containers, p95/RSS en proyectos reales, falsos positivos externos y QA con usuarios |
+| Bloqueos | UI real/a11y, WSL/SSH/Dev Containers, cancelación en hosts remotos, 10–15 usuarios, pentest/TOCTOU adversarial externo y benchmark en proyectos reales. Candidato VSIX 6a738a3 está verificado por CI |
+| Proxima accion exacta | Candidate 6a738a3 verificado con SHA256 y benchmark sintético; ejecutar y registrar matriz UI real, NVDA/VoiceOver/zoom 200%, WSL/SSH/Containers y 10–15 usuarios. Decisión GO/NO-GO del owner antes de 0.2.0 |
+| Gates integrales pendientes | VSIX nuevo solo si cambia runtime tras 6a738a3; UI real/lector pantalla, WSL/SSH/containers, p95/RSS en proyectos reales, falsos positivos externos y QA con 10–15 usuarios |
 | Release decision | NO-GO para Enterprise AAAA |
 
 ### Plantilla de handoff por sesion
