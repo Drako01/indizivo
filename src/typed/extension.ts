@@ -57,7 +57,11 @@ export class ControlCenter {
     return 'indizivo:v1:' + crypto.createHash('sha256').update(this.currentRoot?.toString() || 'none').digest('hex');
   }
   restore() {
-    const value=this.context.workspaceState.get<unknown>(this.scopeKey(), {});
+    // Broken or inaccessible VS Code workspaceState must not prevent activation.
+    // Do not treat failed restoration as evidence of a previous successful check.
+    let value:unknown={};
+    try {value=this.context.workspaceState.get<unknown>(this.scopeKey(), {});}
+    catch {this.error=this.tr('host.storageReadFailed');}
     const stored=value && typeof value==='object' && !Array.isArray(value)?
       value as Partial<ProjectData>:{};
     const timeout=typeof stored.timeoutMs==='number' && Number.isFinite(stored.timeoutMs) ?
@@ -72,7 +76,12 @@ export class ControlCenter {
     };
   }
   async save() {
-    await this.context.workspaceState.update(this.scopeKey(), this.data);
+    try {await this.context.workspaceState.update(this.scopeKey(), this.data);}
+    catch {
+      // Keep actual findings in memory. A storage failure does not turn a
+      // completed diagnostic into FAILED, nor imply that data was persisted.
+      this.error=this.tr('host.storageSaveFailed');
+    }
   }
   viewedSession() {
     return this.selectedHistoryIndex===null ? this.data.session :

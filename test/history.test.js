@@ -59,3 +59,30 @@ test('history persists a complete navigable snapshot and exports the selected se
   assert.equal(controller.data.locale,'en');
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('workspaceState read failure does not block activation or manufacture old evidence',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-storage-read-'));
+ try {
+  const {vscode,ctx}=host(root);
+  ctx.workspaceState.get=()=>{throw new Error('SYNTHETIC_STORAGE_FAILURE');};
+  const controller=load(vscode).activate(ctx).controller;
+  assert.equal(controller.data.session,null);
+  assert.deepEqual(controller.data.history,[]);
+  assert.match(controller.error,/No se pudo recuperar/);
+  assert.doesNotMatch(controller.error,/SYNTHETIC_STORAGE_FAILURE/);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('workspaceState write failure retains valid in-memory diagnosis without false persistence success',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-storage-write-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  const {vscode,ctx}=host(root);
+  ctx.workspaceState.update=async()=>{throw new Error('SYNTHETIC_STORAGE_FAILURE');};
+  const controller=load(vscode).activate(ctx).controller;
+  await controller.runDiagnosis();
+  assert.equal(controller.data.session.state,'completed');
+  assert.equal(controller.data.history.length,1);
+  assert.match(controller.error,/no se pudo guardar el historial/i);
+  assert.doesNotMatch(controller.error,/SYNTHETIC_STORAGE_FAILURE/);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
