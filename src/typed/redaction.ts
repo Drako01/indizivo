@@ -6,7 +6,11 @@ export function redactSensitiveText(value:string):string {
  return value
   .replace(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/gi,
     '[REDACTED PRIVATE KEY]')
-  .replace(/(Authorization\s*:\s*Bearer\s+)[A-Za-z0-9._~+\/-]{8,}/gi,'$1[REDACTED]')
+  .replace(/(Authorization\s*:\s*(?:Bearer|Basic)\s+)[A-Za-z0-9._~+\/=\-]{8,}/gi,'$1[REDACTED]')
+  .replace(/((?:Set-Cookie|Cookie)\s*:\s*)[^\r\n]{1,2048}/gi,'$1[REDACTED]')
+  .replace(/([a-z][a-z0-9+.-]*:\/\/)[^@\s/]{1,512}@/gi,'$1[REDACTED]@')
+  .replace(/\b(?:ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|AKIA[A-Z0-9]{16})\b/g,
+    '[REDACTED TOKEN]')
   .replace(/((?:api[-_]?key|access[-_]?token|refresh[-_]?token|client[-_]?secret|password|secret|credential|token)\s*[:=]\s*)["']?[^\s,;"']{3,}["']?/gi,
     '$1[REDACTED]')
   .replace(/\beyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,

@@ -22,3 +22,25 @@ test('redacts nested exports without changing canonical session evidence',()=>{
  assert.match(raw.checks[0].detail,/synthetic123/);
  assert.equal(copy.provenance.origin,'runtime-tool');
 });
+
+test('redacts synthetic basic-auth, cookie headers, URL userinfo and token identifiers',()=>{
+ const sentinels=[
+  'Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l',
+  'Set-Cookie: session=COOKIE_SENTINEL; HttpOnly',
+  'Cookie: auth=COOKIE_REQUEST_SENTINEL',
+  'http://private-user:URL_PASSWORD_SENTINEL@localhost:7000/health',
+  'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+  'AKIAABCDEFGHIJKLMNOP'
+ ];
+ for(const value of sentinels){
+  const output=redactSensitiveText(value);
+  if(value.startsWith('Authorization:'))assert.doesNotMatch(output,/YWxhZGRp/);
+  else if(value.startsWith('Cookie:')||value.startsWith('Set-Cookie:'))
+   assert.doesNotMatch(output,/COOKIE_.*SENTINEL/);
+  else if(value.startsWith('http:'))
+   assert.doesNotMatch(output,/private-user|URL_PASSWORD_SENTINEL/);
+  else assert.ok(output.includes('[REDACTED TOKEN]'),value);
+ }
+ assert.match(redactSensitiveText('http://127.0.0.1:4000/health'),
+   /^http:\/\/127\.0\.0\.1:4000\/health$/);
+});

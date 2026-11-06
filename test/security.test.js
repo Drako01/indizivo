@@ -76,3 +76,27 @@ test('rejected service targets return BLOCKED evidence without network access or
   assert.ok(!JSON.stringify(findings).includes('SECRET_SENTINEL_NEVER_EXPORT'));
  }finally{await new Promise(resolve=>server.close(resolve));}
 });
+
+test('SSRF allowlist corpus rejects alternate hosts and credential-bearing endpoints without network',()=>{
+ const denied=[
+  'https://localhost:3000/',
+  'http://example.invalid:3000/',
+  'http://localhost.evil.invalid:3000/',
+  'http://127.0.0.2:3000/',
+  'http://127.0.0.1.nip.io:3000/',
+  'http://[::ffff:127.0.0.1]:3000/',
+  'http://[fe80::1]:3000/',
+  'http://169.254.169.254/latest/meta-data',
+  'http://localhost@evil.invalid:3000/',
+  'http://evil.invalid@localhost:3000/',
+  'http://user:password@127.0.0.1:3000/',
+  'http://localhost:3000/?token=private',
+  'http://127.0.0.1:3000/#private',
+  'file:///etc/passwd',
+  'http://localhost:99999/'
+ ];
+ for(const url of denied)assert.equal(validateService({name:'test',url}),null,url);
+ for(const url of ['http://localhost:3000/health','http://127.0.0.1:3000/health',
+   'http://[::1]:3000/health'])
+  assert.equal(validateService({name:'approved',url}).url,url);
+});
