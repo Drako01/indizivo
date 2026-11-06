@@ -14,6 +14,12 @@ const SPECS:Record<ToolName,ToolSpec>={
  docker:{command:'docker',args:['--version']}
 };
 export function toolArguments(tool:ToolName):readonly string[]{return SPECS[tool].args;}
+/** Prevent Go's automatic toolchain selection from downloading another
+ * compiler when reading the local version. Never change the user's env.
+ */
+export function toolEnvironment(tool:ToolName,source:NodeJS.ProcessEnv=process.env):NodeJS.ProcessEnv {
+ return tool==='go'?{...source,GOTOOLCHAIN:'local'}:source;
+}
 /**
  * Recognize bounded version-only prefixes. Never return arbitrary stdout/stderr:
  * command output can be hostile even when arguments are fixed.
@@ -47,6 +53,7 @@ export function probeTool(tool:ToolName,timeout:number,signal?:AbortSignal):Prom
   let settled=false;
   const child=execFile(spec.command,[...spec.args],{
    shell:false,windowsHide:true,
+   env:toolEnvironment(tool),
    timeout:Math.min(10000,Math.max(400,timeout)),
    maxBuffer:16384
   },(error,stdout,stderr)=>{

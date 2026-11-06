@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {toolArguments,parseToolVersion,probeTool}=require('../dist/typed/tool-probes');
+const {toolArguments,parseToolVersion,probeTool,toolEnvironment}=require('../dist/typed/tool-probes');
 test('allowlisted tools have fixed, non-shell version arguments',()=>{
  assert.deepEqual([...toolArguments('node')],['--version']);
  assert.deepEqual([...toolArguments('java')],['-version']);
@@ -33,4 +33,14 @@ test('aborted probes do not return success',async()=>{
  const result=await probeTool('node',1500,c.signal);
  assert.equal(result.ok,false);
  assert.equal(result.value,'Cancelled');
+});
+
+test('Go version-only observation disables automatic toolchain downloads without mutating caller environment',()=>{
+ const source={GOTOOLCHAIN:'auto',UNRELATED:'retained'};
+ const go=toolEnvironment('go',source);
+ assert.equal(go.GOTOOLCHAIN,'local');
+ assert.equal(go.UNRELATED,'retained');
+ assert.equal(source.GOTOOLCHAIN,'auto');
+ assert.equal(toolEnvironment('node',source),source,
+   'Other runtime probes preserve their environment unchanged');
 });
