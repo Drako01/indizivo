@@ -20,7 +20,7 @@ function str(value:unknown,max:number):value is string {
 }
 function descriptor(value:unknown,depth=0):Descriptor|null {
   const item=record(value);
-  if(!item || !str(item.key,120) || !(item.key in CATALOG.en) || depth>3)return null;
+  if(!item || !str(item.key,120) || !Object.hasOwn(CATALOG.en,item.key) || depth>3)return null;
   const values=record(item.values);
   if(item.values!==undefined && !values)return null;
   const safe:Record<string,string|number|Descriptor>={};
@@ -66,7 +66,9 @@ function finding(value:unknown):DiagnosticCheck|null {
   };
   // Historical schema v1 did not include provenance; do not invent it.
   const original=record(item.provenance);
-  if(original && str(original.origin,50)&&str(original.confidence,50)&&
+  if(original &&
+     ['workspace-file','runtime-tool','tcp-loopback','approved-http','framework-convention','discovery'].includes(String(original.origin)) &&
+     ['observed','inferred','inconclusive'].includes(String(original.confidence)) &&
      str(original.method,80)&&str(original.host,100)&&str(original.target,100)&&
      typeof original.limitations==='string' && original.limitations.length<=2000){
     return {...sanitized,provenance:{
@@ -77,6 +79,62 @@ function finding(value:unknown):DiagnosticCheck|null {
     }};
   }
   return sanitized as DiagnosticCheck;
+}
+/** Historical comparisons are optional; malformed trends must never break Webview rendering. */
+function safeComparison(value:unknown):DiagnosticSession['comparison']|undefined {
+ const raw=record(value);
+ if(!raw||!Array.isArray(raw.observations)||raw.observations.length>150 ||
+    !str(raw.note,1000)||!str(raw.previousAt,60)||!str(raw.currentAt,60))return undefined;
+ const trends=[];
+ for(const value of raw.observations){
+  const entry=record(value);
+  if(!entry||!str(entry.id,90)||!(/^[a-z0-9-]+$/i).test(entry.id)||
+    !['new-observation','unchanged','status-changed','not-reobserved'].includes(String(entry.trend))||
+    (entry.before!==null && !STATUSES.has(entry.before as CheckStatus))||
+    (entry.after!==null && !STATUSES.has(entry.after as CheckStatus)))return undefined;
+  trends.push({id:entry.id,
+    before:entry.before as CheckStatus|null,
+    after:entry.after as CheckStatus|null,
+    trend:entry.trend as 'new-observation'|'unchanged'|'status-changed'|'not-reobserved'});
+ }
+ return {note:raw.note,previousAt:raw.previousAt,currentAt:raw.currentAt,observations:trends};
+}
+/** Only preserve bounded discovery facts: arbitrary old state is untrusted input. */
+function safeDiscovery(value:unknown):DiagnosticSession['discovery']|null {
+ const raw=record(value);
+ if(!raw||!str(raw.project,160)||typeof raw.node!=='boolean'||
+   typeof raw.go!=='boolean')return null;
+ const stringList=(input:unknown,max:number):string[]=>
+   Array.isArray(input)?input.filter(x=>typeof x==='string'&&x.length<=80).slice(0,max):[];
+ const ports=Array.isArray(raw.ports)?
+   raw.ports.filter(x=>Number.isInteger(x)&&x>=1&&x<=65535).slice(0,12):[];
+ const fileStates:Record<string,'present'|'missing'|'blocked'|'unreadable'>={};
+ const states=record(raw.fileStates);
+ for(const [key,val] of Object.entries(states||{})){
+   if(key.length<=80 && ['present','missing','blocked','unreadable'].includes(String(val)) &&
+      Object.keys(fileStates).length<30)
+     fileStates[key]=val as 'present'|'missing'|'blocked'|'unreadable';
+ }
+ const origins:Record<string,'declared'|'heuristic'>={};
+ const origin=record(raw.portOrigins);
+ for(const port of ports){
+   const val=origin?.[String(port)];
+   if(val==='declared'||val==='heuristic')origins[String(port)]=val;
+ }
+ const optional:Record<string,string[]>={};
+ const tools=record(raw.optionalRuntimes);
+ for(const key of ['python','php','java','docker']){
+   const names=stringList(tools?.[key],16);
+   if(names.length)optional[key]=names;
+ }
+ return {project:raw.project,node:raw.node,go:raw.go,
+  malformedPackage:raw.malformedPackage===true,
+  nodeRequirement:typeof raw.nodeRequirement==='string'?raw.nodeRequirement.slice(0,80):'',
+  goRequirement:typeof raw.goRequirement==='string'?raw.goRequirement.slice(0,80):'',
+  goToolchain:typeof raw.goToolchain==='string'?raw.goToolchain.slice(0,80):'',
+  ports,portOrigins:origins,fileStates,optionalRuntimes:optional,
+  requiredEnv:stringList(raw.requiredEnv,100),missingEnv:stringList(raw.missingEnv,100),
+  hasEnvExample:raw.hasEnvExample===true,hasEnvFile:raw.hasEnvFile===true};
 }
 export function restoreSession(value:unknown):DiagnosticSession|null {
   const raw=record(value);
@@ -90,8 +148,9 @@ export function restoreSession(value:unknown):DiagnosticSession|null {
   if(serial.length>MAX_SNAPSHOT_BYTES)return null;
   const checks=raw.checks.map(finding),serviceChecks=raw.serviceChecks.map(finding);
   if(checks.includes(null)||serviceChecks.includes(null))return null;
-  const discovery=record(raw.discovery);
+  const discovery=safeDiscovery(raw.discovery);
   if(!discovery)return null;
+  const comparison=safeComparison(raw.comparison);
   const safe={
     id:raw.id,project:raw.project,host:raw.host,state:raw.state as 'completed'|'partial',
     startedAt:raw.startedAt,completedAt:raw.completedAt,
@@ -99,8 +158,8 @@ export function restoreSession(value:unknown):DiagnosticSession|null {
       {schemaVersion:raw.schemaVersion}:{}),
     ...(str(raw.scopeId,100)?{scopeId:raw.scopeId}:{}),
     checks:checks as DiagnosticCheck[],serviceChecks:serviceChecks as DiagnosticCheck[],
-    discovery:JSON.parse(JSON.stringify(discovery)) as DiagnosticSession['discovery'],
-    ...(record(raw.comparison) ? {comparison:JSON.parse(JSON.stringify(raw.comparison))}: {})
+    discovery,
+    ...(comparison?{comparison}:{})
   };
   return safe as DiagnosticSession;
 }

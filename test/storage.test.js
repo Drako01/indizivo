@@ -53,3 +53,27 @@ test('partial sessions remain inspectable but are never promoted to completed',(
    checks:[{id:'budget',status:'inconclusive'}],snapshot:run}]);
  assert.equal(history[0].snapshot.state,'partial');
 });
+
+test('untrusted storage cannot inject inherited i18n keys or invalid comparison shapes',()=>{
+ const forged=session();
+ forged.checks[0].i18n={detail:{key:'toString'}};
+ forged.comparison={note:'stored',observations:'not-an-array',previousAt:'old',currentAt:'new'};
+ const restored=restoreSession(forged);
+ assert.ok(restored);
+ assert.equal(restored.comparison,undefined);
+ assert.equal(restored.checks[0].i18n,undefined);
+ assert.doesNotThrow(()=>localizeFinding(restored.checks[0],'es'));
+});
+test('valid comparison is preserved, hostile provenance and arbitrary discovery fields are rejected',()=>{
+ const forged=session();
+ forged.discovery.extraSecret='NEVER_PERSIST_SECRET';
+ forged.comparison={note:'Comparison of statuses',previousAt:'2026-11-05',currentAt:'2026-11-06',
+   observations:[{id:'node',before:'warn',after:'pass',trend:'status-changed'}]};
+ forged.checks[0].provenance={
+  origin:'not-a-real-origin',confidence:'untrusted',method:'execFile',host:'linux',
+  target:'node',limitations:'n/a'};
+ const restored=restoreSession(forged);
+ assert.equal(restored.comparison.observations.length,1);
+ assert.equal(restored.discovery.extraSecret,undefined);
+ assert.equal(restored.checks[0].provenance,undefined);
+});
