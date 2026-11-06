@@ -196,11 +196,11 @@ export function parseGoDirectives(content:string):{
   }
  }
  const clean=(value:string):string=>value.replace(/\s+\/\/.*$/,'').trim();
- const goLine=directives.go.length===1?clean(directives.go[0]):'';
- const toolLine=directives.toolchain.length===1?clean(directives.toolchain[0]):'';
+ const goLine=directives.go.length===1?clean(directives.go[0] ?? ''):'';
+ const toolLine=directives.toolchain.length===1?clean(directives.toolchain[0] ?? ''):'';
  const validGo=(value:string):boolean=>/^\d{1,3}\.\d{1,3}(?:\.\d{1,3})?$/.test(value);
  const validModule=directives.module.length===1 &&
-  directives.module[0].length>0 && directives.module[0]!=='(';
+  (directives.module[0]?.length ?? 0)>0 && directives.module[0]!=='(';
  let minimum='[unrecognized]';
  let minimumOrigin:'declared'|'implicit'|'invalid'='invalid';
  if(validModule && directives.go.length===0){
@@ -220,7 +220,7 @@ export function parseGoDirectives(content:string):{
     const v=name?parseVersion(name):null;
     const min=parseVersion(minimum);
     // Go 1.21+ release toolchain names require an explicit patch version.
-    if(v && min && compare(v,min)>=0 && (v.minor<21 || v.precision===3)){
+    if(name && v && min && compare(v,min)>=0 && (v.minor<21 || v.precision===3)){
      toolchain=name;toolchainOrigin='declared';
     }
    }
