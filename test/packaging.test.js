@@ -109,3 +109,12 @@ test('Marketplace-facing metadata and README do not link to the private GitHub r
  assert.doesNotMatch(readme,/\]\((?:\.\.?\/)?[A-Za-z_][\w/.-]*\.md\)/);
  assert.doesNotMatch(readme,/href="(?:LICENSE|\.\.?\/)/);
 });
+
+test('manifest explicitly declares limited Workspace Trust and virtual workspace behavior',()=>{
+ const pkg=JSON.parse(read('package.json').toString('utf8'));
+ assert.equal(pkg.capabilities.untrustedWorkspaces.supported,'limited');
+ assert.equal(pkg.capabilities.virtualWorkspaces.supported,'limited');
+ assert.equal(pkg.extensionKind[0],'workspace',
+   'Processes and localhost must be scoped to the workspace Extension Host');
+ assert.equal(pkg.version,'0.1.3','No version bump is authorized in Draft PR #14');
+});

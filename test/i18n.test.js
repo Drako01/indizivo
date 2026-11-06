@@ -18,7 +18,9 @@ test('VS Code command and view localization declares exact matching EN/ES keys',
  const references=[
    pkg.description,...pkg.contributes.commands.flatMap(c=>[c.title,c.category]),
    pkg.contributes.viewsContainers.activitybar[0].title,
-   pkg.contributes.views.indizivo[0].name
+   pkg.contributes.views.indizivo[0].name,
+   pkg.capabilities.untrustedWorkspaces.description,
+   pkg.capabilities.virtualWorkspaces.description
  ];
  for(const ref of references){
    assert.match(ref,/^%[^%]+%$/);

@@ -21,6 +21,16 @@
   "extensionKind": [
     "workspace"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%workspaceTrust.description%"
+    },
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "%virtualWorkspace.description%"
+    }
+  },
   "categories": [
     "Debuggers",
     "Other"
