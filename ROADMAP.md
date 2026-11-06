@@ -1,6 +1,6 @@
 # Indizivo — Engineering roadmap
 
-> Published baseline: 0.1.3 (2026-11-06). This is a plan, not a release commitment. The current source of truth is [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md); acceptance and handoff live in [docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md).
+> Release target: 0.2.0 (version set in `package.json`; publication requires the owner's GO). Last published: 0.1.3 (2026-11-06). This is a plan, not a release commitment. The current source of truth is [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md); acceptance and handoff live in [docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md).
 
 ## Published 0.1.3
 
@@ -9,7 +9,7 @@
 - User-approved localhost HTTP checks, local session history, EN/ES interface, export and recheck comparison.
 - Automated quality gates on Windows/Linux/macOS; real VS Code Extension Host and packaged VSIX smoke tests on Linux.
 
-## Enterprise AAAA milestones (work in PR #14, not released)
+## Enterprise AAAA milestones (shipped in 0.2.0 once published)
 
 1. Accuracy: version ranges, loopback IP families, file observability, stable evidence identities, source attribution.
 2. Security: explicit consent, storage and workspace hardening, cancellation, host namespace accuracy.

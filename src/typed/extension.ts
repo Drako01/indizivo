@@ -1,4 +1,3 @@
-// Indizivo 0.1.3: validate multi-registry release automation; runtime behavior unchanged.
 import * as vscode from 'vscode';
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';

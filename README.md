@@ -45,28 +45,32 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | Capability | What Indizivo does |
 | --- | --- |
 | **Project diagnostics** | Detects Node.js and Go projects and checks their locally available runtimes. |
-| **Runtime compatibility** | Evaluates common Node.js requirements and Go module minimums, reporting unsupported version expressions as inconclusive. |
-| **Port investigation** | Checks declared local TCP ports and attempts read-only process identification where operating-system tools permit. |
-| **Environment configuration** | Compares variable **names only** between .env.example and .env without retaining secret values. |
-| **Local service health** | Tests user-configured localhost HTTP endpoints **only after explicit approval**. |
-| **Evidence-backed findings** | Shows observations, timestamps, limitations and suggested next steps. |
-| **Recheck and compare** | Compares check results across completed sessions without claiming that changed observations prove a fix. |
-| **Reports and history** | Exports Markdown or JSON, copies evidence and manages locally stored session history. |
+| **Runtime compatibility** | Evaluates `engines.node`, `.nvmrc` and Go module requirements with npm-compatible range semantics (`~`, `^`, comparators, OR, wildcards). Anything it cannot interpret is reported as **inconclusive**, never as a false incompatibility. |
+| **Go done right** | Separates the `go` minimum from the suggested `toolchain`, handles implicit `go 1.16` modules and malformed directives, and never lets the CLI download a toolchain during a probe. |
+| **Port investigation** | Checks declared TCP ports over IPv4 and IPv6 loopback and, where the OS allows it, identifies the owning process read-only. Framework defaults (Next.js 3000, Vite 5173) are labeled **inferred**, not declared. |
+| **Environment configuration** | Compares variable **names only** between `.env.example` and `.env`. A missing file is distinguished from an unreadable or blocked one, so an unreadable file is never reported as "absent". |
+| **Optional toolchains** | Read-only version observations for Python, PHP, Java and Docker when their project markers exist, plus lockfile and `packageManager` consistency. No repository scripts are ever run. |
+| **Monorepos and multi-root** | Shallow, bounded discovery of sub-projects with an explicit picker and a separate history per project. |
+| **Local service health** | Tests user-configured loopback HTTP endpoints **only after you approve the exact plan**. Targets are validated against SSRF-style inputs, redirects are not followed and bodies are not read. |
+| **Evidence-backed findings** | Every finding carries what was observed, how, when, with what confidence, what remains unknown and a copy-only next step. Findings have stable versioned IDs. |
+| **Recheck and compare** | Compares sessions by stable check and endpoint identity (reordering endpoints cannot mix up results) without claiming that a change proves a fix. |
+| **Reports and history** | Exports versioned JSON and readable Markdown (EN/ES) through VS Code's file system, redacted for credentials; copies evidence; keeps bounded, schema-validated local history. |
+| **Resilience** | Global time budget per run, bounded output, cancellation that terminates only the processes Indizivo started (including their children), and a safe fallback when VS Code storage is unavailable. |
 
 ### One interface, full control
 
-The **Indizivo Control Center** lives in the VS Code Activity Bar. Its four sections cover the supported workflow:
+The **Indizivo Control Center** lives in the VS Code Activity Bar and opens ready to diagnose. Its four sections cover the whole workflow:
 
-- **Diagnostics:** choose a project, run or cancel checks, inspect findings and copy evidence.
-- **Services:** add or remove localhost HTTP targets, review the exact plan and approve probes.
-- **History & Reports:** compare completed checks, export reports or delete local history.
-- **Settings:** configure diagnostic timeouts through the UI.
+- **Diagnostics:** choose a project, run or cancel checks, filter findings by status, inspect evidence and limitations, and copy evidence.
+- **Services:** add or remove loopback HTTP targets, review the exact plan and approve probes.
+- **History & Reports:** reopen and compare completed sessions, export Markdown or JSON, or delete local history.
+- **Settings:** language (English / Spanish) and probe timeout, all from the UI.
 
-No terminal is required for normal usage after installation.
+No terminal is required for normal usage after installation. The interface supports keyboard navigation, ARIA tab semantics, reduced motion and forced-colors (high contrast) modes.
 
 ## Getting started
 
-> **Published version 0.1.3 (preview).** Automated quality gates passed on Windows, Linux and macOS; official Extension Host and packaged-VSIX smoke tests ran on Linux. Full user-interaction accessibility and remote-development qualification remain pending.
+> **Version 0.2.0 (preview).** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
@@ -77,18 +81,18 @@ No terminal is required for normal usage after installation.
 5. Optionally configure a localhost endpoint in **Services**, review the plan and approve the request.
 6. Rerun diagnostics or export a report after investigating an issue.
 
-Multi-root workspaces allow you to choose the project to inspect. Remote development environments have not yet been fully qualified.
+Multi-root workspaces and monorepos let you choose the project to inspect. Untrusted and virtual workspaces run in a limited mode that disables active probes. WSL, SSH and Dev Containers have not yet been fully qualified.
 
 ### Install the preview VSIX
 
-In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.1.3.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.1.3). Verify the package origin before installing.
+In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.0.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.0). Verify the package origin before installing.
 
 Maintainers with authorized repository access can reproduce the release candidate with:
 
     npm ci
     npm run release:check
 
-The 0.1.3 release pipeline tested an isolated packaged VSIX installation on Linux. Cross-platform real-UI interaction, keyboard, zoom and screen-reader qualification remain release gates.
+The release pipeline tests an isolated packaged VSIX installation on Linux. Cross-platform real-UI interaction, keyboard, zoom and screen-reader qualification remain release gates.
 
 ## Privacy and security
 
@@ -96,7 +100,8 @@ The 0.1.3 release pipeline tested an isolated packaged VSIX installation on Linu
 - **Read-only by default:** checks do not edit source code, install packages or terminate processes.
 - **Explicit consent:** localhost HTTP requests require approval of their exact targets.
 - **Secrets stay private:** environment variable names can be checked, but .env values are not retained in findings.
-- **Bounded operations:** supported reads and probes enforce limits, timeouts and cancellation.
+- **Bounded operations:** supported reads and probes enforce limits, timeouts and cancellation; files are read through verified file handles and symlinks are not followed.
+- **Redacted outputs:** exports and copied evidence mask common credential formats (tokens, bearer/basic headers, cookies, URL credentials, private keys).
 - **Transparent outcomes:** a listening port does not prove a conflict, and a passing check is not a complete project-health guarantee.
 
 Indizivo is not an operating-system sandbox. Runtime and process checks execute with the permissions of the VS Code extension host.
@@ -105,23 +110,23 @@ The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the ins
 
 ## Current scope
 
-The published 0.1.3 preview focuses on **local Node.js and Go development environments**. The interface is available in **English and Spanish**, selectable in Settings. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
+The 0.2.0 preview focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
 
-Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
+Indizivo is a diagnostic aid: a passing check is not a project-health guarantee, and "Enterprise AAAA" is an internal engineering goal, not a certification. Progress is tracked in the [active implementation pull request](https://github.com/Drako01/indizivo/pull/14), its upgrade checklist and the CTO audit. Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
 ## Development
 
-    npm install
-    npm run check
-    npm test
-    npm run test:e2e
+    npm ci
+    npm run verify          # typecheck, type lint, security hygiene, unit/contract/adversarial tests
+    npm run test:coverage-gate
+    npm run test:e2e        # official Extension Host
     npm run package
 
 The E2E suite launches an official VS Code Extension Host. It requires a graphical desktop environment. For reproducible issues, please include the extension version, operating system, relevant status and steps to reproduce.
 
 ## Feedback and support
 
-Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.1.3**.
+Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.2.0**.
 
 **Never upload secrets, private environment values or confidential project logs.**
 
@@ -136,8 +141,3 @@ Found an incorrect diagnosis, an incomplete check or a missing development envir
   <br>
   Released under the MIT License (included with the extension).
 </p>
-
-
-## Enterprise engineering roadmap
-
-Enterprise AAAA is an internal engineering goal, **not** a certification or a claim about the published preview. See the [active Enterprise implementation PR](https://github.com/Drako01/indizivo/pull/14) and its source-branch engineering state, upgrade checklist and CTO audit. Work in PR #14 is not published.

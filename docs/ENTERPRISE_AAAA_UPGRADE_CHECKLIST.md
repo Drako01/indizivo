@@ -243,6 +243,8 @@
 - **Sin cambio:** version `0.1.3`, logos, publisher, workflows de publicacion, reglas, tags. Merge/publicacion/bump a 0.2.0 siguen pendientes del GO del owner.
 - **Siguiente accion:** el Quality Gate de `bbbd1a6` ya esta en PASS; sigue la matriz manual (a11y, WSL/SSH/Containers, 10-15 devs), que no es automatizable.
 
+- **Version 0.2.0 (autorizada por el owner en sesion, 2026-11-06):** `package.json`/lockfile en `0.2.0`, README reescrito con las nuevas funciones, PRIVACY/SECURITY/ROADMAP/CHANGELOG alineados, `verify-packaged.yml` y `packaging.test.js` esperan `0.2.0`. Local: `npm run verify` 156 pass / 0 fail. **Sin publicar, tag ni merge**; las capturas del README siguen siendo las aprobadas (no regeneradas).
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |

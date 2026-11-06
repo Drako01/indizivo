@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — proposed 0.2.0, PR #14 (DRAFT; no release authorization)
+## 0.2.0 — Enterprise diagnostics upgrade (version set; publication pending owner GO)
 
 - More precise Node/npm compatibility evaluation including wildcard caret/tilde cases and a frozen corpus of expectations cross-checked against semver 7.6.3.
 - Unsupported .nvmrc requirements remain explicitly inconclusive; unknown workspace text is never copied into diagnostics.
@@ -16,7 +16,9 @@
 - Extracted pure JSON/Markdown report rendering from the Control Center, with per-format redaction and contract tests.
 - Added opt-in, non-publishing VSIX candidate measurements for synthetic small/medium/large fixtures (p50/p95/RSS), explicitly not customer SLO evidence.
 - Additional unreleased PR #14 engineering: monorepo selection, evidence provenance, explicit port inference, stable service identities, optional toolchain checks, safer exports and consent.
-- This is **not** published. The package version remains 0.1.3 pending the owner's future 0.2.0 GO decision. Manual accessibility/remote/platform and external usability gates remain open.
+- Fixed a Windows-only defect where NTFS file IDs above 2^53 made legitimate project files read as blocked; file identity now uses exact bigint stats.
+- Added per-module coverage floors and a labeled discovery corpus with an error-rate budget to the quality gates.
+- The package version is 0.2.0. Publication, tag and merge still require the owner's GO; manual accessibility, remote and external usability gates remain open.
 
 
 ## 0.1.3 — Marketplace OIDC release verification
