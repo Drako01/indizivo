@@ -97,8 +97,13 @@ export function parseKeys(data:string|undefined|null):string[] {
   return [...names];
 }
 function safeVersionRequirement(input:unknown):string {
-  const value=String(input||'').trim().slice(0,80);
-  return /^[0-9v.^~<>=*xX|\s,]{1,80}$/.test(value)?value:'';
+  if(typeof input!=='string')return '';
+  const value=input.trim();
+  if(!value)return '';
+  // Unsupported declaration is not equivalent to no requirement.
+  // Do not retain untrusted input verbatim in history, reports or clipboard.
+  return value.length<=80 && /^[0-9v.^~<>=*xX|\s,]{1,80}$/.test(value)
+    ?value:'[unrecognized]';
 }
 interface InputFile {state:FileReadState;data:string}
 function classifiedError(error:unknown):FileReadState {
@@ -319,7 +324,8 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       msg('diag.runtimeUnknown');
     const verdict = result.ok ? evaluateVersion(result.value.replace(/^v/,''),d.nodeRequirement,'node') : null;
     const nodeStatus = !result.ok || verdict?.status==='incompatible'?'warn':
-      verdict?.status==='compatible'?'pass':'info';
+      verdict?.status==='compatible'?'pass':
+      verdict?.status==='inconclusive'?'inconclusive':'info';
     push(createCheck('node','Runtime','Node.js',nodeStatus,
       result.value + (d.nodeRequirement ? ' — declared requirement: ' + d.nodeRequirement : '') +
       (verdict ? '. '+verdict.detail : ''),
@@ -329,9 +335,11 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       'Runtime output: '+result.value, {
         category:msg('diag.category.Runtime'),
         detail:msg('diag.nodeDetail',{version:localizedVersion,
-          required:d.nodeRequirement?msg('diag.nodeRequired',{requirement:d.nodeRequirement}):'',
+          required:d.nodeRequirement==='[unrecognized]'?msg('diag.nodeRequirementUnknown'):
+            d.nodeRequirement?msg('diag.nodeRequired',{requirement:d.nodeRequirement}):'',
           verdict:verdict ? (verdict.translation||verdict.detail):''}),
         suggestion:msg(nodeStatus==='warn'?'diag.nodeWarn':
+          verdict?.status==='inconclusive'?'diag.nodeUnrecognizedNext':
           !d.nodeRequirement?'diag.nodeNoReq':'diag.nodeChecked'),
         evidence:msg('diag.outputVersion',{value:localizedVersion})
       }));
