@@ -3,26 +3,17 @@ import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
-import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
+import type {DiagnosticSession, ServiceTarget} from './diagnostics';
 import {html} from './ui';
 import {redactSensitiveText} from './redaction';
 import {renderReport,renderEvidenceCopy} from './reports';
-import {restoreSession,restoreHistory} from './storage';
-import type {HistoryEntry} from './storage';
+import {ProjectStateStore} from './project-state';
+import type {ProjectData,DisplaySession} from './project-state';
 import {compareSessions} from './comparison';
 import {validateUiMessage} from './messages';
 import {t, localizeFinding, localizeSession} from './i18n';
 import type {I18nKey, Locale, Params} from './i18n';
 
-type RunningSession=Pick<DiagnosticSession,'project'|'startedAt'|'completedAt'|'state'|'checks'|'serviceChecks'>;
-type DisplaySession=DiagnosticSession|RunningSession;
-interface ProjectData {
-  session:DisplaySession|null;
-  services:ServiceTarget[];
-  history:HistoryEntry[];
-  timeoutMs:number;
-  locale:Locale;
-}
 function errorMessage(error:unknown):string {
   return error instanceof Error ? error.message : '';
 }
@@ -33,6 +24,7 @@ export class ControlCenter {
   panel:vscode.WebviewPanel|null;
   currentRoot:vscode.Uri|null;
   data:ProjectData;
+  readonly store:ProjectStateStore;
   pendingApproval:ServiceTarget[]|null;
   selectedHistoryIndex:number|null;
   error:string;
@@ -44,6 +36,8 @@ export class ControlCenter {
     this.panel = null;
     const initialFolders=vscode.workspace.workspaceFolders;
     this.currentRoot=initialFolders?.length===1 ? (initialFolders[0]?.uri ?? null) : null;
+    this.store = new ProjectStateStore(context.workspaceState,
+      ()=>vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en');
     this.data = { session: null, services: [], history: [], timeoutMs: 2500, locale:'en' };
     this.pendingApproval = null;
     this.selectedHistoryIndex = null;
@@ -53,37 +47,17 @@ export class ControlCenter {
     this.restore();
   }
   tr(key:I18nKey,values?:Params) {return t(this.data.locale,key,values);}
-  scopeKey() {
-    return 'indizivo:v1:' + crypto.createHash('sha256').update(this.currentRoot?.toString() || 'none').digest('hex');
-  }
+  rootKey() {return this.currentRoot?.toString() ?? null;}
   restore() {
-    // Broken or inaccessible VS Code workspaceState must not prevent activation.
-    // Do not treat failed restoration as evidence of a previous successful check.
-    let value:unknown={};
-    let restorationFailed=false;
-    try {value=this.context.workspaceState.get<unknown>(this.scopeKey(), {});}
-    catch {restorationFailed=true;}
-    const stored=value && typeof value==='object' && !Array.isArray(value)?
-      value as Partial<ProjectData>:{};
-    const timeout=typeof stored.timeoutMs==='number' && Number.isFinite(stored.timeoutMs) ?
-      stored.timeoutMs:2500;
-    this.data = {
-      session: restoreSession(stored.session),
-      services: (Array.isArray(stored.services) ? stored.services : []).map(validateService).filter((item):item is ServiceTarget=>item!==null).slice(0, 20),
-      history: restoreHistory(stored.history),
-      timeoutMs: Math.min(10000, Math.max(400,timeout)),
-      locale: (stored.locale==='es'||stored.locale==='en') ? stored.locale :
-        (vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en')
-    };
-    if(restorationFailed)this.error=this.tr('host.storageReadFailed');
+    const loaded=this.store.load(this.rootKey());
+    this.data=loaded.data;
+    if(loaded.readFailed)this.error=this.tr('host.storageReadFailed');
   }
   async save() {
-    try {await this.context.workspaceState.update(this.scopeKey(), this.data);}
-    catch {
-      // Keep actual findings in memory. A storage failure does not turn a
-      // completed diagnostic into FAILED, nor imply that data was persisted.
+    // Keep actual findings in memory. A storage failure does not turn a
+    // completed diagnostic into FAILED, nor imply that data was persisted.
+    if(!(await this.store.save(this.rootKey(),this.data)))
       this.error=this.tr('host.storageSaveFailed');
-    }
   }
   viewedSession() {
     return this.selectedHistoryIndex===null ? this.data.session :
@@ -218,7 +192,7 @@ export class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
-      session.scopeId=crypto.createHash('sha256').update(this.scopeKey()+'|'+
+      session.scopeId=crypto.createHash('sha256').update(this.store.key(this.rootKey())+'|'+
         (vscode.env.remoteName||'local')).digest('hex');
       session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;

@@ -245,6 +245,17 @@
 
 - **Version 0.2.0 (autorizada por el owner en sesion, 2026-11-06):** `package.json`/lockfile en `0.2.0`, README reescrito con las nuevas funciones, PRIVACY/SECURITY/ROADMAP/CHANGELOG alineados, `verify-packaged.yml` y `packaging.test.js` esperan `0.2.0`. Local: `npm run verify` 156 pass / 0 fail. **Sin publicar, tag ni merge**; las capturas del README siguen siendo las aprobadas (no regeneradas).
 
+### Iteracion 2026-11-06 (sesion 3, parte 2) — v0.2.0: ControlCenter, adversarial, navegador real
+
+| Cambio | IDs | Evidencia (local, Windows 11, Node 24.22.1) |
+|---|---|---|
+| `project-state.ts`: `ProjectStateStore` extrae persistencia (clave hasheada, clamp de timeout, tope de servicios, validacion de locale, lectura/escritura fallida sin lanzar) fuera de `ControlCenter`; 4 tests. | A-01/S-05 | `npm run verify` 163 pass / 0 fail; `Coverage gate: PASS`. `ControlCenter` baja a 400 lineas; bridge de mensajes y comandos siguen en `extension.ts`. `ui.ts` NO se dividio (el inventario VSIX y los tests de CSS dependen de su forma): A-02 sigue PARCIAL. |
+| `test/adversarial.test.js`: fuzz con semilla de 2000 URLs (hosts alternativos, userinfo, esquemas, IPv4 decimal/hex, IPv6 mapeado, homoglifos) que solo acepta loopback sin credenciales/query/hash; escrituras concurrentes sin lecturas rotas; symlink hacia fuera del workspace bloqueado. | S-04/S-06 | Mismos 163 tests. El symlink se pudo crear en este Windows (no SKIP). No es un pentest externo ni prueba DNS real. |
+| Pasada en **Chromium real** (Playwright) con el HTML real de `html()` y un host VS Code simulado: roles/tabs ARIA, flechas/End mueven foco y panel juntos, nombres accesibles correctos en el arbol de accesibilidad, sin desborde horizontal a 640 px (~zoom 200 %) y 320 px, `prefers-reduced-motion` => transicion 0s, `forced-colors: active` => contorno de foco solido 3 px. | P-10 | Manual con harness en scratchpad (no versionado). **No** es NVDA/VoiceOver ni el Webview de VS Code instalado: P-10/B-09 siguen PARCIALES. |
+
+- **P-11:** se mantiene copy-only por diseno (el contrato lo permite como etapa inicial); no hay mutaciones, por lo que no se agrega preview/rollback.
+- **No automatizable y aun abierto:** NVDA/VoiceOver, UI instalada en Windows/macOS, WSL/SSH/Dev Containers (S-01, A-08, R-08), estudio con 10-15 developers (P-12/P-13), benchmark en proyectos reales (B-08/A-06), GO del owner (R-09).
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
