@@ -43,3 +43,13 @@ test('unsupported npm forms and prereleases fail closed rather than guessing',()
  assert.equal(evaluateVersion('22.5.1','^22 || unknown','node').status,'compatible',
    'known successful disjunct is sufficient');
 });
+
+test('partial npm comparison operators use exclusive next boundaries',()=>{
+ for(const [version,range,expected] of [
+  ['20.99.9','<=20','compatible'],['21.0.0','<=20','incompatible'],
+  ['20.4.99','<=20.4','compatible'],['20.5.0','<=20.4','incompatible'],
+  ['20.4.1','>20','incompatible'],['21.0.0','>20','compatible'],
+  ['20.4.99','>20.4','incompatible'],['20.5.0','>20.4','compatible'],
+  ['20.3.0','<20.4','compatible'],['20.4.0','<20.4','incompatible']
+ ])assert.equal(evaluateVersion(version,range,'node').status,expected,version+' '+range);
+});

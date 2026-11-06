@@ -50,8 +50,11 @@ function satisfiesToken(installed:Version,token:string):Match {
   if(spec.wildcard && !['='].includes(op))return 'unknown';
   if(op==='^'||op==='~')return order>=0 && compare(installed,upperBound(op,base))<0?'yes':'no';
   if(op==='>=')return order>=0?'yes':'no';
-  if(op==='>')return order>0?'yes':'no';
-  if(op==='<=')return order<=0?'yes':'no';
+  // Partial comparator bounds differ from exact versions in npm semantics:
+  // >20 is >=21.0.0, <=20.4 is <20.5.0.
+  const next=base.precision===1?at(base.major+1):at(base.major,base.minor+1);
+  if(op==='>')return (base.precision===3?order>0:compare(installed,next)>=0)?'yes':'no';
+  if(op==='<=')return (base.precision===3?order<=0:compare(installed,next)<0)?'yes':'no';
   if(op==='<')return order<0?'yes':'no';
   if(op==='='){
     if(installed.major!==base.major)return 'no';
