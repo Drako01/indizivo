@@ -17,12 +17,14 @@ export interface PackageManifest {
  dependencies?:Record<string,string>;
  devDependencies?:Record<string,string>;
  engines?:{node?:string};
+ packageManager?:string;
 }
 export type FileReadState='present'|'missing'|'blocked'|'unreadable';
 export interface Discovery {
  project:string;node:boolean;go:boolean;malformedPackage:boolean;
  optionalRuntimes:Record<string,string[]>;
  fileStates:Record<string,FileReadState>;
+ lockfiles:string[];packageManager:string;
  nodeRequirement:string;goRequirement:string;goToolchain:string;ports:number[];
   portOrigins:Record<string,'declared'|'heuristic'>;
  requiredEnv:string[];missingEnv:string[];
@@ -146,6 +148,23 @@ export function validateService(input:unknown):ServiceTarget|null {
     return { name, url: url.href };
   } catch { return null; }
 }
+/** Only inspect metadata, never read potentially huge lockfiles or follow symlinks. */
+async function declaredLockfiles(root:string):Promise<string[]> {
+ const known=['package-lock.json','npm-shrinkwrap.json','pnpm-lock.yaml',
+   'yarn.lock','bun.lock','bun.lockb'];
+ const found:string[]=[];
+ for(const name of known){
+  try{
+   const file=await fs.lstat(path.join(root,name));
+   if(file.isFile() && !file.isSymbolicLink())found.push(name);
+  }catch{/* unavailable is not equivalent to absence; do not assert package health */}
+ }
+ return found;
+}
+function safeManager(value:unknown):string {
+ if(typeof value!=='string'||value.length>64)return '';
+ return /^(?:npm|pnpm|yarn|bun)@[0-9][0-9A-Za-z.+-]{0,40}$/.test(value)?value:'';
+}
 export async function discover(root:string):Promise<Discovery> {
   const fileNames=['package.json','go.mod','.env.example','.env','.nvmrc',
     'pyproject.toml','requirements.txt','Pipfile','.python-version',
@@ -166,6 +185,8 @@ export async function discover(root:string):Promise<Discovery> {
       pkg=parsed as PackageManifest;
   }catch{pkg=null;}
   const scripts = pkg && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+  const packageManager=safeManager(pkg?.packageManager);
+  const lockfiles=packageFile?.state==='present'?await declaredLockfiles(root):[];
   const ports = parsePorts(scripts);
   const portOrigins:Record<string,'declared'|'heuristic'>={};
   for(const port of ports)portOrigins[String(port)]='declared';
@@ -186,6 +207,7 @@ export async function discover(root:string):Promise<Discovery> {
     optionalRuntimes[runtime]=names.filter(name=>fileStates[name]==='present');
   return { project: path.basename(root), node: packageFile?.state==='present', go: goFile?.state==='present',
     malformedPackage: packageFile?.state==='present' && !pkg, fileStates,optionalRuntimes,
+    lockfiles,packageManager,
     nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
     goToolchain: /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)/m.exec(goMod)?.[1] || '',
@@ -266,6 +288,27 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     'Invalid JSON; Node.js project metadata cannot be inspected.','','', {
       category:msg('diag.category.Configuration'),detail:msg('diag.invalidPackage')
     }));
+  if(d.node && (d.lockfiles.length || d.packageManager)){
+    const names=d.lockfiles.join(', ')||'none';
+    const expected=d.packageManager.split('@')[0]||'';
+    const matches=(name:string)=>expected==='pnpm'?name==='pnpm-lock.yaml':
+      expected==='yarn'?name==='yarn.lock':
+      expected==='bun'?name==='bun.lock'||name==='bun.lockb':
+      expected==='npm'?name==='package-lock.json'||name==='npm-shrinkwrap.json':true;
+    const unexpected=d.lockfiles.length>1 || Boolean(expected && d.lockfiles.some(name=>!matches(name)));
+    push(createCheck('package-manager','Configuration','Package manager and lockfiles',
+      unexpected?'warn':'info',
+      'Declared package manager: '+(d.packageManager||'not declared')+'. Lockfiles: '+names+
+      (unexpected?'. Multiple or unexpected root lockfiles require manual verification.':''),
+      'Confirm the intended package manager and lockfile before changing dependencies.',
+      'File names only; lockfile contents were not read.',{
+       category:msg('diag.category.Configuration'),
+       detail:msg('diag.lockfilesDetail',{manager:d.packageManager||msg('diag.notDeclared'),
+         files:names,warning:unexpected?msg('diag.lockfilesAmbiguous'):''}),
+       suggestion:msg('diag.lockfilesNext'),
+       evidence:msg('diag.lockfilesEvidence')
+      }));
+  }
   if (d.node) {
     if (signal?.aborted) throw new Error('Cancelled');
     const result = await probeTool('node', timeLeft(), signal);

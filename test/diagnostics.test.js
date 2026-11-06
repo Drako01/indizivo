@@ -97,3 +97,20 @@ test('Python, PHP, Java and Docker workspace markers trigger bounded read-only t
   }
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('root lockfile evidence flags ambiguity without reading sensitive lockfile contents',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-lockfiles-'));
+ try{
+  await fs.writeFile(path.join(root,'package.json'),'{"packageManager":"pnpm@10.2.0"}');
+  await fs.writeFile(path.join(root,'pnpm-lock.yaml'),'TOKEN=DO_NOT_INSPECT_THIS_VALUE');
+  await fs.writeFile(path.join(root,'package-lock.json'),'TOKEN=DO_NOT_INSPECT_THIS_VALUE');
+  const discovery=await discover(root);
+  assert.equal(discovery.packageManager,'pnpm@10.2.0');
+  assert.deepEqual(discovery.lockfiles,['package-lock.json','pnpm-lock.yaml']);
+  const run=await diagnose(root,900);
+  const finding=run.checks.find(x=>x.id==='package-manager');
+  assert.equal(finding.status,'warn');
+  assert.doesNotMatch(JSON.stringify(run),/DO_NOT_INSPECT_THIS_VALUE/);
+  assert.equal(finding.i18n.detail.key,'diag.lockfilesDetail');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
