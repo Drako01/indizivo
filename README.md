@@ -66,7 +66,7 @@ No terminal is required for normal usage after installation.
 
 ## Getting started
 
-> **Version 0.1.0 is a preview.** Supported scenarios have been tested on Windows; other desktop hosts are not yet fully qualified.
+> **Published version 0.1.3 (preview).** Automated quality gates passed on Windows, Linux and macOS; official Extension Host and packaged-VSIX smoke tests ran on Linux. Full user-interaction accessibility and remote-development qualification remain pending.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
@@ -81,14 +81,14 @@ Multi-root workspaces allow you to choose the project to inspect. Remote develop
 
 ### Install the preview VSIX
 
-In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.1.0.vsix` provided by the publisher. Verify the package origin before installing.
+In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.1.3.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.1.3). Verify the package origin before installing.
 
 Maintainers with authorized repository access can reproduce the release candidate with:
 
     npm ci
     npm run release:check
 
-The automated Windows checks include a fresh, isolated installation of the packaged VSIX. Final user-facing checks remain part of the release sign-off.
+The 0.1.3 release pipeline tested an isolated packaged VSIX installation on Linux. Cross-platform real-UI interaction, keyboard, zoom and screen-reader qualification remain release gates.
 
 ## Privacy and security
 
@@ -101,11 +101,11 @@ The automated Windows checks include a fresh, isolated installation of the packa
 
 Indizivo is not an operating-system sandbox. Runtime and process checks execute with the permissions of the VS Code extension host.
 
-The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the installed VSIX; no access to the private source repository is required.
+The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the installed VSIX; no access to the source repository is required.
 
 ## Current scope
 
-The first preview focuses on **local Node.js and Go development environments**. The interface is available in **English and Spanish**, selectable in Settings. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
+The published 0.1.3 preview focuses on **local Node.js and Go development environments**. The interface is available in **English and Spanish**, selectable in Settings. Automatic remediation, remote network scanning, Docker-specific diagnostics and comprehensive WSL, SSH or container support are not part of this release.
 
 Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
@@ -121,7 +121,7 @@ The E2E suite launches an official VS Code Extension Host. It requires a graphic
 
 ## Feedback and support
 
-Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.1.0**.
+Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.1.3**.
 
 **Never upload secrets, private environment values or confidential project logs.**
 
@@ -136,3 +136,8 @@ Found an incorrect diagnosis, an incomplete check or a missing development envir
   <br>
   Released under the MIT License (included with the extension).
 </p>
+
+
+## Enterprise engineering roadmap
+
+Enterprise AAAA is an internal engineering goal, **not** a certification or a claim about the published preview. See [current engineering state](docs/CURRENT_STATE.md), [upgrade checklist](docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) and [CTO audit](docs/CTO_AUDIT_2026-11-06.md). Work in PR #14 is not published.
