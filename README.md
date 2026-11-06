@@ -140,4 +140,4 @@ Found an incorrect diagnosis, an incomplete check or a missing development envir
 
 ## Enterprise engineering roadmap
 
-Enterprise AAAA is an internal engineering goal, **not** a certification or a claim about the published preview. See [current engineering state](docs/CURRENT_STATE.md), [upgrade checklist](docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) and [CTO audit](docs/CTO_AUDIT_2026-11-06.md). Work in PR #14 is not published.
+Enterprise AAAA is an internal engineering goal, **not** a certification or a claim about the published preview. See the [active Enterprise implementation PR](https://github.com/Drako01/indizivo/pull/14) and its source-branch engineering state, upgrade checklist and CTO audit. Work in PR #14 is not published.
