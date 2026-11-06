@@ -256,6 +256,13 @@
 - **P-11:** se mantiene copy-only por diseno (el contrato lo permite como etapa inicial); no hay mutaciones, por lo que no se agrega preview/rollback.
 - **No automatizable y aun abierto:** NVDA/VoiceOver, UI instalada en Windows/macOS, WSL/SSH/Dev Containers (S-01, A-08, R-08), estudio con 10-15 developers (P-12/P-13), benchmark en proyectos reales (B-08/A-06), GO del owner (R-09).
 
+### Cierre de codigo para 0.2.0 — SHA `b3c5e6d`
+
+- **Quality Gate** (run del push de `b3c5e6d`) sobre `b3c5e6d7c8e804e2a3b2574b67b645c9e1e1a4c6`: Linux, Windows, macOS y Extension Host Linux, **4/4 PASS**. El run anterior (`fbaea06`) fallo por una asercion incorrecta de mi test de reescritura concurrente (exigia una lectura exitosa bajo escritura constante; el producto falla cerrado, que es lo correcto); corregida y no reetiquetada como PASS.
+- **VSIX candidato 0.2.0** [Candidate Gate 42314651037](https://github.com/Drako01/indizivo/actions/runs/42314651037) sobre el mismo SHA: PASS, `indizivo-0.2.0.vsix`, 42 archivos, 70,08 KB, SHA-256 `870835dd57ad4a46235878a3949f77edd9c8a2741e7d86d74220da5d32cf75ef`, artefacto 13549732764. Instalacion y smoke en Extension Host aislado Linux; no es click-through real.
+- Nuevo: test con socket real (S-03) y fuzz/TOCTOU/symlink (S-04/S-06); `npm run verify` 164 pass / 0 fail local.
+- **Estado de entrega:** el codigo automatizable queda completo. Pendientes que NO son codigo y quedan para el owner: pruebas manuales (NVDA/VoiceOver, UI instalada Windows/macOS, WSL/SSH/Dev Containers), estudio con 10-15 developers, benchmark en proyectos reales y GO final. A-02 (`ui.ts`) y el bridge de `ControlCenter` quedan como deuda tecnica documentada. **Sin merge, tag ni publicacion.**
+
 ## Registro de avance (actualizar EN CADA SESION)
 
 | Campo | Valor |
