@@ -6,6 +6,7 @@ interface UiEvidence {observedAt:string;fact:string}
 interface UiCheck {
  id:string;label:string;status:string;detail:string;suggestion?:string;
  evidence?:UiEvidence[];
+ provenance?:{origin:string;confidence:string;method:string;host:string;target:string;limitations:string};
 }
 interface UiTrend {id:string;trend:string;before?:string|null;after?:string|null}
 interface UiSession {
@@ -38,6 +39,7 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
   };
   let state:BrowserState={locale:'en'};
   let pendingService:{name:string;url:string}|null=null;
+  let findingFilter:'all'|'warn'|'inconclusive'='all';
   const el=<T extends keyof HTMLElementTagNameMap>(
     tag:T,cls:string|null,content?:string|number):HTMLElementTagNameMap[T] => {
     const node = document.createElement(tag);
@@ -54,6 +56,13 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     const top = el('div','check-top');
     top.append(el('span','check-label',c.label),el('span','status status-'+c.status,tr('status.'+c.status)));
     item.append(top,el('div','muted',c.detail));
+    if(c.provenance){
+      const meta=el('div','provenance',tr('ui.source')+': '+tr('origin.'+c.provenance.origin)+
+        ' · '+tr('ui.confidence')+': '+tr('confidence.'+c.provenance.confidence));
+      meta.append(el('div','muted',tr('ui.method')+': '+c.provenance.method));
+      meta.append(el('div','muted',tr('ui.limitations')+': '+c.provenance.limitations));
+      item.append(meta);
+    }
     const copy=el('button','quiet',tr('copy'));
     copy.setAttribute('type','button');
     copy.setAttribute('aria-label',tr('copy')+': '+c.label);
@@ -110,9 +119,12 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
         comparison.append(el('div','history-row',trend.id+' · '+tr('trend.'+trend.trend)+
           (trend.before?' ('+tr('status.'+trend.before)+' → '+(trend.after?tr('status.'+trend.after):tr('ui.notChecked'))+')':'')));
     }
+    for(const button of document.querySelectorAll<HTMLButtonElement>('[data-filter]'))
+      button.setAttribute('aria-pressed',String(button.dataset.filter===findingFilter));
+    const visible=items.filter(check=>findingFilter==='all'||check.status===findingFilter);
     const checks = clear('checks');
-    if (!items.length) checks.append(el('p','empty',tr('noEvidence')));
-    for (const item of items) renderCheck(checks,item);
+    if (!visible.length)checks.append(el('p','empty',tr(items.length?'ui.noFilteredResults':'noEvidence')));
+    for (const item of visible) renderCheck(checks,item);
     const services = clear('services');
     for (const s of state.services || []) {
       const row = el('div','service-row');
@@ -169,6 +181,12 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     else if (action === 'selectProject') fire('selectProject');
     else if (action === 'openHome') fire('openHome');
     else if (action === 'locale') fire('setLocale',{locale:button.dataset.locale});
+    else if (action === 'filter') {
+      const next=button.dataset.filter;
+      if(next==='all'||next==='warn'||next==='inconclusive'){
+        findingFilter=next;render();
+      }
+    }
     else if (action === 'export-md') fire('export',{format:'md'});
     else if (action === 'export-json') fire('export',{format:'json'});
     else if (action === 'clear') fire('clearHistory');
@@ -194,6 +212,9 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     '[data-action="cancel"]':'cancel','#warning':'trust','#progress':'loading',
     '[data-tab="diagnostics"]':'diagnostics','[data-tab="services"]':'services',
     '[data-tab="history"]':'history','[data-tab="settings"]':'settings',
+    '[data-filter="all"]':'ui.filterAll',
+    '[data-filter="warn"]':'ui.filterWarnings',
+    '[data-filter="inconclusive"]':'ui.filterInconclusive',
     '.metrics .metric:nth-child(1) .muted':'checks',
     '.metrics .metric:nth-child(2) .muted':'warnings',
     '.metrics .metric:nth-child(3) .muted':'observations',
@@ -226,6 +247,8 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
     if(cancel)cancel.textContent=tr('decline');
     const locale=document.querySelector('nav.tabs');
     if(locale)locale.setAttribute('aria-label',tr('section'));
+    const filterGroup=document.querySelector('.filters');
+    if(filterGroup)filterGroup.setAttribute('aria-label',tr('ui.filterGroup'));
     const logo=document.querySelector('.brand img');
     if(logo)logo.setAttribute('alt',tr('ui.logoAlt'));
     const footer=document.querySelector('footer.privacy');
@@ -266,7 +289,7 @@ const STYLE = [
 '.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px}button{cursor:pointer;background:var(--vscode-button-background);color:var(--vscode-button-foreground);border:1px solid transparent;padding:9px 13px;border-radius:6px;font:inherit}button:hover{background:var(--vscode-button-hoverBackground)}button:disabled{opacity:.45;cursor:not-allowed}.quiet{background:transparent;border-color:var(--vscode-panel-border);color:var(--vscode-foreground)}.quiet:hover{background:var(--vscode-toolbar-hoverBackground)}',
 '.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--vscode-panel-border);padding-bottom:10px;margin-bottom:20px}.tab{background:transparent;color:var(--vscode-foreground)}.tab.active{border-color:var(--vscode-focusBorder);border-bottom:3px solid var(--vscode-focusBorder)}',
 '.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 20px}.metric{background:var(--vscode-sideBar-background);border:1px solid var(--vscode-panel-border);border-radius:10px;padding:14px}.metric strong{display:block;font-size:27px;margin-top:4px}.muted{opacity:.76;line-height:1.5}.empty{opacity:.8;padding:30px;text-align:center;border:1px dashed var(--vscode-panel-border)}',
-'.check{border:1px solid var(--vscode-panel-border);border-radius:9px;padding:14px;margin:0 0 10px;background:var(--vscode-sideBar-background)}.check-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.check-label{font-weight:700}.status{padding:3px 8px;border-radius:10px;background:var(--vscode-badge-background);color:var(--vscode-badge-foreground);text-transform:uppercase;font-size:10px;letter-spacing:.07em}.status-warn{border:1px solid var(--vscode-editorWarning-foreground)}.status-pass{border:1px solid var(--vscode-testing-iconPassed)}.suggestion{margin-top:9px;line-height:1.5}.evidence{margin-top:12px;border-top:1px solid var(--vscode-panel-border);padding-top:10px}.evidence summary{cursor:pointer}.evidence p{white-space:pre-wrap;overflow-wrap:anywhere}',
+'.filters{margin:0 0 12px}.filters button[aria-pressed="true"]{border-color:var(--vscode-focusBorder);font-weight:700}.provenance{font-size:12px;border-top:1px solid var(--vscode-panel-border);padding-top:8px;margin-top:10px;overflow-wrap:anywhere}.check{border:1px solid var(--vscode-panel-border);border-radius:9px;padding:14px;margin:0 0 10px;background:var(--vscode-sideBar-background)}.check-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.check-label{font-weight:700}.status{padding:3px 8px;border-radius:10px;background:var(--vscode-badge-background);color:var(--vscode-badge-foreground);text-transform:uppercase;font-size:10px;letter-spacing:.07em}.status-warn{border:1px solid var(--vscode-editorWarning-foreground)}.status-pass{border:1px solid var(--vscode-testing-iconPassed)}.suggestion{margin-top:9px;line-height:1.5}.evidence{margin-top:12px;border-top:1px solid var(--vscode-panel-border);padding-top:10px}.evidence summary{cursor:pointer}.evidence p{white-space:pre-wrap;overflow-wrap:anywhere}',
 '.panel{border:1px solid var(--vscode-panel-border);border-radius:10px;padding:15px;margin:10px 0 18px}.panel h3{margin:0 0 12px;font-size:16px}.fields{display:grid;gap:12px}.fields label{display:grid;gap:6px;font-weight:600}.fields input{min-width:0;width:100%;padding:9px 10px;border:1px solid var(--vscode-input-border);border-radius:5px;background:var(--vscode-input-background);color:var(--vscode-input-foreground);font:inherit}.service-row,.history-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--vscode-panel-border)}.service-name{overflow-wrap:anywhere}.callout{padding:12px;border-left:3px solid var(--vscode-editorWarning-foreground);background:var(--vscode-sideBar-background);margin:10px 0}.approval{border-color:var(--vscode-focusBorder)}pre{white-space:pre-wrap;overflow-wrap:anywhere}.privacy{font-size:11px;opacity:.75;margin-top:18px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--vscode-focusBorder);outline-offset:2px}',
 '@media(max-width:500px){.shell{padding:14px}.metrics{grid-template-columns:1fr}.brand img{width:42px;height:42px}.brand h1{font-size:23px}.hero{padding:14px}}@media(prefers-reduced-motion:no-preference){button{transition:background .12s ease}}',
  '@media(max-width:620px){.service-row,.history-row{align-items:flex-start;flex-wrap:wrap}}@media(forced-colors:active){.tab.active,.status-warn,.status-pass,.callout{border:2px solid CanvasText}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid Highlight;outline-offset:2px}}'
@@ -286,7 +309,7 @@ export function html(webview:vscode.Webview,extensionUri:vscode.Uri,vscodeApi:ty
     '<div class="toolbar"><button id="diagnose" data-action="diagnose">Diagnose project</button><button class="quiet" id="recheck" data-action="recheck">Recheck</button><button class="quiet" id="select-project" data-action="selectProject">Choose project</button><button class="quiet" data-action="openHome">Full view</button><button class="quiet" id="cancel" data-action="cancel" disabled>Cancel</button></div></div>'+
     '<div id="warning" class="callout" role="alert" hidden>This workspace is not trusted. Diagnostics are disabled until you trust it in VS Code.</div><div id="progress" class="callout" role="status" hidden>Diagnosis running…</div><div id="error" class="callout" role="alert" hidden></div>'+
     '<nav class="tabs" role="tablist" aria-label="Control center sections"><button class="tab active" role="tab" id="tab-diagnostics" aria-controls="section-diagnostics" aria-selected="true" data-action="tab" data-tab="diagnostics">Diagnostics</button><button class="tab" role="tab" id="tab-services" aria-controls="section-services" aria-selected="false" tabindex="-1" data-action="tab" data-tab="services">Services</button><button class="tab" role="tab" id="tab-history" aria-controls="section-history" aria-selected="false" tabindex="-1" data-action="tab" data-tab="history">History & Reports</button><button class="tab" role="tab" id="tab-settings" aria-controls="section-settings" aria-selected="false" tabindex="-1" data-action="tab" data-tab="settings">Settings</button></nav>'+
-    '<section id="section-diagnostics" aria-labelledby="tab-diagnostics" data-section="diagnostics" role="tabpanel"><div class="metrics"><div class="metric"><span class="muted">Checks</span><strong id="total">0</strong></div><div class="metric"><span class="muted">Warnings</span><strong id="warnings">0</strong></div><div class="metric"><span class="muted">Observations</span><strong id="observations">0</strong></div></div><p class="muted" id="summary" role="status" aria-live="polite"></p><div id="comparison" class="panel"></div><div id="checks"></div></section>'+
+    '<section id="section-diagnostics" aria-labelledby="tab-diagnostics" data-section="diagnostics" role="tabpanel"><div class="metrics"><div class="metric"><span class="muted">Checks</span><strong id="total">0</strong></div><div class="metric"><span class="muted">Warnings</span><strong id="warnings">0</strong></div><div class="metric"><span class="muted">Observations</span><strong id="observations">0</strong></div></div><div class="toolbar filters" role="group" aria-label="Filter findings"><button class="quiet" data-action="filter" data-filter="all" aria-pressed="true">All</button><button class="quiet" data-action="filter" data-filter="warn" aria-pressed="false">Warnings</button><button class="quiet" data-action="filter" data-filter="inconclusive" aria-pressed="false">Uncertain</button></div><p class="muted" id="summary" role="status" aria-live="polite"></p><div id="comparison" class="panel"></div><div id="checks"></div></section>'+
     '<section id="section-services" aria-labelledby="tab-services" data-section="services" role="tabpanel" hidden><div class="panel"><h3>Local service checks</h3><p class="muted">Add loopback HTTP endpoints only. Requests are never sent until you inspect the plan and approve them.</p><div id="services"></div><div class="fields"><label>Service name<input id="service-name" maxlength="50" placeholder="Local API"></label><label>Loopback URL<input id="service-url" placeholder="http://127.0.0.1:5000/health"></label><button data-action="addService">Add service</button></div></div><button id="verify" data-action="prepare" disabled>Review checks & approve</button><div id="approval" class="panel approval" hidden><h3>Approval required</h3><p>Indizivo will make GET requests to exactly these loopback endpoints:</p><pre id="service-plan"></pre><div class="toolbar"><button data-action="confirm">Approve and run</button><button class="quiet" data-action="decline">Cancel</button></div></div></section>'+
     '<section id="section-history" aria-labelledby="tab-history" data-section="history" role="tabpanel" hidden><div class="panel"><h3>Local review history</h3><div id="history"></div></div><div class="toolbar"><button id="export-md" data-action="export-md">Export Markdown</button><button class="quiet" id="export-json" data-action="export-json">Export JSON</button><button class="quiet" id="clear-history" data-action="clear">Delete history</button></div></section>'+
     '<section id="section-settings" aria-labelledby="tab-settings" data-section="settings" role="tabpanel" hidden><div class="panel"><h3>Probe settings</h3><p class="muted">All local settings can be managed here. No manual editing of settings.json is required.</p><div class="fields"><label>Timeout per probe (400–10000 ms)<input id="timeout" type="number" min="400" max="10000" step="100" value="2500"></label><button data-action="saveTimeout">Save settings</button></div></div><div class="panel"><h3 id="locale-legend">Interface language</h3><div class="toolbar"><button class="quiet" data-action="locale" data-locale="en" aria-pressed="false">English</button><button class="quiet" data-action="locale" data-locale="es" aria-pressed="false">Español</button></div></div><div id="settings-privacy" class="callout">Privacy: local-first, no telemetry, no AI, no cloud. Indizivo reads key names from .env without retaining values. Repository scripts are never executed.</div></section>'+
