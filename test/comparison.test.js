@@ -15,3 +15,8 @@ test('incomparable projects or partial runs return no trend',()=>{
  assert.equal(compareSessions({project:'A',state:'completed'}, {project:'B',state:'completed'}),null);
  assert.equal(compareSessions({project:'A',state:'running'}, {project:'A',state:'completed'}),null);
 });
+
+test('observations from different Extension Host platforms cannot be compared',()=>{
+ const old={project:'demo',host:'linux',completedAt:'before',state:'completed',checks:[{id:'port-3000',status:'info'}]};
+ assert.equal(compareSessions(old,{...old,host:'win32',completedAt:'after'}),null);
+});

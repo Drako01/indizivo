@@ -37,3 +37,27 @@ test('empty project returns honest limited finding',async()=>{
   assert.equal(result.checks[0].status,'info');
  } finally {await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('framework convention ports are labeled inferred, not declared',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-inferred-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({dependencies:{next:'^16.0.0'}}));
+  const d=await discover(root);
+  assert.equal(d.portOrigins['3000'],'heuristic');
+  const session=await diagnose(root,500);
+  const finding=session.checks.find(c=>c.id==='port-3000');
+  assert.match(finding.detail,/framework convention/);
+  assert.equal(finding.i18n.suggestion.key,'diag.portNextInferred');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+test('explicit ports and Go toolchain remain separately attributed',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-toolchain-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({scripts:{dev:'next dev --port 3301'}}));
+  await fs.writeFile(path.join(root,'go.mod'),'module example.org/demo\\ngo 1.23\\ntoolchain go1.24.5\\n');
+  const d=await discover(root);
+  assert.equal(d.portOrigins['3301'],'declared');
+  assert.equal(d.goRequirement,'1.23');
+  assert.equal(d.goToolchain,'1.24.5');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

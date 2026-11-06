@@ -17,7 +17,8 @@ export interface PackageManifest {
 }
 export interface Discovery {
  project:string;node:boolean;go:boolean;malformedPackage:boolean;
- nodeRequirement:string;goRequirement:string;ports:number[];
+ nodeRequirement:string;goRequirement:string;goToolchain:string;ports:number[];
+  portOrigins:Record<string,'declared'|'heuristic'>;
  requiredEnv:string[];missingEnv:string[];
  hasEnvExample:boolean;hasEnvFile:boolean;
 }
@@ -75,7 +76,7 @@ export function parseKeys(data:string|undefined|null):string[] {
 }
 function safeVersionRequirement(input:unknown):string {
   const value=String(input||'').trim().slice(0,80);
-  return /^[0-9v.^~<>=*xX\s,-]{1,80}$/.test(value)?value:'';
+  return /^[0-9A-Za-z .^~<>=*xX|,_+\-]{1,80}$/.test(value)?value:'';
 }
 async function readBounded(root:string,name:string):Promise<string> {
   let handle:fs.FileHandle|undefined;
@@ -132,16 +133,19 @@ export async function discover(root:string):Promise<Discovery> {
   }catch{pkg=null;}
   const scripts = pkg && typeof pkg.scripts === 'object' ? pkg.scripts : {};
   const ports = parsePorts(scripts);
+  const portOrigins:Record<string,'declared'|'heuristic'>={};
+  for(const port of ports)portOrigins[String(port)]='declared';
   const deps = { ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) };
-  if (!ports.length && deps.next) ports.push(3000);
-  if (!ports.length && deps.vite) ports.push(5173);
+  if (!ports.length && deps.next){ports.push(3000);portOrigins['3000']='heuristic';}
+  if (!ports.length && deps.vite){ports.push(5173);portOrigins['5173']='heuristic';}
   const required = parseKeys(example);
   const provided = new Set(parseKeys(env));
   return { project: path.basename(root), node: Boolean(packageText), go: Boolean(goMod),
     malformedPackage: Boolean(packageText && !pkg),
     nodeRequirement: nvm || safeVersionRequirement(pkg?.engines?.node),
     goRequirement: /^\s*go\s+([\d.]+)/m.exec(goMod)?.[1] || '',
-    ports, requiredEnv: required, missingEnv: required.filter(key => !provided.has(key)),
+    goToolchain: /^\s*toolchain\s+go(\d+\.\d+(?:\.\d+)?)/m.exec(goMod)?.[1] || '',
+    ports,portOrigins, requiredEnv: required, missingEnv: required.filter(key => !provided.has(key)),
     hasEnvExample: !!example, hasEnvFile: !!env };
 }
 function runVersion(command:string,args:string[],timeout:number,signal?:AbortSignal):
@@ -188,8 +192,12 @@ function inspectService(service:ServiceTarget,timeout:number,signal?:AbortSignal
     let done = false;
     function finish(ok:boolean, detail:string):void { if (done) return; done = true;
       signal?.removeEventListener('abort', cancel); resolve({ ok, detail }); }
+    const host=new URL(valid.url).hostname;
+    // Never resolve arbitrary DNS; preserve the approved IPv4/IPv6 loopback target.
+    const address=host==='[::1]'?'::1':'127.0.0.1';
+    const family=address==='::1'?6:4;
     const req = http.get(valid.url, { timeout, agent: false,
-      lookup: (_host, _options, callback) => callback(null, '127.0.0.1', 4),
+      lookup: (_host, _options, callback) => callback(null, address, family),
       headers: { 'user-agent': 'Indizivo/0.1' } }, res => {
       // Headers are sufficient evidence. Never download or buffer service bodies.
       const status=res.statusCode ?? 0;
@@ -256,11 +264,13 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       verdict?.status==='compatible'?'pass':'info';
     push(createCheck('go','Runtime','Go',goStatus,
       result.value + (d.goRequirement ? ' — module requirement: '+d.goRequirement : '') +
+      (d.goToolchain ? ' — preferred toolchain: go'+d.goToolchain : '') +
       (verdict ? '. '+verdict.detail : ''),
       goStatus==='warn'?'Check the declared Go toolchain minimum.':'Only validated constraints are considered compatible.',
       'Runtime output: '+result.value, {
         category:msg('diag.category.Runtime'),
-        detail:msg('diag.nodeDetail',{version:localizedVersion,
+        detail:msg('diag.goDetail',{version:localizedVersion,
+          toolchain:d.goToolchain?msg('diag.goToolchain',{version:d.goToolchain}):'',
           required:d.goRequirement?msg('diag.goRequired',{requirement:d.goRequirement}):'',
           verdict:verdict ? (verdict.translation||verdict.detail):''}),
         suggestion:msg(goStatus==='warn'?'diag.goWarn':'diag.goChecked'),
@@ -289,22 +299,26 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     const ownerDetail=owner?.owners?.length ?
       ' Listening owner(s): '+owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')+'.' :
       status==='listening' ? ' Process owner not established (tool, permission or namespace limitation).' : '';
+    const inferred=d.portOrigins[String(port)]==='heuristic';
     push(createCheck('port-'+port,'Ports','Port '+port,
       ['listening','not-listening'].includes(status)?'info':'warn',
       (status === 'listening' ? 'A TCP listener responded on 127.0.0.1:'+port+
         '. This does not establish a process conflict.' :
         status === 'not-listening' ? 'No local TCP listener responded on 127.0.0.1:'+port+
-        '. The application may not be started.' : 'Port status could not be verified.')+ownerDetail,
-      'Inspect service startup logs and host bindings; do not terminate processes blindly.',
-      'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.'), {
+        '. The application may not be started.' : 'Port status could not be verified.')+ownerDetail+
+      (inferred?' Port is a framework convention, not a declared project configuration.':''),
+      'Inspect service startup logs and host bindings; do not terminate processes blindly.'+
+      (inferred?' Confirm the actual project port.':''),
+      'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.')+
+      (inferred?' Port inferred from a framework default.':''), {
         category:msg('diag.category.Ports'),label:msg('diag.label.port',{port}),
         detail:msg(status==='listening'?'diag.portListening':
           status==='not-listening'?'diag.portNotListening':'diag.portUnknown',
           {port,owner:status==='listening'?owner?.owners?.length?
             msg('diag.portOwners',{owners:owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')}):
             msg('diag.portNoOwner'):''}),
-        suggestion:msg('diag.portNext'),
-        evidence:msg('diag.portEvidence',{status:msg(status==='listening'?'diag.portStateListening':
+        suggestion:msg(inferred?'diag.portNextInferred':'diag.portNext'),
+        evidence:msg(inferred?'diag.portEvidenceInferred':'diag.portEvidence',{status:msg(status==='listening'?'diag.portStateListening':
           status==='not-listening'?'diag.portStateNotListening':
           status==='timeout'?'diag.portStateTimeout':
           status==='cancelled'?'diag.portStateCancelled':'diag.portStateInconclusive'),
@@ -331,7 +345,8 @@ export async function verifyServices(services:ServiceTarget[],timeout:number,sig
     if (!svc) continue;
     const result = await inspectService(svc, Math.max(400, Math.min(10000, timeout)), signal);
     assertActive(signal);
-    checks.push(createCheck('service-'+i,'Services',svc.name,
+    const stableId='service-'+crypto.createHash('sha256').update(svc.url).digest('hex').slice(0,24);
+    checks.push(createCheck(stableId,'Services',svc.name,
       result.ok?'pass':'warn',result.detail,
       result.ok?'':'Check the service, port and endpoint; no changes were made.',
       'Loopback '+svc.url+' → '+result.detail, {

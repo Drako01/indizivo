@@ -18,6 +18,7 @@ export interface Finding {
 export interface ServiceTarget {name:string; url:string}
 export interface SessionSummary {
   project: string;
+  host?:string;
   completedAt: string;
   state: SessionStatus;
   checks?: readonly Pick<Finding,'id'|'status'>[];
