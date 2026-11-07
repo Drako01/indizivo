@@ -47,7 +47,7 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | **Project diagnostics** | Detects Node.js and Go projects and checks their locally available runtimes. |
 | **Runtime compatibility** | Evaluates `engines.node`, `.nvmrc` and Go module requirements with npm-compatible range semantics (`~`, `^`, comparators, hyphen ranges, OR, wildcards). Anything it cannot interpret is reported as **inconclusive**, never as a false incompatibility. |
 | **Go done right** | Separates the `go` minimum from the suggested `toolchain`, handles implicit `go 1.16` modules and malformed directives, and never lets the CLI download a toolchain during a probe. |
-| **Port investigation** | Checks declared TCP ports over IPv4 (`127.0.0.1`) and IPv6 (`::1`) loopback, reporting which family answered, and, where the OS allows it, identifies the owning process read-only. Framework defaults (Next.js 3000, Vite 5173) are labeled **inferred**, not declared. |
+| **Port investigation** | Checks declared TCP ports over IPv4 (`127.0.0.1`) and IPv6 (`::1`) loopback, reporting which family answered, and, where the OS allows it, identifies the owning process read-only (IPv4 and IPv6 listeners, on Windows, Linux and macOS). Framework defaults (Next.js 3000, Vite 5173) are labeled **inferred**, not declared. |
 | **Environment configuration** | Compares variable **names only** between `.env.example` and `.env`. A missing file is distinguished from an unreadable or blocked one, so an unreadable file is never reported as "absent". |
 | **Optional toolchains** | Read-only version observations for Python, PHP, Java and Docker when their project markers exist, plus lockfile and `packageManager` consistency. No repository scripts are ever run. |
 | **Monorepos and multi-root** | Shallow, bounded discovery of sub-projects with an explicit picker and a separate history per project. |
@@ -55,7 +55,8 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | **Evidence-backed findings** | Every finding carries what was observed, how, when, with what confidence, what remains unknown and a copy-only next step. Findings have stable versioned IDs. |
 | **Recheck and compare** | Compares sessions by stable check and endpoint identity (reordering endpoints cannot mix up results) without claiming that a change proves a fix. |
 | **Reports and history** | Exports versioned JSON and readable Markdown (EN/ES) through VS Code's file system, redacted for credentials; copies evidence; keeps bounded, schema-validated local history. |
-| **Resilience** | Global time budget per run, bounded output, cancellation that terminates only the processes Indizivo started (including their children), and a safe fallback when VS Code storage is unavailable. |
+| **Remote awareness** | Sessions record where they ran (for example `linux · wsl`) and are never compared across different hosts. Real WSL, SSH and Dev Containers qualification is still pending. |
+| **Resilience** | Global time budget per run, bounded output, cancellation that terminates only the processes Indizivo started (including their children, also when VS Code shuts down), and a safe fallback when VS Code storage is unavailable. |
 
 ### One interface, full control
 
@@ -98,7 +99,7 @@ The release pipeline tests an isolated packaged VSIX installation on Linux. Cros
 
 - **Local-first:** no account, mandatory AI provider, cloud backend or telemetry.
 - **Read-only by default:** checks do not edit source code, install packages or terminate processes.
-- **Explicit consent:** localhost HTTP requests require approval of their exact targets.
+- **Explicit consent:** localhost HTTP requests require approval of their exact targets. A pending approval is discarded if the endpoints, project or workspace folders change.
 - **Secrets stay private:** environment variable names can be checked, but .env values are not retained in findings.
 - **Bounded operations:** supported reads and probes enforce limits, timeouts and cancellation; files are read through verified file handles and symlinks are not followed.
 - **Redacted outputs:** exports and copied evidence mask common credential formats (tokens, bearer/basic headers, cookies, URL credentials, private keys).
