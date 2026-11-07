@@ -192,6 +192,8 @@ export class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
+      // Findings describe the Extension Host's machine: label remote topologies explicitly.
+      session.host=process.platform+(vscode.env.remoteName?' · '+vscode.env.remoteName:'');
       session.scopeId=crypto.createHash('sha256').update(this.store.key(this.rootKey())+'|'+
         (vscode.env.remoteName||'local')).digest('hex');
       session.comparison=compareSessions(previousCompleted,session);
