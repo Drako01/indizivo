@@ -46,10 +46,9 @@ export function parseOwners(platform:string,output:unknown,port:number):PortOwne
   return owners;
 }
 export function inspectionArgs(platform:string,port:number):InspectionCommand|null {
-  if(platform==='win32')return {command:'netstat',args:['-ano','-p','tcp']};
-  if(platform==='linux')return {command:'ss',args:['-ltnp']};
+  // lsof can filter by port on macOS; netstat and ss always list every listener.
   if(platform==='darwin')return {command:'lsof',args:['-nP','-iTCP:'+port,'-sTCP:LISTEN']};
-  return null;
+  return inspectionBatchArgs(platform);
 }
 export function inspectOwner(port:number,timeoutMs:number,signal?:AbortSignal,
   platform:string=process.platform):Promise<OwnerInspection>{
@@ -75,7 +74,8 @@ export function inspectOwner(port:number,timeoutMs:number,signal?:AbortSignal,
 
 /** One bounded read-only platform snapshot for all declared TCP ports. */
 export function inspectionBatchArgs(platform:string):InspectionCommand|null {
- if(platform==='win32')return {command:'netstat',args:['-ano','-p','tcp']};
+ // `-p tcp` on Windows lists IPv4 only; plain `-ano` also lists IPv6 (::1) TCP listeners.
+ if(platform==='win32')return {command:'netstat',args:['-ano']};
  if(platform==='linux')return {command:'ss',args:['-ltnp']};
  if(platform==='darwin')return {command:'lsof',args:['-nP','-iTCP','-sTCP:LISTEN']};
  return null;
