@@ -12,7 +12,6 @@
 
 <p align="center">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-35C2B1">
-  <img alt="Status: Preview" src="https://img.shields.io/badge/status-preview-F6BA65">
   <img alt="VS Code 1.99 or newer" src="https://img.shields.io/badge/VS_Code-%E2%89%A51.99-18232F">
 </p>
 
@@ -71,7 +70,7 @@ No terminal is required for normal usage after installation. The interface suppo
 
 ## Getting started
 
-> **Version 0.2.1 (preview).** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
+> **Version 0.2.2.** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
@@ -84,9 +83,9 @@ No terminal is required for normal usage after installation. The interface suppo
 
 Multi-root workspaces and monorepos let you choose the project to inspect. Untrusted and virtual workspaces run in a limited mode that disables active probes. WSL, SSH and Dev Containers have not yet been fully qualified.
 
-### Install the preview VSIX
+### Install the VSIX
 
-In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.1.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.1). Verify the package origin before installing.
+In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.2.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.2). Verify the package origin before installing.
 
 Maintainers with authorized repository access can reproduce the release candidate with:
 
@@ -111,7 +110,7 @@ The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the ins
 
 ## Current scope
 
-The 0.2.1 preview focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
+Indizivo 0.2.2 focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
 
 Indizivo is a diagnostic aid: a passing check is not a project-health guarantee, and "Enterprise AAAA" is an internal engineering goal, not a certification. Progress is tracked in the [active implementation pull request](https://github.com/Drako01/indizivo/pull/14), its upgrade checklist and the CTO audit. Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
@@ -127,7 +126,7 @@ The E2E suite launches an official VS Code Extension Host. It requires a graphic
 
 ## Feedback and support
 
-Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.2.1**.
+Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.2.2**.
 
 **Never upload secrets, private environment values or confidential project logs.**
 

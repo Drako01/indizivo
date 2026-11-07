@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 — Preview flag removed
+
+- Removed `"preview": true` from the manifest so the Marketplace no longer labels Indizivo as a preview (owner decision). No functional changes.
+- Manual accessibility, remote-topology and external usability qualification remain pending and are still documented as such; removing the label is not a certification.
+
 ## 0.2.1 — Diagnostic accuracy and release-pipeline hardening
 
 - **Fixed:** a TCP listener bound only to IPv6 loopback (`::1`, e.g. `localhost` on dual-stack hosts) was reported as "not listening" because only `127.0.0.1` was probed. Both families are now probed; the finding states which address answered, and "not listening" is reported only when both refuse (an unavailable IPv6 stack counts as no listener). English and Spanish strings added; stored 0.2.0 sessions keep rendering with their original keys.
