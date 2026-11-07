@@ -1,6 +1,6 @@
 # Security Policy — Indizivo
 
-Indizivo is a preview for local developer-environment diagnostics, not an OS sandbox. Security-sensitive behavior depends on VS Code Workspace Trust and the permissions of the extension host.
+Indizivo is a tool for local developer-environment diagnostics, not an OS sandbox. Security-sensitive behavior depends on VS Code Workspace Trust and the permissions of the extension host.
 
 ## Threat model
 
@@ -14,7 +14,7 @@ Use the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/) a
 
 ## Supported versions
 
-Security fixes target the latest published release (`0.2.1` once published to the Visual Studio Marketplace and Open VSX). Unreleased work in pull requests is not a supported build and is not presented as security-certified.
+Security fixes target the latest published release (`0.2.2` once published to the Visual Studio Marketplace and Open VSX). Unreleased work in pull requests is not a supported build and is not presented as security-certified.
 
 ## Dependencies
 

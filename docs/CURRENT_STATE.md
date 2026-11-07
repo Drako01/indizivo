@@ -2,10 +2,10 @@
 
 > **Source of truth**, updated 2026-11-07. Historical PLAN.md, HANDOFF.md and RELEASE_READINESS.md contain dated, superseded statements and are not release evidence.
 
-## Published preview
+## Published releases
 - Baseline: **0.2.0** on [main @ 4d81290](https://github.com/Drako01/indizivo/commit/4d81290b28d5f2be1f3daf610833dea9e16eb0dd) ([release](https://github.com/Drako01/indizivo/releases/tag/v0.2.0)), VSIX SHA-256 `8cdafec982d019d6d5c41b562bcb4a2289918eb180d1bfec380f199f7816cec7`; [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42316225544) and [Publish](https://github.com/Drako01/indizivo/actions/runs/42316225513) PASS.
 - **0.2.1** hardens 0.2.0: IPv6 loopback port observation, npm hyphen ranges, remote-topology labelling in sessions, and a de-duplicated publish pipeline. See CHANGELOG. Its publication evidence is recorded in the checklist ledger once the pipeline completes.
-- Publisher `armotusitio`, extension ID, branding and `preview: true` are unchanged.
+- Publisher `armotusitio`, extension ID, branding are unchanged; the Marketplace "Preview" flag was removed in 0.2.2 by owner decision (qualification gaps below remain documented).
 - Scope: Node/Go environment probes, optional Python/PHP/Java/Docker version probes, local port/process-owner observation, `.env` name presence, approved loopback HTTP, history and EN/ES interface. The code is not an OS sandbox.
 
 ## Not certified (unchanged)

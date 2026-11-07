@@ -1,6 +1,6 @@
 # Indizivo Support
 
-**Product:** Indizivo (Preview) for Visual Studio Code. Include the installed version shown in the Extensions view.
+**Product:** Indizivo for Visual Studio Code. Include the installed version shown in the Extensions view.
 
 Report errors or request support using the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/). Mention **Indizivo** in the request. The source repository is private, so GitHub Issues are not a public support channel.
 

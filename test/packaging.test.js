@@ -116,5 +116,6 @@ test('manifest explicitly declares limited Workspace Trust and virtual workspace
  assert.equal(pkg.capabilities.virtualWorkspaces.supported,'limited');
  assert.equal(pkg.extensionKind[0],'workspace',
    'Processes and localhost must be scoped to the workspace Extension Host');
- assert.equal(pkg.version,'0.2.1','Owner-approved hardening release version');
+ assert.equal(pkg.version,'0.2.2','Owner-approved release version');
+ assert.equal(pkg.preview,undefined,'Marketplace preview flag intentionally removed in 0.2.2');
 });

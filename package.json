@@ -1,7 +1,7 @@
 {
   "name": "indizivo",
   "displayName": "Indizivo",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "publisher": "armotusitio",
   "description": "%extension.description%",
   "author": {
@@ -14,7 +14,6 @@
   "homepage": "https://armotusitio.com.ar",
   "license": "MIT",
   "private": true,
-  "preview": true,
   "engines": {
     "vscode": "^1.99.0"
   },
