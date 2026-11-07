@@ -1,5 +1,9 @@
 # Architecture
 
+> **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+
+
 **Current implementation snapshot (2026-11-05, source through `8cf2bc3238e0a5540096d894cf4185da23f2cf48`):** Extension Host, diagnostic probes, platform port ownership and Webview logic now have authored strict TypeScript implementations in `src/typed/`. CommonJS wrappers preserve stable VS Code imports. Native manifest and runtime EN/ES dictionaries, evidence descriptors, Webview controls, integration-test adaptation and required VSIX inventory were updated. **Validation remains NOT EXECUTED for this new source** (`npm ci`, `tsc`, Node integration, real Extension Host and installed VSIX); no Enterprise AAA or release PASS is claimed. Stable `main` remains unchanged. Refer to `docs/HANDOFF.md`.
 
 

@@ -91,6 +91,13 @@ class FakeDocument {
    const node=this.createElement('button');node.setAttribute('data-action','locale');
    node.setAttribute('data-locale',locale);return node;
   });
+  this.filters=['all','warn','inconclusive'].map(filter=>{
+   const node=this.createElement('button');
+   node.setAttribute('data-action','filter');node.setAttribute('data-filter',filter);
+   this.special.set('[data-filter="'+filter+'"]',node);
+   return node;
+  });
+  this.special.set('.filters',this.createElement('div'));
   for(const selector of ['.hero p','nav.tabs','.brand img','footer.privacy']){
    this.special.set(selector,this.createElement(selector==='.brand img'?'img':'div'));
   }
@@ -242,4 +249,31 @@ test('Host-provided evidence stays inert text rather than executable HTML',()=>{
  const detail=check.children.find(node=>node.className==='muted');
  assert.equal(detail.textContent,suspicious);
  assert.equal(detail.children.length,0);
+});
+
+test('live Webview filters findings by outcome and displays provenance without HTML injection',()=>{
+ const h=createWebviewHarness(),doc=h.document;
+ const checks=[
+  {id:'node',label:'Node.js',status:'warn',detail:'Node runtime mismatch',evidence:[],
+   provenance:{origin:'runtime-tool',confidence:'observed',method:'execFile',
+    host:'linux',target:'node',limitations:'Version alone does not prove compatibility'}},
+  {id:'port-3000',label:'Port 3000',status:'info',detail:'Listening',evidence:[]},
+  {id:'file--env',label:'.env',status:'inconclusive',detail:'Unreadable',evidence:[]}
+ ];
+ h.send(state({locale:'es',session:{...session(),checks}}));
+ assert.equal(doc.getElementById('checks').children.length,3);
+ const item=doc.getElementById('checks').children[0];
+ const meta=item.children.find(x=>x.className==='provenance');
+ assert.ok(meta);
+ assert.match(meta.textContent,/Origen:/);
+ assert.match(meta.textContent,/Entorno de ejecución|Herramienta de ejecución/);
+ doc.filters[1].click();
+ assert.equal(doc.filters[1].getAttribute('aria-pressed'),'true');
+ assert.equal(doc.getElementById('checks').children.length,1);
+ assert.equal(doc.getElementById('checks').children[0].children[0].children[0].textContent,'Node.js');
+ doc.filters[2].click();
+ assert.equal(doc.getElementById('checks').children.length,1);
+ assert.match(doc.getElementById('checks').children[0].children[1].textContent,/Unreadable/);
+ doc.filters[0].click();
+ assert.equal(doc.getElementById('checks').children.length,3);
 });

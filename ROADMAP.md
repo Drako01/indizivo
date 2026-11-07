@@ -1,11 +1,20 @@
-# Indizivo Roadmap
+# Indizivo — Engineering roadmap
 
-Features are delivered incrementally after reproducible tests, security review and usability verification.
+> Release target: 0.2.0 (version set in `package.json`; publication requires the owner's GO). Last published: 0.1.3 (2026-11-06). This is a plan, not a release commitment. The current source of truth is [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md); acceptance and handoff live in [docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md).
 
-1. **0.1 local MVP:** UI, Node/Go discovery, local port checks, env key names, approved HTTP loopback checks, evidence and export. Source implemented; E2E pending.
-2. **0.2 reliability:** strict TypeScript contracts, formal schema validation, recheck comparability, runtime requirement validation and safe process ownership evidence.
-3. **0.3 UX/locale:** Spanish localization, high-contrast/keyboard/screen-reader testing, E2E installation and cross-platform fixtures.
-4. **0.4 beta:** Windows/Linux validation, package hardening, user trials and benchmark-driven defect fixes.
-5. **1.0 release candidate:** security/legal checks, trademark clearance, complete VSIX E2E, marketplace assets, explicit publication authorization.
+## Published 0.1.3
 
-No release date or capability is guaranteed before verified acceptance.
+- Local Node.js and Go runtime discovery, bounded version and port checks, optional process-owner inspection.
+- Environment-variable **names** only; read-only by default, no scripts executed.
+- User-approved localhost HTTP checks, local session history, EN/ES interface, export and recheck comparison.
+- Automated quality gates on Windows/Linux/macOS; real VS Code Extension Host and packaged VSIX smoke tests on Linux.
+
+## Enterprise AAAA milestones (shipped in 0.2.0 once published)
+
+1. Accuracy: version ranges, loopback IP families, file observability, stable evidence identities, source attribution.
+2. Security: explicit consent, storage and workspace hardening, cancellation, host namespace accuracy.
+3. Product utility: actionable findings, monorepo awareness, opt-in dependency checks, demand-backed language adapters.
+4. Engineering: modular typed contracts, real UI E2E/a11y, focused coverage and realistic performance baselines.
+5. Release: immutable VSIX, provenance-based gates, registry reconciliation, user validation and explicit owner GO/NO-GO.
+
+A feature is not complete merely because code is written. No version, date, tag or publication is authorized by this roadmap.

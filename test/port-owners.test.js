@@ -23,3 +23,32 @@ test('does not make up owners from missing permission/port',()=>{
  assert.deepEqual(parseOwners('win32','TCP 0.0.0.0:3000 0.0.0.0:0 LISTENING 5020',3001),[]);
  assert.equal(inspectionArgs('unknown',3000),null);
 });
+
+test('batch inspection uses one bounded OS-specific command per run',()=>{
+ const {inspectionBatchArgs}=require('../src/port-owners');
+ assert.deepEqual(inspectionBatchArgs('win32'),{command:'netstat',args:['-ano','-p','tcp']});
+ assert.deepEqual(inspectionBatchArgs('linux'),{command:'ss',args:['-ltnp']});
+ assert.deepEqual(inspectionBatchArgs('darwin'),{command:'lsof',args:['-nP','-iTCP','-sTCP:LISTEN']});
+ assert.equal(inspectionBatchArgs('unknown'),null);
+});
+test('macOS process-owner evidence must match the exact requested port',()=>{
+ const line='node 3821 dev 20u IPv4 8123 0t0 TCP 127.0.0.1:30001 (LISTEN)';
+ assert.deepEqual(parseOwners('darwin',line,3000),[]);
+ assert.equal(parseOwners('darwin',line,30001)[0].pid,3821);
+});
+
+test('real listening socket: owner is this PID when observed, never invented otherwise',async()=>{
+ const net=require('node:net');
+ const {inspectOwners}=require('../dist/typed/port-owners');
+ const server=net.createServer();
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+ const port=server.address().port;
+ try{
+  const result=(await inspectOwners([port,port===65535?65534:port+1],4000)).get(port);
+  assert.ok(['observed','inconclusive'].includes(result.status),result.status);
+  if(result.status==='observed')
+   assert.ok(result.owners.some(owner=>owner.pid===process.pid),
+    'the observed owner of our own listener must be this process');
+  else assert.deepEqual(result.owners,[]);
+ }finally{await new Promise(resolve=>server.close(resolve));}
+});

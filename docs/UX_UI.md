@@ -1,5 +1,9 @@
 # UI/UX specification
 
+> **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+
+
 **Everything implemented must be controllable inside the extension.**
 
 Activity Bar: Indizivo Control Center. Tabs: Diagnostics, Services, History & Reports, Settings.

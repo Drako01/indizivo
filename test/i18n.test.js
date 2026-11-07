@@ -18,7 +18,9 @@ test('VS Code command and view localization declares exact matching EN/ES keys',
  const references=[
    pkg.description,...pkg.contributes.commands.flatMap(c=>[c.title,c.category]),
    pkg.contributes.viewsContainers.activitybar[0].title,
-   pkg.contributes.views.indizivo[0].name
+   pkg.contributes.views.indizivo[0].name,
+   pkg.capabilities.untrustedWorkspaces.description,
+   pkg.capabilities.virtualWorkspaces.description
  ];
  for(const ref of references){
    assert.match(ref,/^%[^%]+%$/);
@@ -100,4 +102,17 @@ test('completed sessions localize findings and comparisons without mutating stor
  assert.ok(localized.checks[0].detail.includes('Node.js/Go'));
  assert.match(localized.comparison.note,/Comparación de estados/);
  assert.equal(JSON.stringify(canonical),serialized,'historic canonical observations must remain unchanged');
+});
+
+test('provenance limitations are localized in Spanish without mutating canonical evidence',()=>{
+ const {localizeFinding}=require('../dist/typed/i18n');
+ const original={id:'go',label:'Go',category:'Runtime',status:'inconclusive',
+  detail:'Compatibility unknown',suggestion:'',evidence:[],
+  provenance:{origin:'runtime-tool',method:'execFile',host:'linux',target:'go',
+   confidence:'inconclusive',limitations:'A runtime version does not guarantee project compatibility.'},
+  i18n:{limitations:{key:'diag.limitationRuntime'}}};
+ const translated=localizeFinding(original,'es');
+ assert.match(translated.provenance.limitations,/La versión detectada/);
+ assert.equal(original.provenance.limitations,
+  'A runtime version does not guarantee project compatibility.');
 });

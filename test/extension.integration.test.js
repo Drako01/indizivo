@@ -220,3 +220,98 @@ test('history navigation revokes pending active service consent',async()=>{
   await assert.rejects(()=>controller.confirmServices(),/Approval plan expired/);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('report export uses VS Code workspace.fs for a user-selected non-file URI',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-export-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  const app=fixture(root,true);
+  let output=null;
+  app.vscode.workspace.fs={writeFile:async(uri,bytes)=>{output={uri,data:Buffer.from(bytes).toString('utf8')};}};
+  app.vscode.window.showSaveDialog=async()=>({scheme:'memfs',path:'/reports/indizivo.json'});
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  await controller.export('json');
+  assert.equal(output.uri.scheme,'memfs');
+  const report=JSON.parse(output.data);
+  assert.equal(report.schemaVersion,2);
+  assert.equal(report.reportFormatVersion,1);
+  assert.ok(/^20\d\d-/.test(report.reportGeneratedAt));
+  assert.equal(report.state,'completed');
+  assert.ok(report.checks.some(c=>c.id==='node'&&c.provenance.origin==='runtime-tool'));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('reports and copied evidence redact synthetic secret values without mutating a session',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-redact-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  const app=fixture(root,true);
+  let exported='';
+  app.vscode.workspace.fs={writeFile:async(_uri,bytes)=>{exported=Buffer.from(bytes).toString('utf8');}};
+  app.vscode.window.showSaveDialog=async()=>({scheme:'memfs',path:'/reports/report.json'});
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  controller.data.session.serviceChecks.push({id:'service-synthetic',category:'Services',
+    label:'synthetic',status:'warn',detail:'client_secret=NEVER_EXPORT_12345',
+    suggestion:'',evidence:[{id:'evidence',fact:'password=NEVER_EXPORT_12345',
+      observedAt:'2026-11-06T00:00:00Z'}]});
+  await controller.export('json');
+  assert.doesNotMatch(exported,/NEVER_EXPORT_12345/);
+  await controller.copyEvidence('service-synthetic');
+  assert.doesNotMatch(app.getClipboard(),/NEVER_EXPORT_12345/);
+  assert.match(controller.data.session.serviceChecks[0].detail,/NEVER_EXPORT_12345/,
+    'canonical in-memory evidence must remain unchanged');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('recheck compares approved service evidence only after the second service probe',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-service-compare-'));
+ let responseStatus=200;
+ const server=http.createServer((_req,res)=>{res.writeHead(responseStatus);res.end();});
+ try{
+  await fs.writeFile(path.join(root,'package.json'),'{"name":"fixture"}');
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  const endpoint='http://127.0.0.1:'+server.address().port+'/health';
+  await controller.runDiagnosis();
+  await controller.addService({name:'API',url:endpoint});
+  await controller.prepareServices();
+  await controller.confirmServices();
+  assert.equal(controller.data.session.serviceChecks[0].status,'pass');
+  responseStatus=503;
+  await controller.runDiagnosis();
+  assert.equal(controller.data.session.serviceChecks.length,0);
+  await controller.prepareServices();
+  await controller.confirmServices();
+  const finding=controller.data.session.serviceChecks[0];
+  assert.equal(finding.status,'warn');
+  const result=controller.data.session.comparison?.observations.find(o=>o.id===finding.id);
+  assert.equal(result?.trend,'status-changed');
+  assert.equal(result?.before,'pass');
+  assert.equal(result?.after,'warn');
+ }finally{
+  if(server.listening)await new Promise(resolve=>server.close(resolve));
+  await fs.rm(root,{recursive:true,force:true});
+ }
+});
+
+test('Markdown report preserves localized provenance and limitations without exporting credentials',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-md-report-'));
+ try {
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({engines:{node:'>=20'}}));
+  const app=fixture(root,true);
+  let output='';
+  app.vscode.workspace.fs={writeFile:async(_uri,bytes)=>{output=Buffer.from(bytes).toString('utf8');}};
+  app.vscode.window.showSaveDialog=async()=>({scheme:'memfs',path:'/reports/indizivo.md'});
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  controller.data.session.checks[0].detail='Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l';
+  await controller.export('md');
+  for(const phrase of ['Extension Host:', 'Source:', 'Method:', 'Confidence:', 'Limitations:'])
+   assert.ok(output.includes(phrase),phrase);
+  assert.doesNotMatch(output,/YWxhZGRp/);
+  assert.equal(controller.data.session.checks[0].detail.includes('YWxhZGRp'),true);
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.0 — Enterprise diagnostics upgrade (version set; publication pending owner GO)
+
+- More precise Node/npm compatibility evaluation including wildcard caret/tilde cases and a frozen corpus of expectations cross-checked against semver 7.6.3.
+- Unsupported .nvmrc requirements remain explicitly inconclusive; unknown workspace text is never copied into diagnostics.
+- Reject unknown future history schemas and unexpected Webview message fields; preserve legacy v1 history safely.
+- Fail gracefully when VS Code workspaceState cannot be read/written: preserve the current diagnosis in memory, report persistence limitations clearly in EN/ES, and never invent stored history.
+- Rejected HTTP health targets create explicit BLOCKED evidence without requests or credential-bearing URL disclosure.
+- Strict Go module minimum and recommended toolchain handling, including implicit Go 1.16 and invalid-directive detection; Go CLI version probe disables automatic toolchain downloads.
+- File-descriptor identity and final file mutation checks, plus expanded SSRF and synthetic credential redaction cases.
+- Additive JSON report format metadata and evidence/provenance-rich Markdown exports.
+- Explicit localized limited Workspace Trust and virtual-workspace declarations in the extension manifest.
+- Additive versioned Finding v1 check/target identifiers and conservative unassessed severity, with safe history migration and EN/ES provenance limitations.
+- Bounded subprocess orchestration and real child-tree cancellation tested on Linux, macOS and Windows. Replaced execFile with spawn after an adversarial test exposed leaked descendants.
+- Extracted pure JSON/Markdown report rendering from the Control Center, with per-format redaction and contract tests.
+- Added opt-in, non-publishing VSIX candidate measurements for synthetic small/medium/large fixtures (p50/p95/RSS), explicitly not customer SLO evidence.
+- Additional unreleased PR #14 engineering: monorepo selection, evidence provenance, explicit port inference, stable service identities, optional toolchain checks, safer exports and consent.
+- Fixed a Windows-only defect where NTFS file IDs above 2^53 made legitimate project files read as blocked; file identity now uses exact bigint stats.
+- Added per-module coverage floors and a labeled discovery corpus with an error-rate budget to the quality gates.
+- The package version is 0.2.0. Publication, tag and merge still require the owner's GO; manual accessibility, remote and external usability gates remain open.
+
+
 ## 0.1.3 — Marketplace OIDC release verification
 
 - Patch-version increment to validate the automatic multi-registry publishing pipeline after merging a pull request to `main`.

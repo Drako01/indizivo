@@ -12,6 +12,13 @@ const MANDATORY=[
  'extension/src/comparison.js','extension/src/messages.js','extension/dist/typed/messages.js',
  'extension/dist/typed/versions.js','extension/dist/typed/comparison.js','extension/dist/typed/i18n.js','extension/dist/typed/port-owners.js',
  'extension/dist/typed/diagnostics.js','extension/dist/typed/ui.js','extension/dist/typed/extension.js',
+ 'extension/dist/typed/storage.js',
+ 'extension/dist/typed/tool-probes.js',
+ 'extension/dist/typed/budget.js',
+ 'extension/dist/typed/monorepo.js',
+ 'extension/dist/typed/redaction.js',
+ 'extension/dist/typed/process-control.js',
+ 'extension/dist/typed/reports.js',
  'extension/media/indizivo-icon-128.png',
  'extension/readme.md','extension/LICENSE.txt','extension/PRIVACY.md'
 ];

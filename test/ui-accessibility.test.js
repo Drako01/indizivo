@@ -30,3 +30,12 @@ test('ARIA tabs have matching panels and keyboard-accessible history',()=>{
  assert.ok(source.includes("event.key==='ArrowRight'"));
  assert.ok(source.includes("restore.focus({preventScroll:true})"));
 });
+
+test('diagnostic filters and provenance are accessible and localized',()=>{
+ for(const key of ['data-filter="all"','data-filter="warn"','data-filter="inconclusive"',
+   'role="group"','aria-pressed','findingFilter','provenance','ui.noFilteredResults'])
+   assert.ok(source.includes(key),key);
+ for(const key of ['ui.filterAll','ui.filterWarnings','ui.filterInconclusive',
+   'origin.framework-convention','confidence.inferred','ui.limitations'])
+   assert.ok(catalog.includes(key),key);
+});

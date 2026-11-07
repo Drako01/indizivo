@@ -9,3 +9,14 @@ test('benchmark harness measures repeated actual diagnosis operations',()=>{
    'peakRssMiB','Synthetic local fixture only'])
    assert.ok(s.includes(phrase),'Missing benchmark feature: '+phrase);
 });
+
+test('enterprise performance fixture profiles remain explicitly synthetic and bounded',()=>{
+ const content=fs.readFileSync(path.resolve(__dirname,'../scripts/benchmark.cjs'),'utf8');
+ for(const field of ['INDIZIVO_BENCH_PROFILE','fixtureEnvNames','declaredPorts','fixtureDependencies'])
+  assert.ok(content.includes(field),field);
+ assert.ok(content.includes('Math.min(50'));
+ const workflow=fs.readFileSync(path.resolve(__dirname,'../.github/workflows/verify-packaged.yml'),'utf8');
+ assert.match(workflow,/for profile in small medium large/);
+ assert.match(workflow,/indizivo\.synthetic-benchmarks\.jsonl/);
+ assert.doesNotMatch(workflow,/vsce publish|ovsx publish|gh release create/);
+});
