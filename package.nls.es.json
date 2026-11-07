@@ -7,5 +7,7 @@
   "command.cancel": "Cancelar diagnóstico",
   "command.settings": "Configurar diagnósticos",
   "views.container": "Indizivo",
-  "views.control": "Centro de control"
+  "views.control": "Centro de control",
+  "workspaceTrust.description": "El centro de control y las evidencias guardadas siguen disponibles. Para ejecutar diagnósticos y solicitudes HTTP locales es necesario confiar en el espacio de trabajo.",
+  "virtualWorkspace.description": "El centro de control sigue disponible. Los diagnósticos activos requieren una carpeta de proyecto con sistema de archivos local."
 }

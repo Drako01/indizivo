@@ -1,5 +1,9 @@
 # Rulesets — reference: Drako01/probato-pr
 
+> **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+
+
 Last inspected: 2026-11-05.
 Source rulesets:
 - [Protect main](https://github.com/Drako01/probato-pr/rules/26362018)

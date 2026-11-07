@@ -7,5 +7,7 @@
   "command.cancel": "Cancel Diagnosis",
   "command.settings": "Configure Diagnostics",
   "views.container": "Indizivo",
-  "views.control": "Control Center"
+  "views.control": "Control Center",
+  "workspaceTrust.description": "The Control Center and saved evidence remain available. Active diagnostics and local HTTP requests require a trusted workspace.",
+  "virtualWorkspace.description": "The Control Center remains available. Active diagnostics require a filesystem-backed project folder."
 }

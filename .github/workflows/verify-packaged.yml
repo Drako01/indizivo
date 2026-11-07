@@ -1,0 +1,64 @@
+# Enterprise candidate gate: intentionally isolated from publish.yml.
+# Run only after editing the candidate marker or explicitly dispatching.
+name: Indizivo / Enterprise VSIX Candidate Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/indizivo-enterprise-aaaa]
+    paths:
+      - docs/ENTERPRISE_AAAA_RELEASE_CANDIDATE.md
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indizivo-enterprise-vsix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packaged:
+    name: Packaged VSIX / isolated Linux Extension Host
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build and verify the exact branch source
+        run: npm run package
+      - name: Exercise the installed VSIX with isolated VS Code profile
+        run: xvfb-run -a npm run smoke:vsix
+      - run: npm run inspect:vsix
+      - name: Capture labelled synthetic p50/p95/RSS profiles, not production SLOs
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > indizivo.synthetic-benchmarks.jsonl
+          for profile in small medium large; do
+            INDIZIVO_BENCH_PROFILE="$profile" INDIZIVO_BENCH_RUNS=12 INDIZIVO_BENCH_JSONL=1 \
+              node scripts/benchmark.cjs >> indizivo.synthetic-benchmarks.jsonl
+          done
+          node -e 'const fs=require("node:fs"); const results=fs.readFileSync("indizivo.synthetic-benchmarks.jsonl","utf8").trim().split("\n").map(JSON.parse); if(results.length!==3||results.some(x=>x.kind!=="synthetic-local-benchmark"||!x.p95Ms||!x.peakRssMiB))process.exit(1); console.log("Synthetic profiles recorded:",results.map(x=>x.profile).join(", "));'
+      - name: Fingerprint the immutable candidate without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          test "$version" = "0.2.0"
+          test -f "indizivo-$version.vsix"
+          sha256sum "indizivo-$version.vsix" | tee indizivo.candidate.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: indizivo-unreleased-candidate
+          path: |
+            indizivo-*.vsix
+            indizivo.candidate.sha256
+            indizivo.synthetic-benchmarks.jsonl
+          if-no-files-found: error
+          retention-days: 3

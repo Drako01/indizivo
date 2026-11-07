@@ -1,30 +1,19 @@
-// Indizivo 0.1.3: validate multi-registry release automation; runtime behavior unchanged.
 import * as vscode from 'vscode';
-import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';
+import * as path from 'node:path';
+import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
-import type {DiagnosticSession, DiagnosticCheck, ServiceTarget} from './diagnostics';
+import type {DiagnosticSession, ServiceTarget} from './diagnostics';
 import {html} from './ui';
+import {redactSensitiveText} from './redaction';
+import {renderReport,renderEvidenceCopy} from './reports';
+import {ProjectStateStore} from './project-state';
+import type {ProjectData,DisplaySession} from './project-state';
 import {compareSessions} from './comparison';
 import {validateUiMessage} from './messages';
 import {t, localizeFinding, localizeSession} from './i18n';
 import type {I18nKey, Locale, Params} from './i18n';
 
-type RunningSession=Pick<DiagnosticSession,'project'|'startedAt'|'completedAt'|'state'|'checks'|'serviceChecks'>;
-type DisplaySession=DiagnosticSession|RunningSession;
-interface HistoryEntry {
-  project:string;
-  completedAt:string;
-  checks:Array<Pick<DiagnosticCheck,'id'|'status'>>;
-  snapshot?:DiagnosticSession;
-}
-interface ProjectData {
-  session:DisplaySession|null;
-  services:ServiceTarget[];
-  history:HistoryEntry[];
-  timeoutMs:number;
-  locale:Locale;
-}
 function errorMessage(error:unknown):string {
   return error instanceof Error ? error.message : '';
 }
@@ -35,6 +24,7 @@ export class ControlCenter {
   panel:vscode.WebviewPanel|null;
   currentRoot:vscode.Uri|null;
   data:ProjectData;
+  readonly store:ProjectStateStore;
   pendingApproval:ServiceTarget[]|null;
   selectedHistoryIndex:number|null;
   error:string;
@@ -46,6 +36,8 @@ export class ControlCenter {
     this.panel = null;
     const initialFolders=vscode.workspace.workspaceFolders;
     this.currentRoot=initialFolders?.length===1 ? (initialFolders[0]?.uri ?? null) : null;
+    this.store = new ProjectStateStore(context.workspaceState,
+      ()=>vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en');
     this.data = { session: null, services: [], history: [], timeoutMs: 2500, locale:'en' };
     this.pendingApproval = null;
     this.selectedHistoryIndex = null;
@@ -55,22 +47,17 @@ export class ControlCenter {
     this.restore();
   }
   tr(key:I18nKey,values?:Params) {return t(this.data.locale,key,values);}
-  scopeKey() {
-    return 'indizivo:v1:' + crypto.createHash('sha256').update(this.currentRoot?.toString() || 'none').digest('hex');
-  }
+  rootKey() {return this.currentRoot?.toString() ?? null;}
   restore() {
-    const stored = this.context.workspaceState.get<Partial<ProjectData>>(this.scopeKey(), {});
-    this.data = {
-      session: stored.session || null,
-      services: (Array.isArray(stored.services) ? stored.services : []).map(validateService).filter((item):item is ServiceTarget=>item!==null).slice(0, 20),
-      history: (Array.isArray(stored.history) ? stored.history : []).slice(0, 10),
-      timeoutMs: Math.min(10000, Math.max(400, Number(stored.timeoutMs) || 2500)),
-      locale: (stored.locale==='es'||stored.locale==='en') ? stored.locale :
-        (vscode.env?.language?.toLowerCase().startsWith('es') ? 'es' : 'en')
-    };
+    const loaded=this.store.load(this.rootKey());
+    this.data=loaded.data;
+    if(loaded.readFailed)this.error=this.tr('host.storageReadFailed');
   }
   async save() {
-    await this.context.workspaceState.update(this.scopeKey(), this.data);
+    // Keep actual findings in memory. A storage failure does not turn a
+    // completed diagnostic into FAILED, nor imply that data was persisted.
+    if(!(await this.store.save(this.rootKey(),this.data)))
+      this.error=this.tr('host.storageSaveFailed');
   }
   viewedSession() {
     return this.selectedHistoryIndex===null ? this.data.session :
@@ -81,8 +68,12 @@ export class ControlCenter {
       locale: this.data.locale,
       reviewMode: this.selectedHistoryIndex!==null,
       selectedHistoryIndex: this.selectedHistoryIndex,
-      project: this.currentRoot ? vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : '',
-      host: process.platform + ' · ' + this.tr('ui.hostCurrent'),
+      project: this.currentRoot ?
+        (vscode.workspace.getWorkspaceFolder(this.currentRoot)?.uri.toString()===this.currentRoot.toString() ?
+         vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : path.basename(this.currentRoot.fsPath)):'',
+
+      host: process.platform + (vscode.env.remoteName?' · '+vscode.env.remoteName:'')+
+        ' · ' + this.tr('ui.hostCurrent'),
       trusted: vscode.workspace.isTrusted,
       session: localizeSession(this.viewedSession(),this.data.locale),
       services: this.data.services,
@@ -131,36 +122,58 @@ export class ControlCenter {
   }
   async selectProject() {
     if (this.running) throw new Error(this.tr('host.cancelProject'));
-    const folders = vscode.workspace.workspaceFolders || [];
-    if (!folders.length) { this.error=this.tr('host.openFolder'); this.broadcast(); return; }
-    const selectedFolder = folders.length===1 ? folders[0] :
-      (await vscode.window.showQuickPick(
-        folders.map(folder=>({label:folder.name,description:folder.uri.fsPath,folder})),
-        {placeHolder:this.tr('host.selectProject')}))?.folder;
-    if (!selectedFolder) return;
-    this.currentRoot = selectedFolder.uri;
+    const folders=vscode.workspace.workspaceFolders||[];
+    if(!folders.length){this.error=this.tr('host.openFolder');this.broadcast();return;}
+    const options:{label:string;description:string;detail?:string;uri:vscode.Uri}[]=[];
+    for(const folder of folders){
+      options.push({label:folder.name,description:folder.uri.fsPath,uri:folder.uri});
+      if(folder.uri.scheme!=='file')continue;
+      // Explicit, shallow, bounded user-initiated discovery; never recursively scan.
+      for(const project of await discoverProjectRoots(folder.uri.fsPath)){
+        options.push({label:project.label,description:folder.name,
+          detail:project.marker,uri:vscode.Uri.file(project.path)});
+      }
+    }
+    const selected=options.length===1?options[0]:
+      await vscode.window.showQuickPick(options,{placeHolder:this.tr('host.selectProject')});
+    if(!selected)return;
+    this.currentRoot=selected.uri;
     this.selectedHistoryIndex=null;
     this.pendingApproval=null;
     this.error='';
     this.restore();
     this.broadcast();
   }
-  ensureReady() {
+  async ensureReady() {
     if (!vscode.workspace.isTrusted) throw new Error(this.tr('host.trust'));
-    if (!this.currentRoot) throw new Error(this.tr('host.projectFirst'));
-    const folders = vscode.workspace.workspaceFolders || [];
     const selectedRoot=this.currentRoot;
-    if (!folders.some(folder=>folder.uri.toString()===selectedRoot.toString()))
+    if (!selectedRoot) throw new Error(this.tr('host.projectFirst'));
+    if (selectedRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
+    const roots=(vscode.workspace.workspaceFolders||[])
+      .filter(folder=>folder.uri.scheme==='file').map(folder=>folder.uri.fsPath);
+    if(!(await isInsideWorkspace(selectedRoot.fsPath,roots)))
       throw new Error(this.tr('host.workspaceClosed'));
-    if (this.currentRoot.scheme !== 'file') throw new Error(this.tr('host.localOnly'));
     if (this.running) throw new Error(this.tr('host.alreadyRunning'));
+  }
+  /** Marks the controller busy and returns the signal that cancels this run. */
+  beginRun():AbortSignal {
+    this.running=true;
+    this.pendingApproval=null;
+    this.abort=new AbortController();
+    this.broadcast();
+    return this.abort.signal;
+  }
+  endRun() {
+    this.running=false;
+    this.abort=null;
+    this.broadcast();
   }
   cancel() {
     if (this.abort) this.abort.abort();
     this.pendingApproval=null;
   }
   async runDiagnosis() {
-    this.ensureReady();
+    await this.ensureReady();
     this.error='';
     this.selectedHistoryIndex=null;
     const root=this.currentRoot;
@@ -168,21 +181,19 @@ export class ControlCenter {
     const previousCompleted = this.data.session && this.data.session.state==='completed' &&
       'discovery' in this.data.session ? this.data.session : null;
     this.data.session=null;
-    this.running=true;
-    this.pendingApproval=null;
-    this.abort=new AbortController();
-    const signal=this.abort.signal;
-    this.broadcast();
+    const signal=this.beginRun();
     try {
       const session=await diagnose(root.fsPath,this.data.timeoutMs,signal,checks=>{
         this.data.session = {
-          project: vscode.workspace.getWorkspaceFolder(root)?.name || this.tr('ui.projectDefault'),
+          project: path.basename(root.fsPath) || this.tr('ui.projectDefault'),
           startedAt:new Date().toISOString(), completedAt:this.tr('ui.progress'),
           state:'running', checks, serviceChecks:[]
         };
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
+      session.scopeId=crypto.createHash('sha256').update(this.store.key(this.rootKey())+'|'+
+        (vscode.env.remoteName||'local')).digest('hex');
       session.comparison=compareSessions(previousCompleted,session);
       this.data.session=session;
       this.data.history.unshift({ project:session.project, completedAt:session.completedAt,
@@ -195,13 +206,11 @@ export class ControlCenter {
         this.tr('host.failed',{reason:errorMessage(e) || this.tr('host.unknown')});
       if (this.data.session) this.data.session.state=signal.aborted?'cancelled':'failed';
     } finally {
-      this.running=false;
-      this.abort=null;
-      this.broadcast();
+      this.endRun();
     }
   }
   async prepareServices() {
-    this.ensureReady();
+    await this.ensureReady();
     if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
     if (!this.data.session) throw new Error(this.tr('host.diagnoseFirst'));
     if (!this.data.services.length) throw new Error(this.tr('host.addEndpointFirst'));
@@ -210,17 +219,13 @@ export class ControlCenter {
     this.broadcast();
   }
   async confirmServices() {
-    this.ensureReady();
+    await this.ensureReady();
     if (this.selectedHistoryIndex!==null) throw new Error(this.tr('host.currentSession'));
     const session=this.data.session;
     if (!this.pendingApproval || !session) throw new Error(this.tr('host.approvalExpired'));
     const plan=this.pendingApproval.map(validateService).filter((item):item is ServiceTarget=>item!==null);
     if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error(this.tr('host.targetsChanged'));
-    this.pendingApproval=null;
-    this.running=true;
-    this.abort=new AbortController();
-    const signal=this.abort.signal;
-    this.broadcast();
+    const signal=this.beginRun();
     try {
       const result=await verifyServices(plan,this.data.timeoutMs,signal,partial=>{
         session.serviceChecks=partial;
@@ -229,6 +234,13 @@ export class ControlCenter {
       if (signal.aborted) throw new Error(this.tr('host.serviceCancelled'));
       session.serviceChecks=result;
       session.completedAt=new Date().toISOString();
+      if(result.some(finding=>finding.id==='service-budget'))session.state='partial';
+      if('id' in session && session.state==='completed'){
+        // A comparison against the previous completed session is meaningful only
+        // after the approved service observations have actually been collected.
+        const previous=this.data.history[1]?.snapshot||null;
+        session.comparison=compareSessions(previous,session as DiagnosticSession);
+      }
       const recent=this.data.history[0];
       if(recent?.snapshot && 'id' in session &&
         recent.snapshot.id===session.id)
@@ -237,9 +249,7 @@ export class ControlCenter {
     } catch(e) {
       this.error=signal.aborted?this.tr('host.serviceCancelled'):this.tr('host.serviceFailed',{reason:errorMessage(e)||this.tr('host.unknown')});
     } finally {
-      this.running=false;
-      this.abort=null;
-      this.broadcast();
+      this.endRun();
     }
   }
   async addService(message:unknown) {
@@ -268,14 +278,8 @@ export class ControlCenter {
     const checks=[...(viewed?.checks||[]),...(viewed?.serviceChecks||[])];
     const finding=checks.find(check=>check.id===id);
     if (!finding) throw new Error(this.tr('host.findingUnavailable'));
-    const localized=localizeFinding(finding,this.data.locale);
-    const lines=[this.tr('report.copiedTitle'),localized.label,
-      this.tr('report.status')+': '+this.tr(`status.${localized.status}`),
-      this.tr('report.observation')+': '+localized.detail,
-      this.tr('report.next')+': '+(localized.suggestion||this.tr('report.none'))];
-    for(const record of localized.evidence||[])
-      lines.push(this.tr('report.evidence')+': '+record.fact+' · '+record.observedAt);
-    await vscode.env.clipboard.writeText(lines.join('\n'));
+    await vscode.env.clipboard.writeText(renderEvidenceCopy(
+      localizeFinding(finding,this.data.locale),key=>this.tr(key)));
     vscode.window.showInformationMessage(this.tr('host.copied'));
   }
   async selectHistory(index:number) {
@@ -325,22 +329,9 @@ export class ControlCenter {
       filters: format==='md'?{'Markdown':['md']}:{'JSON':['json']}
     });
     if (!uri) return;
-    let output='';
-    if (format==='json') output=JSON.stringify(session,null,2)+'\n';
-    else {
-      const lines=['# '+this.tr('report.heading'),'',this.tr('report.project')+': '+session.project,
-        this.tr('report.date')+': '+session.completedAt,
-        this.tr('report.state')+': '+this.tr(`state.${session.state}`),
-        '', '> '+this.tr('report.disclaimer'),''];
-      for (const c of [...(session.checks||[]),...(session.serviceChecks||[])]) {
-        lines.push('## '+c.label,'','**'+this.tr(`status.${c.status}`)+'** — '+c.detail,
-          '',c.suggestion||'','');
-        for (const e of c.evidence||[]) lines.push('- '+this.tr('report.evidence')+': '+e.fact+' ('+e.observedAt+')');
-        lines.push('');
-      }
-      output=lines.join('\n');
-    }
-    await fs.writeFile(uri.fsPath,output,'utf8');
+    const output=renderReport(session,format,key=>this.tr(key));
+    await vscode.workspace.fs.writeFile(uri,Buffer.from(output,'utf8'));
+    // VS Code workspace.fs supports user-selected remote and virtual URI schemes.
     vscode.window.showInformationMessage(this.tr('host.reportExported'));
   }
   async message(m:unknown) {
@@ -390,8 +381,10 @@ export function activate(context:vscode.ExtensionContext) {
   }
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{
     const folders=vscode.workspace.workspaceFolders || [];
-    const selected=controller.currentRoot?.toString();
-    if(selected && !folders.some(folder=>folder.uri.toString()===selected)) {
+    const selected=controller.currentRoot;
+    if(selected && !folders.some(folder=>folder.uri.scheme==='file' &&
+       (folder.uri.toString()===selected.toString() ||
+        selected.fsPath.startsWith(folder.uri.fsPath+path.sep)))) {
       controller.cancel();
       controller.currentRoot=folders.length===1 ? folders[0]?.uri ?? null : null;
       controller.restore();

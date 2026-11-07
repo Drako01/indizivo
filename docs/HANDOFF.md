@@ -1,5 +1,9 @@
 # Indizivo — Technical handoff / current engineering state
 
+> **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. The authoritative active implementation ledger and exact-SHA handoff are in [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md), updated through candidate 6a738a3 (2026-11-06): QA 42312166879 attempt 2 4/4 PASS; VSIX 42312161308 PASS with hash 023a9c4755... and labelled synthetic benchmark artifact. See ledger for unresolved manual gates. Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+
+
 ### Icono Activity Bar + QA final Windows (2026-11-05 17:27 ART)
 
 - **Run realmente validado:** `f1edf967c300ade273d05ab6104147ed232d37b6`, `logs(4).log` local, **18 gates: 17 PASS / 0 FAIL / 1 WARN**. TypeScript estricto PASS, **77/77** tests Node PASS, Extension Host E2E real PASS, VSIX instalado aislado PASS. Cobertura total **73,23 % líneas / 70,86 % ramas / 73,17 % funciones**; benchmark sintético **25 rondas**, p50 **38,4 ms**, p95 **40,3 ms**, RSS pico **55,1 MiB**. Auditoría producción **0 vulnerabilidades**; advertencia: **3 moderadas** en `glob`/`minimatch`, transitivas dev `@vscode/vsce`.
