@@ -22,3 +22,12 @@ test('synthetic benchmark evidence is attached only to unreleased candidate, nev
  assert.match(file,/INDIZIVO_BENCH_RUNS=12/);
  assert.doesNotMatch(file,/id-token:\s*write/);
 });
+
+test('publish packages the VSIX without repeating the verify gate that its needs already passed',()=>{
+ const publish=fs.readFileSync(path.resolve(__dirname,'../.github/workflows/publish.yml'),'utf8');
+ const pkg=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../package.json'),'utf8'));
+ assert.match(publish,/needs: \[plan, verify, vscode-e2e\]/);
+ assert.match(publish,/run: npm run package:vsix/);
+ assert.doesNotMatch(publish,/run: npm run package\s*$/m);
+ assert.match(pkg.scripts.package,/^npm run verify && npm run package:vsix$/);
+});

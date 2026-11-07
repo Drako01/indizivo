@@ -106,7 +106,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run package
+      # verify (3 OS) and vscode-e2e already passed for this exact SHA, lockfile and Linux runner (needs:).
+      # Only the VSIX build needs types compiled; re-running the full verify here is redundant evidence.
+      - run: npm run build:types
+      - run: npm run package:vsix
       - run: xvfb-run -a npm run smoke:vsix
       - run: npm run inspect:vsix
       - name: Verify extension identity and record the exact VSIX checksum
