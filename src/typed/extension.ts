@@ -6,6 +6,7 @@ import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, ServiceTarget} from './diagnostics';
 import {html} from './ui';
 import {redactSensitiveText} from './redaction';
+import {hostLabel} from './host';
 import {renderReport,renderEvidenceCopy} from './reports';
 import {ProjectStateStore} from './project-state';
 import type {ProjectData,DisplaySession} from './project-state';
@@ -72,8 +73,7 @@ export class ControlCenter {
         (vscode.workspace.getWorkspaceFolder(this.currentRoot)?.uri.toString()===this.currentRoot.toString() ?
          vscode.workspace.getWorkspaceFolder(this.currentRoot)?.name : path.basename(this.currentRoot.fsPath)):'',
 
-      host: process.platform + (vscode.env.remoteName?' · '+vscode.env.remoteName:'')+
-        ' · ' + this.tr('ui.hostCurrent'),
+      host: hostLabel(vscode.env.remoteName) + ' · ' + this.tr('ui.hostCurrent'),
       trusted: vscode.workspace.isTrusted,
       session: localizeSession(this.viewedSession(),this.data.locale),
       services: this.data.services,
@@ -192,6 +192,8 @@ export class ControlCenter {
         this.broadcast();
       });
       if (signal.aborted) throw new Error(this.tr('host.cancelled'));
+      // Findings describe the Extension Host's machine: label remote topologies explicitly.
+      session.host=hostLabel(vscode.env.remoteName);
       session.scopeId=crypto.createHash('sha256').update(this.store.key(this.rootKey())+'|'+
         (vscode.env.remoteName||'local')).digest('hex');
       session.comparison=compareSessions(previousCompleted,session);
@@ -360,6 +362,8 @@ export class ControlCenter {
 }
 export function activate(context:vscode.ExtensionContext) {
   const controller=new ControlCenter(context);
+  // VS Code disposes subscriptions on shutdown: never leave a probe we spawned running.
+  context.subscriptions.push({dispose:()=>controller.cancel()});
   context.subscriptions.push(vscode.window.registerWebviewViewProvider('indizivo.control',{
     resolveWebviewView(view) {
       const viewWebview=view.webview;
@@ -382,6 +386,8 @@ export function activate(context:vscode.ExtensionContext) {
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{
     const folders=vscode.workspace.workspaceFolders || [];
     const selected=controller.currentRoot;
+    // A changed workspace invalidates any HTTP plan the user was about to approve.
+    controller.pendingApproval=null;
     if(selected && !folders.some(folder=>folder.uri.scheme==='file' &&
        (folder.uri.toString()===selected.toString() ||
         selected.fsPath.startsWith(folder.uri.fsPath+path.sep)))) {

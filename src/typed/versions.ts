@@ -66,14 +66,21 @@ function satisfiesToken(installed:Version,token:string):Match {
   }
   return 'unknown';
 }
+/** npm hyphen range `A - B` means `>=A <=B`; partial bounds follow the comparator rules. */
+function expandHyphenRange(group:string):string {
+  const match=/^\s*(v?\d+(?:\.\d+){0,2})\s+-\s+(v?\d+(?:\.\d+){0,2})\s*$/.exec(group);
+  return match?'>='+match[1]+' <='+match[2]:group;
+}
 /**
  * Strict, intentionally bounded npm range subset. Incomplete or prerelease
  * semantics fail closed as INCONCLUSIVE, never as incompatible/compatible.
- * Support: comparator sets, ^/~, x/* and OR. Never run package scripts.
+ * Support: comparator sets, hyphen ranges, ^/~, x/* and OR. Never run package scripts.
  */
 function satisfiesNode(installed:Version,range:string):Match {
-  if(range.length>200 || /[-+]/.test(range))return 'unknown';
-  const alternatives=range.split(/\s*\|\|\s*/);
+  if(range.length>200)return 'unknown';
+  const alternatives=range.split(/\s*\|\|\s*/).map(expandHyphenRange);
+  // Prerelease/build identifiers (and any other hyphen) stay unsupported.
+  if(alternatives.some(group=>/[-+]/.test(group)))return 'unknown';
   if(alternatives.some(group=>!group.trim()))return 'unknown';
   let unknown=false;
   for(const alternative of alternatives){

@@ -1,6 +1,6 @@
 # Indizivo Privacy Policy
 
-**Applies to:** Indizivo 0.2.0 preview for Visual Studio Code.
+**Applies to:** Indizivo 0.2.1 preview for Visual Studio Code.
 
 - **Local-first:** no account, analytics, telemetry, advertising, mandatory AI provider or cloud backend.
 - Indizivo reads bounded local project manifests, runtime version output, declared ports and variable **names** from `.env.example` and `.env`. Variable **values** are not stored in findings.

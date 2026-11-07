@@ -27,3 +27,11 @@ test('scope IDs prevent cross-workspace comparisons for identical project names'
  assert.equal(compareSessions(run,{...run,scopeId:'workspace-b'}),null);
  assert.equal(compareSessions(run,{...run,scopeId:undefined}),null);
 });
+
+test('remote and local hosts are labelled distinctly so their sessions are never compared',()=>{
+ const {hostLabel}=require('../dist/typed/host');
+ assert.equal(hostLabel(undefined,'linux'),'linux');
+ assert.equal(hostLabel('wsl','linux'),'linux · wsl');
+ const base={project:'demo',completedAt:'t',state:'completed',checks:[{id:'a',status:'info'}]};
+ assert.equal(compareSessions({...base,host:hostLabel(undefined,'linux')},{...base,host:hostLabel('ssh-remote','linux')}),null);
+});

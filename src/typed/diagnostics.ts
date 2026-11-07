@@ -309,7 +309,12 @@ export async function discover(root:string):Promise<Discovery> {
     hasEnvExample: exampleFile?.state==='present', hasEnvFile: envFile?.state==='present' };
 }
 
-function inspectPort(port:number,timeout:number,signal?:AbortSignal):Promise<PortState> {
+/** Loopback families probed per port: a listener bound to ::1 only (common for
+ * `localhost` on dual-stack hosts) must not be reported as "not listening". */
+const LOOPBACK_ADDRESSES=['127.0.0.1','::1'] as const;
+type LoopbackAddress=typeof LOOPBACK_ADDRESSES[number];
+interface PortProbe {state:PortState;address?:LoopbackAddress}
+function probeAddress(host:LoopbackAddress,port:number,timeout:number,signal?:AbortSignal):Promise<PortState> {
   return new Promise<PortState>(resolve => {
     if (signal?.aborted) return resolve('cancelled');
     const socket = new net.Socket();
@@ -321,9 +326,24 @@ function inspectPort(port:number,timeout:number,signal?:AbortSignal):Promise<Por
     socket.setTimeout(timeout);
     socket.once('connect', () => finish('listening'));
     socket.once('timeout', () => finish('timeout'));
-    socket.once('error', err => finish('code' in err && err.code === 'ECONNREFUSED' ? 'not-listening' : 'inconclusive'));
-    socket.connect({ host: '127.0.0.1', port });
+    socket.once('error', err => {
+      const code='code' in err?String(err.code):'';
+      // IPv6 may be disabled: an unavailable ::1 stack is not a listener, nor an error.
+      const absent=code==='ECONNREFUSED' || (host==='::1' && ['EADDRNOTAVAIL','EAFNOSUPPORT'].includes(code));
+      finish(absent?'not-listening':'inconclusive');
+    });
+    socket.connect({ host, port });
   });
+}
+async function inspectPort(port:number,timeout:number,signal?:AbortSignal):Promise<PortProbe> {
+  const states:PortState[]=[];
+  for(const address of LOOPBACK_ADDRESSES){
+    const state=await probeAddress(address,port,timeout,signal);
+    if(state==='listening' || state==='cancelled')return {state,address};
+    states.push(state);
+  }
+  if(states.every(state=>state==='not-listening'))return {state:'not-listening'};
+  return {state:states.includes('timeout')?'timeout':'inconclusive'};
 }
 function inspectService(service:ServiceTarget,timeout:number,signal?:AbortSignal):Promise<ServiceResult> {
   const valid = validateService(service);
@@ -524,7 +544,9 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
   let ownerSnapshot:Map<number,OwnerInspection>|null=null;
   for (const port of d.ports) {
     if (signal?.aborted) throw new Error('Cancelled');
-    const status = await inspectPort(port,timeLeft(),signal);
+    const probe = await inspectPort(port,timeLeft(),signal);
+    const status=probe.state;
+    const bracketed=probe.address==='::1'?'[::1]':'127.0.0.1';
     assertActive(signal);
     if(status==='listening' && ownerSnapshot===null)
       ownerSnapshot=await inspectOwners(d.ports,timeLeft(),signal);
@@ -536,9 +558,9 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
     const inferred=d.portOrigins[String(port)]==='heuristic';
     push(createCheck('port-'+port,'Ports','Port '+port,
       ['listening','not-listening'].includes(status)?'info':'warn',
-      (status === 'listening' ? 'A TCP listener responded on 127.0.0.1:'+port+
+      (status === 'listening' ? 'A TCP listener responded on '+bracketed+':'+port+
         '. This does not establish a process conflict.' :
-        status === 'not-listening' ? 'No local TCP listener responded on 127.0.0.1:'+port+
+        status === 'not-listening' ? 'No local TCP listener responded on 127.0.0.1:'+port+' or [::1]:'+port+
         '. The application may not be started.' : 'Port status could not be verified.')+ownerDetail+
       (inferred?' Port is a framework convention, not a declared project configuration.':''),
       'Inspect service startup logs and host bindings; do not terminate processes blindly.'+
@@ -546,8 +568,8 @@ export async function diagnose(root:string,timeout=2500,signal?:AbortSignal,
       'TCP loopback result: '+status+'. '+(owner?.detail || 'Owner inspection not applicable.')+
       (inferred?' Port inferred from a framework default.':''), {
         category:msg('diag.category.Ports'),label:msg('diag.label.port',{port}),
-        detail:msg(status==='listening'?'diag.portListening':
-          status==='not-listening'?'diag.portNotListening':'diag.portUnknown',
+        detail:msg(status==='listening'?(probe.address==='::1'?'diag.portListeningV6':'diag.portListening'):
+          status==='not-listening'?'diag.portNotListeningBoth':'diag.portUnknown',
           {port,owner:status==='listening'?owner?.owners?.length?
             msg('diag.portOwners',{owners:owner.owners.map(x=>x.name+' PID '+x.pid).join(', ')}):
             msg('diag.portNoOwner'):''}),

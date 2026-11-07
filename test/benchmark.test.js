@@ -20,3 +20,9 @@ test('enterprise performance fixture profiles remain explicitly synthetic and bo
  assert.match(workflow,/indizivo\.synthetic-benchmarks\.jsonl/);
  assert.doesNotMatch(workflow,/vsce publish|ovsx publish|gh release create/);
 });
+
+test('benchmark can measure a real local project read-only and omits its name',()=>{
+ const s=fs.readFileSync(path.resolve(__dirname,'../scripts/benchmark.cjs'),'utf8');
+ for(const phrase of ['INDIZIVO_BENCH_ROOT','real-project-local-benchmark','Project name is intentionally omitted','if(!external)await fs.rm'])
+  assert.ok(s.includes(phrase),phrase);
+});

@@ -15,6 +15,7 @@ const MANDATORY=[
  'extension/dist/typed/storage.js',
  'extension/dist/typed/tool-probes.js',
  'extension/dist/typed/budget.js',
+ 'extension/dist/typed/host.js',
  'extension/dist/typed/monorepo.js',
  'extension/dist/typed/redaction.js',
  'extension/dist/typed/process-control.js',

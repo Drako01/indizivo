@@ -315,3 +315,19 @@ test('Markdown report preserves localized provenance and limitations without exp
   assert.equal(controller.data.session.checks[0].detail.includes('YWxhZGRp'),true);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('shutdown cancels a running diagnosis and workspace changes revoke a pending HTTP approval',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-int-'));
+ try {
+  const app=fixture(root,true);
+  let folderChange;
+  app.vscode.workspace.onDidChangeWorkspaceFolders=handler=>{folderChange=handler;return {dispose(){}};};
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  controller.abort=new AbortController();
+  controller.pendingApproval=[{name:'a',url:'http://127.0.0.1:1/'}];
+  folderChange();
+  assert.equal(controller.pendingApproval,null,'workspace change revokes consent');
+  for(const subscription of app.context.subscriptions)subscription.dispose();
+  assert.equal(controller.abort?.signal.aborted??true,true,'dispose aborts the running probe');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});

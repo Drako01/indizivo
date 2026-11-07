@@ -45,9 +45,9 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | Capability | What Indizivo does |
 | --- | --- |
 | **Project diagnostics** | Detects Node.js and Go projects and checks their locally available runtimes. |
-| **Runtime compatibility** | Evaluates `engines.node`, `.nvmrc` and Go module requirements with npm-compatible range semantics (`~`, `^`, comparators, OR, wildcards). Anything it cannot interpret is reported as **inconclusive**, never as a false incompatibility. |
+| **Runtime compatibility** | Evaluates `engines.node`, `.nvmrc` and Go module requirements with npm-compatible range semantics (`~`, `^`, comparators, hyphen ranges, OR, wildcards). Anything it cannot interpret is reported as **inconclusive**, never as a false incompatibility. |
 | **Go done right** | Separates the `go` minimum from the suggested `toolchain`, handles implicit `go 1.16` modules and malformed directives, and never lets the CLI download a toolchain during a probe. |
-| **Port investigation** | Checks declared TCP ports over IPv4 and IPv6 loopback and, where the OS allows it, identifies the owning process read-only. Framework defaults (Next.js 3000, Vite 5173) are labeled **inferred**, not declared. |
+| **Port investigation** | Checks declared TCP ports over IPv4 (`127.0.0.1`) and IPv6 (`::1`) loopback, reporting which family answered, and, where the OS allows it, identifies the owning process read-only (IPv4 and IPv6 listeners, on Windows, Linux and macOS). Framework defaults (Next.js 3000, Vite 5173) are labeled **inferred**, not declared. |
 | **Environment configuration** | Compares variable **names only** between `.env.example` and `.env`. A missing file is distinguished from an unreadable or blocked one, so an unreadable file is never reported as "absent". |
 | **Optional toolchains** | Read-only version observations for Python, PHP, Java and Docker when their project markers exist, plus lockfile and `packageManager` consistency. No repository scripts are ever run. |
 | **Monorepos and multi-root** | Shallow, bounded discovery of sub-projects with an explicit picker and a separate history per project. |
@@ -55,7 +55,8 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | **Evidence-backed findings** | Every finding carries what was observed, how, when, with what confidence, what remains unknown and a copy-only next step. Findings have stable versioned IDs. |
 | **Recheck and compare** | Compares sessions by stable check and endpoint identity (reordering endpoints cannot mix up results) without claiming that a change proves a fix. |
 | **Reports and history** | Exports versioned JSON and readable Markdown (EN/ES) through VS Code's file system, redacted for credentials; copies evidence; keeps bounded, schema-validated local history. |
-| **Resilience** | Global time budget per run, bounded output, cancellation that terminates only the processes Indizivo started (including their children), and a safe fallback when VS Code storage is unavailable. |
+| **Remote awareness** | Sessions record where they ran (for example `linux · wsl`) and are never compared across different hosts. Real WSL, SSH and Dev Containers qualification is still pending. |
+| **Resilience** | Global time budget per run, bounded output, cancellation that terminates only the processes Indizivo started (including their children, also when VS Code shuts down), and a safe fallback when VS Code storage is unavailable. |
 
 ### One interface, full control
 
@@ -70,7 +71,7 @@ No terminal is required for normal usage after installation. The interface suppo
 
 ## Getting started
 
-> **Version 0.2.0 (preview).** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
+> **Version 0.2.1 (preview).** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
@@ -85,7 +86,7 @@ Multi-root workspaces and monorepos let you choose the project to inspect. Untru
 
 ### Install the preview VSIX
 
-In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.0.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.0). Verify the package origin before installing.
+In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.1.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.1). Verify the package origin before installing.
 
 Maintainers with authorized repository access can reproduce the release candidate with:
 
@@ -98,7 +99,7 @@ The release pipeline tests an isolated packaged VSIX installation on Linux. Cros
 
 - **Local-first:** no account, mandatory AI provider, cloud backend or telemetry.
 - **Read-only by default:** checks do not edit source code, install packages or terminate processes.
-- **Explicit consent:** localhost HTTP requests require approval of their exact targets.
+- **Explicit consent:** localhost HTTP requests require approval of their exact targets. A pending approval is discarded if the endpoints, project or workspace folders change.
 - **Secrets stay private:** environment variable names can be checked, but .env values are not retained in findings.
 - **Bounded operations:** supported reads and probes enforce limits, timeouts and cancellation; files are read through verified file handles and symlinks are not followed.
 - **Redacted outputs:** exports and copied evidence mask common credential formats (tokens, bearer/basic headers, cookies, URL credentials, private keys).
@@ -110,7 +111,7 @@ The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the ins
 
 ## Current scope
 
-The 0.2.0 preview focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
+The 0.2.1 preview focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
 
 Indizivo is a diagnostic aid: a passing check is not a project-health guarantee, and "Enterprise AAAA" is an internal engineering goal, not a certification. Progress is tracked in the [active implementation pull request](https://github.com/Drako01/indizivo/pull/14), its upgrade checklist and the CTO audit. Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
@@ -126,7 +127,7 @@ The E2E suite launches an official VS Code Extension Host. It requires a graphic
 
 ## Feedback and support
 
-Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.2.0**.
+Found an incorrect diagnosis, an incomplete check or a missing development environment? [Open a support request](https://armotusitio.com.ar/soporte/) and mention **Indizivo 0.2.1**.
 
 **Never upload secrets, private environment values or confidential project logs.**
 

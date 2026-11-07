@@ -26,7 +26,7 @@ test('does not make up owners from missing permission/port',()=>{
 
 test('batch inspection uses one bounded OS-specific command per run',()=>{
  const {inspectionBatchArgs}=require('../src/port-owners');
- assert.deepEqual(inspectionBatchArgs('win32'),{command:'netstat',args:['-ano','-p','tcp']});
+ assert.deepEqual(inspectionBatchArgs('win32'),{command:'netstat',args:['-ano']});
  assert.deepEqual(inspectionBatchArgs('linux'),{command:'ss',args:['-ltnp']});
  assert.deepEqual(inspectionBatchArgs('darwin'),{command:'lsof',args:['-nP','-iTCP','-sTCP:LISTEN']});
  assert.equal(inspectionBatchArgs('unknown'),null);
@@ -51,4 +51,11 @@ test('real listening socket: owner is this PID when observed, never invented oth
     'the observed owner of our own listener must be this process');
   else assert.deepEqual(result.owners,[]);
  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
+test('IPv6 loopback listeners are attributed on every supported platform',()=>{
+ assert.equal(parseOwners('win32','  TCP    [::1]:3000    [::]:0    LISTENING    4242',3000)[0].pid,4242);
+ assert.equal(parseOwners('linux','LISTEN 0 511 [::1]:3000 [::]:* users:((\"node\",pid=77,fd=19))',3000)[0].pid,77);
+ assert.equal(parseOwners('darwin','node 55 dev 20u IPv6 8123 0t0 TCP [::1]:3000 (LISTEN)',3000)[0].pid,55);
+ assert.deepEqual(parseOwners('win32','  UDP    0.0.0.0:3000    *:*    4242',3000),[]);
 });

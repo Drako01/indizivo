@@ -168,3 +168,41 @@ test('new findings expose stable versioned check and target IDs without invented
   assert.equal(second.checks.find(x=>x.id==='node').metadata.targetId,found.metadata.targetId);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('IPv6-only loopback listener is observed instead of reported as not listening',async t=>{
+ const net=require('node:net');
+ const server=net.createServer();
+ try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'::1',resolve);});}
+ catch{t.skip('IPv6 loopback unavailable on this host');return;}
+ const port=server.address().port;
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'indizivo-v6-'));
+ try{
+  fs.writeFileSync(path.join(dir,'package.json'),JSON.stringify({scripts:{dev:'vite --port '+port}}));
+  const {diagnose}=require('../dist/typed/diagnostics');
+  const session=await diagnose(dir,2000);
+  const check=session.checks.find(item=>item.id==='port-'+port);
+  assert.ok(check,'port check present');
+  assert.match(check.detail,/\[::1\]/);
+  assert.equal(check.i18n.detail.key,'diag.portListeningV6');
+ }finally{
+  server.close();fs.rmSync(dir,{recursive:true,force:true});
+ }
+});
+
+test('closed port reports both loopback families as unobserved listeners',async()=>{
+ const net=require('node:net');
+ const probe=net.createServer();
+ await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));
+ const port=probe.address().port;
+ await new Promise(resolve=>probe.close(resolve));
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'indizivo-closed-'));
+ try{
+  fs.writeFileSync(path.join(dir,'package.json'),JSON.stringify({scripts:{dev:'vite --port '+port}}));
+  const {diagnose}=require('../dist/typed/diagnostics');
+  const check=(await diagnose(dir,2000)).checks.find(item=>item.id==='port-'+port);
+  assert.match(check.detail,/127\.0\.0\.1:\d+ or \[::1\]:\d+/);
+  assert.equal(check.i18n.detail.key,'diag.portNotListeningBoth');
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

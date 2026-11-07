@@ -1,7 +1,7 @@
 {
   "name": "indizivo",
   "displayName": "Indizivo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "armotusitio",
   "description": "%extension.description%",
   "author": {
@@ -52,7 +52,8 @@
     "check": "node --check src/diagnostics.js && node --check src/port-owners.js && node --check src/versions.js && node --check src/comparison.js && node --check src/ui.js && node --check src/messages.js && node --check src/extension.js && node --check scripts/inspect-vsix.cjs",
     "test": "npm run build:types && node --test test/*.test.js",
     "verify": "npm run typecheck && npm run lint:types && npm run check && npm run lint:security && npm test",
-    "package": "npm run verify && npx --no-install @vscode/vsce package --no-dependencies && npm run inspect:vsix",
+    "package:vsix": "npx --no-install @vscode/vsce package --no-dependencies && npm run inspect:vsix",
+    "package": "npm run verify && npm run package:vsix",
     "test:e2e": "npm run build:types && node test/e2e/run.js",
     "release:check": "npm run verify && npm run test:e2e && npm run test:vsix",
     "inspect:vsix": "node scripts/inspect-vsix.cjs",
