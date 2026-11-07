@@ -14,7 +14,7 @@ Use the public [ArmoTuSitio support form](https://armotusitio.com.ar/soporte/) a
 
 ## Supported versions
 
-Security fixes target the latest published release (`0.2.0` once published to the Visual Studio Marketplace and Open VSX). Unreleased work in pull requests is not a supported build and is not presented as security-certified.
+Security fixes target the latest published release (`0.2.1` once published to the Visual Studio Marketplace and Open VSX). Unreleased work in pull requests is not a supported build and is not presented as security-certified.
 
 ## Dependencies
 

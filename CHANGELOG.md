@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.2.0 — Enterprise diagnostics upgrade (version set; publication pending owner GO)
+## 0.2.1 — Diagnostic accuracy and release-pipeline hardening
+
+- **Fixed:** a TCP listener bound only to IPv6 loopback (`::1`, e.g. `localhost` on dual-stack hosts) was reported as "not listening" because only `127.0.0.1` was probed. Both families are now probed; the finding states which address answered, and "not listening" is reported only when both refuse (an unavailable IPv6 stack counts as no listener). English and Spanish strings added; stored 0.2.0 sessions keep rendering with their original keys.
+- **Fixed:** npm hyphen ranges (`1.2.3 - 2.1.0`, partial bounds such as `1 - 2` or `1.2.3 - 2.3`) were INCONCLUSIVE; they are now evaluated with npm's partial-bound semantics. Prerelease/build identifiers and malformed hyphens remain INCONCLUSIVE. Frozen reference corpus extended.
+- Sessions record the remote topology name (WSL, SSH, Dev Containers) in `host`, so sessions from different hosts are never compared. Real remote qualification remains pending and is documented as such.
+- CI: the publish workflow no longer repeats the full `verify` inside the packaging job; that job `needs` the three-OS verify and the Extension Host job for the same SHA, and still builds, inspects, installs and smoke-tests the real VSIX. `npm run package` (local) keeps verify + package via the new `package:vsix` script.
+- Documentation brought in line with the published 0.2.0 baseline (current state, roadmap, handoff, checklist).
+
+## 0.2.0 — Enterprise diagnostics upgrade
 
 - More precise Node/npm compatibility evaluation including wildcard caret/tilde cases and a frozen corpus of expectations cross-checked against semver 7.6.3.
 - Unsupported .nvmrc requirements remain explicitly inconclusive; unknown workspace text is never copied into diagnostics.

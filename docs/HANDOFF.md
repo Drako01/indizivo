@@ -1,7 +1,7 @@
 # Indizivo — Technical handoff / current engineering state
 
 > **HISTORICAL RECORD — NOT THE CURRENT RELEASE STATE.**
-> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published 0.1.3 baseline and active PR #14. The authoritative active implementation ledger and exact-SHA handoff are in [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md), updated through candidate 6a738a3 (2026-11-06): QA 42312166879 attempt 2 4/4 PASS; VSIX 42312161308 PASS with hash 023a9c4755... and labelled synthetic benchmark artifact. See ledger for unresolved manual gates. Dated entries below may describe older branches, stale release decisions, inactive CI or unverified features. Only SHA-specific CI evidence and the [upgrade checklist](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) establish current verified status.
+> Refer to [CURRENT_STATE.md](CURRENT_STATE.md) for the published baseline (0.2.0) and the 0.2.1 hardening, and to [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md) for the backlog and 0.2.1 ledger. Dated entries below describe older branches and are historical; only SHA-specific CI evidence establishes verified status.
 
 
 ### Icono Activity Bar + QA final Windows (2026-11-05 17:27 ART)

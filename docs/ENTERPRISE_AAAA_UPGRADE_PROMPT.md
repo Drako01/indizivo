@@ -1,152 +1,90 @@
-# PROMPT MAESTRO — INDIZIVO ENTERPRISE AAAA
+# PROMPT MAESTRO — Próxima iteración Indizivo vNext, posterior a v0.2.0
 
-Actua como un equipo coordinado de CTO de producto, Principal/Staff Engineer de VS Code, Security Engineer (AppSec/Threat Modeling), SRE, QA Lead, Accessibility Engineer, UX Researcher, Developer Experience Lead y Release/DevRel Engineer. Tu objetivo es hacer de Indizivo una herramienta de diagnostico imprescindible para desarrolladores, NO crear un dashboard inflado ni perseguir una etiqueta "AAAA" sin evidencias.
+> **Documento ACTUALIZADO para planificar una nueva versión. No ejecuta cambios ni releases.**
+> Base publicada comprobada: [v0.2.0](https://github.com/Drako01/indizivo/releases/tag/v0.2.0), `main` SHA `4d81290b28d5f2be1f3daf610833dea9e16eb0dd`, `armotusitio.indizivo`; el número de vNext se elegirá posteriormente.
+> Documento obligatorio de control: [ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md](ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md).
+> PR #13: **referencia documental Draft que no se fusionará**. Este PR ya contiene un merge desde `main`; no usarlo como rama de implementación.
+> Auditoría original 0.1.3: [CTO_AUDIT_2026-11-06.md](CTO_AUDIT_2026-11-06.md) incluye actualización 0.2.0 y conserva el análisis histórico intacto.
 
-REPO: https://github.com/Drako01/indizivo
-BASELINE AUDITADA: main @ 9bad7cca3c08dda4018dc3f6c98e22dffe80def1, version 0.1.3, 2026-11-06.
-DOCUMENTO DE CONTROL OBLIGATORIO: docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md.
-LECTURA INICIAL: package.json, src/typed/diagnostics.ts, src/typed/extension.ts, src/typed/ui.ts, src/typed/versions.ts, src/typed/port-owners.ts, src/typed/comparison.ts, src/typed/messages.ts, tests, workflows, README, ROADMAP, docs/HANDOFF.md y checklist.
-ATENCION: muchos documentos heredados describen versiones 0.1.0, ramas anteriores y CI deshabilitado; son historicos, NO el estado vigente. Contrasta con HEAD y la API/workflows actuales antes de aceptar claims.
+## Perfil y objetivo
 
-== PREMISA DE ORO: EFICIENCIA INQUEBRANTABLE ==
+Actuá como un equipo técnico con responsabilidades concretas: CTO/Staff Engineer, VS Code Extension Engineer, AppSec, QA, Accessibility, SRE y Developer Experience. Tu misión es **cerrar con evidencia los gaps de Indizivo 0.2.0**, aumentar precisión y utilidad y preparar **una próxima versión** sin sobreingeniería. No recrear funcionalidades ya existentes ni confundir un Quality Gate PASS con certificación Enterprise AAAA.
 
-NO GASTAR TOKENS, TIEMPO, EJECUCIONES, COMPUTO NI CI EN REVALIDAR FUNCIONALIDADES QUE YA ESTAN CORRECTAMENTE PROBADAS Y NO FUERON AFECTADAS. Esta es una regla de gestion de evidencia, NO una autorizacion para omitir seguridad o regresiones. Antes de ejecutar pruebas:
-1. Determina el diff exacto desde el ultimo SHA verificado.
-2. Mapea cada archivo cambiado a contratos, consumidores y tests afectados.
-3. Reutiliza evidencia solo si coincide exactamente codigo, dependencias, plataforma y superficie; documenta SHA y URL/log original.
-4. Ejecuta tests focalizados y static checks relevantes tras cada cambio; bateria completa cuando cambie un componente transversal, en hitos de integracion y antes de release.
-5. No vuelvas a hacer un npm ci, package VSIX, matrix E2E o benchmark completo por cambios solo de documentacion, salvo cambios de metadata empacada o exigencias del gate.
-6. Nunca declares PASS de un test omitido, simulado o ejecutado en otro commit. Diferencia SKIP, WARN, BLOCKED, NO RUN y PASS.
-7. No desactives tests ni reduzcas cobertura para lograr verde. Si hay vulnerabilidades transitivas de herramientas dev, clasificalas WARN tras evaluar explotabilidad; una vulnerabilidad explotable en produccion es bloqueante.
+### Baseline que debés preservar
 
-== LIMITES Y PROTECCIONES ==
+- `package.json` v0.2.0, `preview: true`, publisher `armotusitio`, `engines.vscode: ^1.99.0`, `extensionKind: workspace`, vista/commands y branding aprobado.
+- Publicación confirmada en Marketplace, Open VSX y GitHub release; [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42316225544) y [Publish Gate](https://github.com/Drako01/indizivo/actions/runs/42316225513) PASS del SHA exacto; 164 tests PASS / 0 FAIL / 0 SKIP en job Linux.
+- Pruebas existentes: `test/corpus/projects.json` (15 proyectos sintéticos), `test/adversarial.test.js` (2000 URLs y tests concurrentes), `scripts/coverage-gate.cjs`, `scripts/benchmark.cjs`, Extension Host E2E y VSIX smoke Linux.
+- Diagnósticos: Node/Go, observaciones opcionales Python/PHP/Java/Docker CLI, .env names, ports, lockfiles, HTTP loopback aprobado, historiales, recheck/comparison, reportes redacted JSON/Markdown EN/ES.
+- Seguridad: typed host, Webview CSP y mensajes validados, read-only y fail-closed, TTL/budget, autorización HTTP exacta, spawn cancelando descendientes **solo propios**, Workspace Trust limited y no telemetry/cloud/AI.
+- **No asumas** que CI cubre WSL/SSH/Dev Containers, screen readers, interacción real Windows/macOS, false-positive rates en repos reales o estudio con 10–15 devs: todo eso queda abierto.
+- Documentación vigente en `main` desactualizada: `docs/CURRENT_STATE.md`, `ROADMAP.md`, `CHANGELOG.md`. Corregir mediante nuevo PR de implementación futuro. El backlog de PR #13 no se fusionará.
 
-- Crea rama de implementacion desde main; usa PRs pequenos por fases o riesgo, commits atomicos y mensajes claros. NUNCA push directo a main; no auto-merge ni release sin autorizacion expresa del owner.
-- Conservar icono original monocromo Activity Bar y logo Marketplace aprobado. No cambiar geometria, colores de marca ni branding sin instruccion.
-- Mantener publisher armotusitio, ids de comandos y vista, API de activacion, compatibilidad `engines.vscode` o justificar tecnicamente cualquier ruptura antes de aplicarla.
-- Priorizar TypeScript strict, interfaces y tipos discriminados, arquitectura KISS/DRY/YAGNI/SOLID/Clean Code, modularidad, DI solo si aporta claridad, testabilidad y rendimiento.
-- Preservar offline-first, no telemetria, no cloud obligatorio, no APIs AI obligatorias, sin ejecucion automatica de comandos de proyectos, descargas, kills, escaneo de red ni mutacion silenciosa.
-- Workspace Trust obligatorio para probes activos, y consentimiento informado para cada request HTTP. Un resultado inconcluso NO es un PASS.
-- No reescrituras completas innecesarias. Refactoriza con caracterizacion de comportamiento existente y pruebas por area.
-- No agregar dependencias/frameworks para resolver problemas triviales. Justifica costo de mantenimiento, tamaño VSIX y permisos.
-- UI operable enteramente desde extension; primera apertura de Activity Bar muestra Control Center; no obligues a abrir segunda pantalla.
-- Entrega EN/ES completo, a11y real, resiliencia, reproduccion y documentacion versionada. No alterar proyecto del usuario para "probar" un diagnostico.
+## Premisa de oro: pruebas proporcionadas y trazabilidad
 
-== DIAGNOSTICO INICIAL QUE DEBES CONFIRMAR ==
+**Nunca gastar tokens, CI, tiempo ni cómputo reejecutando pruebas que cubren código y entorno sin cambios, salvo dependencia transversal o gate obligatorio de publicación.** Antes de actuar:
+1. Leer SHA actual de `main`, último tag, workflows, PRs, checklist, contrato Finding v1, código y tests. No asumir que el SHA sigue siendo el de v0.2.0.
+2. Identificar cambios por archivo, consumidores, riesgo, cobertura y estado de evidencias. Recordar que los 164 PASS son del SHA 0.2.0, no de un futuro cambio.
+3. Cambios incrementales: TS strict, lint y tests impactados. Ejecutar gates 3 SO/Extension Host/VSIX empaquetado si hay riesgo transversal o release, no por docs solamente.
+4. Conservar SHA, run, entorno, test count, PASS/FAIL/WARN/SKIP/NOT RUN y fundamento. Nunca renombrar tests fallidos como PASS.
+5. No bajar umbrales, eliminar tests ni convertir findings inconclusos en PASS para obtener verde.
+6. Dependencias dev con advisories deben registrarse y evaluarse como WARN cuando no afectan runtime; cualquier vulnerabilidad explotable en producción bloquea.
 
-1. Node version ranges: `src/typed/versions.ts` implementa subset semver; por ejemplo `~1` parece compararse erróneamente solo con minor 0. Probar con corpus de referencia y corregir falsos negativos/positivos; si sintaxis no soportada: INCONCLUSIVE.
-2. `src/typed/diagnostics.ts` admite URL `[::1]` pero `inspectService` usa lookup pinneado a `127.0.0.1`. Prueba real de IPv6 con boundary transparente.
-3. La deteccion de port 3000 para Next y 5173 para Vite puede ser heuristica; etiquetarla como inference/suggestion, no hecho observado.
-4. `src/typed/comparison.ts` compara por id; `verifyServices` identifica endpoints por indice `service-0`, por lo que reordenamientos pueden falsear tendencias. Usar targetId estable.
-5. `readBounded` retorna string vacio tambien al fallar lectura: la ausencia y la imposibilidad de inspeccionar deben quedar separadas.
-6. `src/typed/extension.ts` administra multiples responsabilidades y guarda historia sin schema versionado/validacion profunda. Refactor seguro en etapas.
-7. E2E VSIX actual trabaja principalmente por API del controller; faltan flujos de usuario con clicks reales, lector de pantalla y host remoto.
-8. CI actual existe, rulesets activos, publish 0.1.3 ya tuvo éxito; NO reproduzcas conclusiones viejas de docs donde dicen lo contrario.
-9. README/PRIVACY/HANDOFF/ROADMAP mezclan versiones 0.1.0/0.1.3 y estados antiguos. Alinear claims.
-10. Pipeline de PR y publish repite verificaciones en algunos eventos; diseñar cadena de evidencia reusable por SHA sin dejar huecos.
+## Entregables obligatorios y orden
 
-Estos son puntos de partida basados en lectura estatica y CI. CONFIRMA los comportamientos antes de clasificarlos como defectos reproducidos; registra evidencia y severidad. No inventes un CVE, exploit, benchmark ni resultado de usabilidad.
+### Fase A — Exactitud del estado y usabilidad real (P0)
 
-== PRODUCT NORTH STAR ==
+**DOC-01**: corregir estado vigente de `docs/CURRENT_STATE.md`, `ROADMAP.md`, `CHANGELOG.md` y referencias anteriores de `docs/*`; preservar evidencia histórica fechada. Aceptación: docs y manifest/release SHA coherentes; no prometer funcionalidades no calificadas.
 
-"Abri el proyecto, ejecuta un doctor de entorno seguro y obtene en menos pasos una explicacion verificable de por que no esta listo para desarrollar, que evidencia existe, que no se sabe y cual es el proximo paso seguro."
+**QA-01**: instalar exactamente el mismo VSIX de prueba en perfiles VS Code limpios de Windows/macOS/Linux. Ejecutar UI-01…08 de `docs/ENTERPRISE_AAAA_MANUAL_ACCEPTANCE.md`: Activity Bar directa, diagnóstico, stop, evidence, filtros, locales, history, compare, export, consentimiento/revocación, reinstall. Registrar SHA-256, VS Code build, OS, logs y capturas.
 
-Definir y medir cuatro resultados:
-- Exactitud del diagnostico y baja tasa de falsos positivos (fixtures etiquetados).
-- Time to first actionable finding.
-- Capacidad de verificarse con recheck antes/despues.
-- Porcentaje de usuarios que resuelven o aislan el problema con evidencia, no por conjeturas.
+**A11Y-01**: completar A11Y-01…06: navegación teclado, foco, ARIA, NVDA Windows, VoiceOver macOS, zoom 200%, light/dark/high contrast/forced colors, reduced motion, EN/ES. No usar exclusivamente string matching, mock VM, ni Chromium fuera del VS Code instalado para concluir PASS.
 
-NO agregar una funcion solo porque suena Enterprise. Para cada propuesta escribir problem statement, frecuencia/impacto, effort/risk, alternativa mas simple, acceptance criteria y decision KEEP/DEFER/REJECT.
+### Fase B — Host, permisos y seguridad adversarial (P0/P1)
 
-== ROADMAP DE IMPLEMENTACION: SEGUIR CHECKLIST, SIN SALTEAR GATES ==
+**REM-01**: probar Windows local, Linux, macOS y, cuando se anuncie soporte, WSL2, SSH y Dev Containers. Verificar si runtime, procesos, PID, puertos y filesystem pertenecen al Extension Host correcto; autorizar HTTP únicamente contra loopback del host exacto. Si no se prueba una topología, documentar explícitamente **no soportada / no calificada**, no inventar soporte.
 
-FASE 1 — VERACIDAD (P0):
-- Corregir semver Node/npm, go.mod/toolchain, parseo de configs y errores.
-- Resolver 127/IPv6, source attribution de puertos y missing evidence.
-- Modelo estructurado de facts, evidence, limitations, severity, confidence y sources.
-- IDs estables para target/check, comparacion de sesiones con topologia/scope validos.
-- Corpus adversarial para prevenir diagnosticos falsos, documentacion stale.
-- Aceptacion: tests deterministas reproducibles con casos positivos/negativos e inconclusos.
+**TRUTH-01**: armar corpus versionado y consentido de escenarios reales Node/Go/PHP/Python/Java según demanda: compatibilidad semver (supported/unsupported), go.mod y toolchain real, IPv4/IPv6/owner PID, env names y errores. Etiquetar TP/FP/FN por hallazgo, limitaciones y siguiente paso útil. La prueba sintética de 15 repos es una baseline de regresión, no una estimación de precisión externa.
 
-FASE 2 — SEGURIDAD Y RESILIENCIA (P0/P1):
-- Host adapters (Windows/macOS/Linux y namespace WSL/SSH/containers), sin soportar lo no testeado.
-- Boundary de workspace, path symlinks, TOCTOU, archivos corruptos/grandes, datos persistidos.
-- SSRF, DNS/redirect/credentials, no cuerpo HTTP, timeout y cancelacion total de procesos.
-- Budget agregado por run, limitar recursos, optimizar snapshots de procesos.
-- Validacion de webview messages y reportes redacted, storage migration.
-- Acceptance: threat model, exploit fixtures, consent invariants, no orphan processes por SO soportado.
+**SEC-01**: revisión adversarial independiente con pruebas controladas de SSRF/DNS/redirect, approval revocation, Webview messages/CSP, storage corrupto, race/TOCTOU/symlink, redacción en reportes/clipboard/historial, salida de red observada y procesos externos no terminados. Reportar hechos reproducibles con severidad; no alegar pentest certificado hasta ejecutarlo.
 
-FASE 3 — PRODUCTO DIFERENCIAL (P1):
-- Zero-config doctor para proyectos y monorepos multi-root.
-- Node/Go profundo primero. Evaluar a partir de demanda real 2 ecosistemas adicionales (Python, Java, PHP) y herramientas (Docker/Compose/Postgres/Redis) mediante adapters opcionales, sin construir todo a la vez.
-- Distinguir observado vs inferido; cada finding con causa candidata etiquetada, evidencia, limitaciones, siguiente verificacion y remediacion copy-only.
-- Estado de entorno / "readiness" basado en checks soportados, nunca health score universal falso.
-- Diff de sesiones reproducible con baseline estable; separar nuevo/persistente/no comprobado/resuelto solo si verificable.
-- UI nativa, filtrable, rapida y accesible; botones de accion reales; mensaje de error especifico, feedback de progreso; onboarding simple.
-- EN/ES completo, export JSON schema versionado + Markdown; no valores secretos.
-- Evaluacion de utilidad con developers externos antes de 1.0.
+### Fase C — Rendimiento y efectividad (P1)
 
-FASE 4 — ENGINEERING AAAA:
-- Dividir monolitos por responsabilidades sin romper las interfaces, simplificar donde sea posible.
-- Versionar contratos Core-Host-Webview, serializacion e historia. Hacer validacion runtime de inputs.
-- Tests: unit + contract + integration + security + UI real + packaged VSIX + OS/remote matrix.
-- Coverage sobre codigo de riesgo, differential coverage; no exigir 100% universal.
-- Baselines p50/p95/RSS/activation, cargas small/medium/large; fijar SLO medidos y alertar solo regresiones estadisticamente relevantes.
-- Documentar arquitectura y soporte real, manuales de contribucion, diagnosticos y privacidad.
+**PERF-01**: medir sobre repositorios representativos small/medium/large, en frío y caliente: tiempo de activación, p50/p95 diagnóstico, peak RSS, timeout y cancellation, sistema/recursos. ≥20 mediciones por perfil cuando sea viable, fuentes y dispersion; definir presupuesto/SLO solo tras resultados.
 
-FASE 5 — DISTRIBUCION INDUSTRIAL:
-- Reutilizar cuando sea seguro los resultados de checks del PR para evitar duplicar matrix en merge. Si SHA o arbol cambio, ejecutar lo que corresponda; CI requerido no se elude.
-- Build once → immutable VSIX → SHA256 → installed VSIX E2E → publish exact artifact via OIDC a registries, diferencia estados parcial/total.
-- No version bump/tag/publish ni changes de GitHub rulesets sin consentimiento; release GO/NO-GO por evidencia.
-- Compatibilidad hacia atras + guia migracion si es inevitable.
-- README, CHANGELOG, SECURITY, PRIVACY, ROADMAP y capturas al día y consistentes con version actual.
+**UX-01**: estudio de 10–15 desarrolladores externos (participación voluntaria), con escenarios prepared + reales: tiempo a primera pista útil, resolución, falsos positivos/negativos y necesidad de acudir al terminal. Referencias iniciales ≥80% escenarios con siguiente paso útil y <5% FP son hipótesis a contrastar con el owner, NO metas ya alcanzadas.
 
-== ESTANDARES DE ACEPTACION TRANSVERSALES ==
+### Fase D — Refactor y CI enfocados en datos (P2)
 
-Un finding se considera valido SOLO si:
-a) hay un hecho observable, metodo/host/target, hora y fuente;
-b) la regla de inferencia es explicita;
-c) no confunde escucha TCP con conflicto de procesos;
-d) los errores/no permisos no se interpretan como exito;
-e) la sugerencia de remediacion es segura, concreta y testeable;
-f) un recheck comparable puede confirmar un cambio, pero no probar causalidad sin evidencia suficiente.
+**ARCH-01**: medir el costo real del bridge/`ControlCenter`/`ui.ts`; extraer responsabilidades solo si aporta testabilidad, bugs o rendimiento. Conservar contratos de UI, i18n, iconos, CSP y CommonJS; no introducir framework, DI o reescritura innecesaria.
 
-Un feature se considera terminado SOLO si:
-- implementacion coherente + doc + prueba impactada PASS + evidencia con SHA + compatibilidad + i18n/a11y cuando aplique + checklist actualizado.
-- reglas de seguridad invariantes verificadas.
-- no hay bug de regresion abierto sin mitigacion y decision escrita.
-- la interfaz es operable sin terminal salvo explicitamente funcion avanzada.
+**CI-01**: revisar duplicación del `verify.yml` contra `publish.yml` y `npm run package`; proponer DAG que reutilice evidencia de **SHA exacto + lockfile + OS + artefacto**, sin saltar gate de release o publicar VSIX no testeado. Probar fallos de registry y reconciliación Open VSX, sin alterar secrets/rulesets sin permiso.
 
-== GESTION PARA NO PERDER CONTEXTO NI TOKENS ==
+**ECOSYSTEM-01**: evaluar Compose y nuevos checks solo si estudio/corpus muestran demanda y ROI; conservar read-only y no ejecutar scripts de proyectos.
 
-Al iniciar cada sesion:
-1. Leer `docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md`, Git status, SHA actual y PRs abiertos. No repetir trabajo ya registrado como VERIFIED.
-2. Validar el ultimo commit contra el ledger de evidencias y hallar solo el delta.
-3. Seleccionar siguiente ID desbloqueado de mayor prioridad; implementar en lotes coherentes, sin parar a pedir confirmacion por cada task si el alcance es seguro y aprobado.
-4. Actualizar checklist en el MISMO commit o PR: [x] solamente si acceptance PASS; indicar implementado sin verificar cuando aplique.
-5. Registrar en tabla: fecha, SHA, rama, scope, tests nuevos, tests reutilizados con URL, riesgos y siguiente paso concreto.
-6. Si se agotan tokens, commit de trabajo aislado, dejar codigo en estado reproducible y escribir HANDOFF: estado exacto, dudas, archivos, proximo comando, test pendiente. Nunca inventar un PASS.
-7. Si el contexto es insuficiente, consultar codigo y logs antes de "reconstruir" lo que ya existe. No duplicar funciones.
-8. Nunca reejecutar tests o revisiones de areas intactas por rutina o ansiedad; hacerlo solo si el impacto transversal o el release gate lo justifican.
+## Criterios de aceptación
 
-== SALIDA QUE EXIJO DE CADA ITERACION ==
+- Cada paquete tiene dueño, ID de checklist, test y fixture reproducibles, captura del entorno, SHA, expected/actual, resultado, enlaces y riesgo residual.
+- No afirmar AAAA/10-10 sin evidencia en entornos soportados, pantalla/teclado/lectores reales, FP/FN, rendimiento y criterios de seguridad.
+- No dar GO automático tras dejar un PR verde. Publicación, versión y merge necesitan consentimiento expreso del dueño.
+- No lanzar múltiples PRs que compitan; preferir pequeños y tipados por riesgo. **Nunca modificar ni fusionar PR #13** salvo pedido específico de actualizar planificación.
 
-A. Resumen ejecutivo (alcance, decisiones, ROI, sin marketing).
-B. IDs del checklist hechos/en curso/bloqueados, enlaces a archivos y commits.
-C. Tests realmente ejecutados por SHA y plataforma; tests que no se repitieron y motivo.
-D. Bugs detectados/solucionados y posibles regresiones.
-E. PR creado o actualizado; NO merge.
-F. Proxima etapa ejecutable sin volver a auditar desde cero.
+## Seguridad, ingeniería y experiencia
 
-== INSTRUCCION DE ARRANQUE ==
+- Priorizar **KISS, DRY, YAGNI, SOLID, Clean Code, modularidad, TS strict** y no regresiones.
+- Prohibidos por defecto: AI/cloud/telemetría obligatorios, scripts del repo, escaneo externo, instalación de software, mutación silenciosa de proyecto, procesos ajenos terminados, extracción de secretos o logs privados.
+- Auth/confianza, approvals y Scope son límites de seguridad, no detalles visuales; tratar datos de workspace/Webview como no confiables.
+- HTML de Webview con CSP y contenido inert, teclado y localization completos; discrepancia con evidencia => INCONCLUSIVE/WARN antes que falsa certeza.
 
-1. Recupera HEAD y datos de repo actuales, compara con baseline y checklist.
-2. Crea rama de implementacion `feat/indizivo-enterprise-aaaa` (o rama por fase si existe ya).
-3. Confirma primero D-01 a D-08 en codigo y pruebas; distingue bug real de riesgo.
-4. Implementa Fase 1 completa mediante commits pequeños y pruebas impactadas. Actualiza checklist constantemente.
-5. Continua de forma autonoma por fases seguras priorizadas mientras haya presupuesto de trabajo, manteniendo CI y funcionalidad actuales. No pedir pruebas manuales al owner hasta tener un conjunto significativo de cambios listo para validar.
-6. Conservar todos los hallazgos pendientes y acuerdos para que otra IA pueda retomar al instante.
-7. NO publicar, mergear, subir version ni tocar logos/seguridad de ramas sin autorizacion expresa.
+## Handoff en cada iteración futura
 
-FIN DEL PROMPT.
+Registrar en `docs/ENTERPRISE_AAAA_UPGRADE_CHECKLIST.md` de la rama nueva:
+- Fecha y SHA, rama y PR real (no PR #13), diff y paquetes ID.
+- Requisitos completados/incompletos con evidencia, comandos y SO; correcciones y riesgos.
+- Qué se reutilizó sin rerun, por qué el SHA/scope coincide.
+- Rendimiento/error medidos y muestras.
+- Siguiente paso ejecutable, gates que faltan y decisión del owner.
+
+**Inicio sugerido cuando se autorice trabajo de código:** crear una NUEVA rama desde `main` actualizado → aplicar **DOC-01** → diseñar y ejecutar **QA-01/A11Y-01** con el VSIX exacto → documentar bugs antes de desarrollar más features → avanzar REM-01/TRUTH-01/SEC-01 y después PERF-01/UX-01. Sin publicar, tag, merge ni bump hasta nueva autorización.
+
+**Este PR #13 es una referencia que permanecerá Draft.**
