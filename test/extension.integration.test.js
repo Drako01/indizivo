@@ -185,10 +185,10 @@ test('disposing sidebar webview does not read its invalidated getter',async()=>{
      onDidDispose(fn){handler=fn;return {dispose(){}};}
    };
    resolveView(view);
-   assert.equal(controller.views.size,1);
+   assert.equal(controller.views.size,2,'launcher and editor use distinct webviews');
    closed=true;
    assert.doesNotThrow(()=>handler());
-   assert.equal(controller.views.size,0);
+   assert.equal(controller.views.size,1,'closing sidebar leaves editor panel intact');
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });
 
@@ -329,5 +329,65 @@ test('shutdown cancels a running diagnosis and workspace changes revoke a pendin
   assert.equal(controller.pendingApproval,null,'workspace change revokes consent');
   for(const subscription of app.context.subscriptions)subscription.dispose();
   assert.equal(controller.abort?.signal.aborted??true,true,'dispose aborts the running probe');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
+
+test('cancelled service batch preserves completed session and history atomically',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-atomic-'));
+ const fast=http.createServer((_req,res)=>{res.writeHead(200);res.end('ok');});
+ const slow=http.createServer((_req,res)=>{setTimeout(()=>{
+  if(!res.writableEnded){res.writeHead(200);res.end('late');}
+ },1700);});
+ try{
+  await Promise.all([fast,slow].map(s=>new Promise(resolve=>s.listen(0,'127.0.0.1',resolve))));
+  const app=fixture(root,true);
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  await controller.runDiagnosis();
+  const id=controller.data.session.id;
+  await controller.addService({name:'Fast',url:'http://127.0.0.1:'+fast.address().port+'/health'});
+  await controller.addService({name:'Slow',url:'http://127.0.0.1:'+slow.address().port+'/health'});
+  await controller.prepareServices();
+  const pending=controller.confirmServices();
+  await new Promise(resolve=>setTimeout(resolve,300));
+  controller.cancel();
+  await pending;
+  assert.equal(controller.data.session.id,id);
+  assert.equal(controller.data.session.state,'completed');
+  assert.deepEqual(controller.data.session.serviceChecks,[]);
+  assert.deepEqual(controller.data.history[0].snapshot.serviceChecks,[]);
+  assert.equal(controller.running,false);
+ }finally{
+  await Promise.all([fast,slow].map(s=>s.listening?new Promise(resolve=>s.close(resolve)):Promise.resolve()));
+  await fs.rm(root,{recursive:true,force:true});
+ }
+});
+test('Activity Bar view shows compact launcher and reuses the editor panel',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-activity-'));
+ try{
+  const app=fixture(root,true);
+  let resolveView,visibility,created=0,revealed=0;
+  const webview={cspSource:'vscode-resource:',asWebviewUri:u=>u.fsPath,
+   postMessage:()=>Promise.resolve(true),onDidReceiveMessage:()=>({dispose(){}})};
+  app.vscode.window.createWebviewPanel=()=>{
+   created++;
+   return {webview,reveal:()=>{revealed++;},onDidDispose:()=>({dispose(){}})};
+  };
+  app.vscode.window.registerWebviewViewProvider=(_name,provider)=>{
+   resolveView=provider.resolveWebviewView;return {dispose(){}};
+  };
+  const {controller}=loadExtension(app.vscode).activate(app.context);
+  const side={webview:{...webview},visible:true,
+   onDidChangeVisibility:handler=>{visibility=handler;return {dispose(){}};},
+   onDidDispose:()=>({dispose(){}})};
+  resolveView(side);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(created,1);
+  assert.match(side.webview.html,/Open Control Center/);
+  assert.doesNotMatch(side.webview.html,/id="section-diagnostics"/);
+  visibility();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(created,1);
+  assert.ok(revealed>=1);
+  assert.ok(controller.panel);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — Engineering hardening and editor-first Control Center (UNRELEASED)
+
+- **UX:** selecting Indizivo in the Activity Bar opens the full Control Center in the Editor Area. The Sidebar hosts a compact EN/ES launcher. Opening repeatedly reuses the existing panel; VS Code's layout remains under user control.
+- **Correctness:** Node engine hyphen ranges now survive workspace-file sanitization and reach the npm-compatible range evaluator; hostile unsupported declarations remain inconclusive without executing workspace scripts.
+- **Resilience:** approved localhost HTTP service findings are staged until a complete run; cancellation no longer commits partial observations into otherwise completed session snapshots or history.
+- **Tests:** added integration regressions for editor-first launcher, version requirements and cancellation; refreshed the version contract to 0.3.0. VS Code Extension Host screenshots were captured from synthetic fixtures, not mockups.
+- **Security and release:** existing strict typing, Workspace Trust, CSP, loopback-only consent, OIDC release pipeline and immutable VSIX checks are retained. No package release, tag or publication is performed by this PR.
+- **Open qualification:** effective branch rule still needs required CI checks confirmed by an administrator; 35 manual accessibility/remote/usability cases remain unsigned. This is not an Enterprise certification.
+
+
 ## 0.2.2 — Preview flag removed
 
 - Removed `"preview": true` from the manifest so the Marketplace no longer labels Indizivo as a preview (owner decision). No functional changes.

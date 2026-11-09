@@ -38,20 +38,20 @@
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": false,
+        "strict_required_status_checks_policy": true,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
-            "context": "Node tests / ubuntu-latest"
+            "context": "Node 24 / ubuntu-latest"
           },
           {
-            "context": "Node tests / windows-latest"
+            "context": "Node 24 / windows-latest"
           },
           {
-            "context": "Node tests / macos-latest"
+            "context": "Node 24 / macos-latest"
           },
           {
-            "context": "Official VS Code E2E / Linux"
+            "context": "Official VS Code Extension Host / Linux"
           }
         ]
       }

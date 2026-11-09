@@ -27,17 +27,19 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 
 ## Screenshots
 
-### Diagnostics — findings and supporting evidence
+### Diagnostics — Editor Area (0.3.0 candidate)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-diagnostics.png" width="1200" alt="Indizivo Diagnostics: completed project scan with Node.js warning, missing environment key and port observation">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/c788cd22d2d79fcaf56126f40466f43a153f5ded/media/indizivo-0.3.0-diagnostics.png" width="1200" alt="Indizivo Diagnostics: completed project scan with Node.js warning, missing environment key and port observation">
 </p>
 
-### Services — review and approve local checks
+### Services — localhost verification (0.3.0 candidate)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Drako01/indizivo/ae041b816b2f66edab89a487fc240f3b93aae729/media/indizivo-services.png" width="1200" alt="Indizivo Services: localhost endpoint configuration and explicit approval plan">
+  <img src="https://raw.githubusercontent.com/Drako01/indizivo/c788cd22d2d79fcaf56126f40466f43a153f5ded/media/indizivo-0.3.0-services.png" width="1200" alt="Indizivo Services: localhost endpoint configuration and explicit approval plan">
 </p>
+
+Screenshots were captured from the **real VS Code Extension Host on Linux**, using a **synthetic test project** on the 0.3.0 implementation branch. They are not design mockups or a substitute for manual Windows/macOS accessibility acceptance.
 
 ## Features
 
@@ -50,7 +52,7 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 | **Environment configuration** | Compares variable **names only** between `.env.example` and `.env`. A missing file is distinguished from an unreadable or blocked one, so an unreadable file is never reported as "absent". |
 | **Optional toolchains** | Read-only version observations for Python, PHP, Java and Docker when their project markers exist, plus lockfile and `packageManager` consistency. No repository scripts are ever run. |
 | **Monorepos and multi-root** | Shallow, bounded discovery of sub-projects with an explicit picker and a separate history per project. |
-| **Local service health** | Tests user-configured loopback HTTP endpoints **only after you approve the exact plan**. Targets are validated against SSRF-style inputs, redirects are not followed and bodies are not read. |
+| **Local service health** | Tests user-configured loopback HTTP endpoints **only after you approve the exact plan**. Results are committed to the session only after a complete successful batch, so cancellation cannot falsely persist partial checks. Targets are validated against SSRF-style inputs, redirects are not followed and bodies are not read. |
 | **Evidence-backed findings** | Every finding carries what was observed, how, when, with what confidence, what remains unknown and a copy-only next step. Findings have stable versioned IDs. |
 | **Recheck and compare** | Compares sessions by stable check and endpoint identity (reordering endpoints cannot mix up results) without claiming that a change proves a fix. |
 | **Reports and history** | Exports versioned JSON and readable Markdown (EN/ES) through VS Code's file system, redacted for credentials; copies evidence; keeps bounded, schema-validated local history. |
@@ -59,7 +61,9 @@ Indizivo prioritizes **observed facts over guesses**. When it cannot establish a
 
 ### One interface, full control
 
-The **Indizivo Control Center** lives in the VS Code Activity Bar and opens ready to diagnose. Its four sections cover the whole workflow:
+Select the **Indizivo icon in the Activity Bar** to open the full Control Center automatically in the **Editor Area** (the main editor surface). The narrow Sidebar is now a minimal launcher, not the main diagnostics UI. Reopening the Control Center reveals the existing editor panel instead of cloning it. VS Code still controls Activity Bar/sidebar placement; Indizivo does not forcibly hide or resize the Sidebar.
+
+Its four sections cover the whole workflow:
 
 - **Diagnostics:** choose a project, run or cancel checks, filter findings by status, inspect evidence and limitations, and copy evidence.
 - **Services:** add or remove loopback HTTP targets, review the exact plan and approve probes.
@@ -70,22 +74,26 @@ No terminal is required for normal usage after installation. The interface suppo
 
 ## Getting started
 
-> **Version 0.2.2.** Automated gates pass on Windows, Linux and macOS and in an official VS Code Extension Host on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification are still pending.
+> **Version 0.3.0 is under review in [Draft PR #17](https://github.com/Drako01/indizivo/pull/17); it is not published.** The latest stable public release remains **0.2.2**. Automated tests for the implementation branch run on Windows, Linux and macOS, with Extension Host tests on Linux. Manual accessibility, remote-development (WSL, SSH, Dev Containers) and external usability qualification remain pending.
 
 **Requirements:** desktop Visual Studio Code 1.99 or newer, a trusted local workspace and the relevant tools installed for each supported diagnostic. No account, AI key, container or hosted service is required.
 
 1. Open your project folder in Visual Studio Code.
-2. Open **Indizivo** from the Activity Bar.
-3. Select **Diagnose project**.
-4. Inspect the observations, their evidence and suggested next steps.
-5. Optionally configure a localhost endpoint in **Services**, review the plan and approve the request.
-6. Rerun diagnostics or export a report after investigating an issue.
+2. Select **Indizivo** in the Activity Bar. Its Control Center opens in the central **Editor Area** (the Sidebar shows only a launcher).
+3. Select the target project when prompted, then choose **Diagnose project**.
+4. Review findings, evidence, limitations and recommended next steps.
+5. Optionally configure a localhost endpoint in **Services**, review the exact request plan and explicitly approve it.
+6. Recheck diagnostics or export a report after investigating. Close and reopen the editor panel without losing persisted history.
 
 Multi-root workspaces and monorepos let you choose the project to inspect. Untrusted and virtual workspaces run in a limited mode that disables active probes. WSL, SSH and Dev Containers have not yet been fully qualified.
 
-### Install the VSIX
+### Install the published stable release
 
 In VS Code, choose **Extensions → … → Install from VSIX…**, then select `indizivo-0.2.2.vsix` from [GitHub Releases](https://github.com/Drako01/indizivo/releases/tag/v0.2.2). Verify the package origin before installing.
+
+### Build and test the unreleased 0.3.0 candidate
+
+Check out [Draft PR #17](https://github.com/Drako01/indizivo/pull/17) and run `npm ci && npm run release:check`. The candidate can be packaged locally as `indizivo-0.3.0.vsix`, but this is **not** a public release, and its version bump must not trigger publication until the owner merges it.
 
 Maintainers with authorized repository access can reproduce the release candidate with:
 
@@ -110,9 +118,9 @@ The detailed `PRIVACY.md` and `SECURITY.md` policies are included inside the ins
 
 ## Current scope
 
-Indizivo 0.2.2 focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
+Indizivo 0.3.0 (unreleased candidate) focuses on **local Node.js and Go development environments**, with read-only observations for Python, PHP, Java and Docker. The interface is available in **English and Spanish**. Automatic remediation (suggestions are copy-only), remote network scanning, Docker/Compose orchestration and comprehensive WSL, SSH or container support are not part of these releases.
 
-Indizivo is a diagnostic aid: a passing check is not a project-health guarantee, and "Enterprise AAAA" is an internal engineering goal, not a certification. Progress is tracked in the [active implementation pull request](https://github.com/Drako01/indizivo/pull/14), its upgrade checklist and the CTO audit. Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
+Indizivo is a diagnostic aid: a passing check is not a project-health guarantee, and "Enterprise AAAA" is an internal engineering goal, not a certification. Upgrade progress and outstanding qualification gates are tracked in [Draft PR #17](https://github.com/Drako01/indizivo/pull/17) and [the 0.3.0 upgrade checklist](https://github.com/Drako01/indizivo/blob/feat/indizivo-0.3.0-engineering-ux/docs/UPGRADE_0_3_0_CHECKLIST.md). Future capabilities are described in the `ROADMAP.md` file bundled with the extension.
 
 ## Development
 

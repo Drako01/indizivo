@@ -3,6 +3,23 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const http=require('node:http');
 const vscode=require('vscode');
+const path=require('node:path');
+const fsSync=require('node:fs');
+const {execFile}=require('node:child_process');
+const {promisify}=require('node:util');
+const exec=promisify(execFile);
+async function capture(name) {
+ const dir=process.env.INDIZIVO_SCREENSHOT_DIR;
+ if(!dir)return;
+ fsSync.mkdirSync(dir,{recursive:true});
+ // Capture actual VS Code Extension Host with synthetic fixture, not a mockup.
+ await new Promise(resolve=>setTimeout(resolve,800));
+ const file=path.resolve(dir,'indizivo-0.3.0-'+name+'.png');
+ await exec('import',['-window','root',file],{timeout:15000});
+ const stat=fsSync.statSync(file);
+ assert.ok(stat.size>12000,'Screenshot must not be an empty image');
+ console.log('Real VS Code screenshot: '+path.basename(file));
+}
 
 exports.run=async function run(){
   const extension=vscode.extensions.getExtension('armotusitio.indizivo');
@@ -21,6 +38,7 @@ exports.run=async function run(){
   assert.ok(session.checks.some(x=>x.id==='env'),'Missing environment key must be reported');
   assert.ok(!JSON.stringify(session).includes('FAKE_KEY=example'),'Environment values must not be persisted');
   assert.ok(controller.data.history.length>0,'Diagnosis history must be saved');
+  await capture('diagnostics');
 
   await assert.rejects(()=>controller.addService({name:'unsafe',url:'http://example.org/'}),
     /loopback HTTP/);
@@ -39,6 +57,8 @@ exports.run=async function run(){
     await controller.confirmServices();
     assert.equal(controller.data.session.serviceChecks[0].status,'pass');
     assert.match(controller.data.session.serviceChecks[0].detail,/HTTP 200/);
+    await controller.panel.webview.postMessage({type:'navigate',tab:'services'});
+    await capture('services');
   } finally {await new Promise(resolve=>server.close(resolve));}
 
   await controller.saveTimeout(700);

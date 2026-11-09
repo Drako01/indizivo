@@ -31,3 +31,6 @@ verify-indizivo.ps1
 # README screenshots are hosted from the public repository; do not bundle them in the VSIX
 media/indizivo-diagnostics.png
 media/indizivo-services.png
+
+media/indizivo-0.3.0-diagnostics.png
+media/indizivo-0.3.0-services.png
