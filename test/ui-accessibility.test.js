@@ -39,3 +39,12 @@ test('diagnostic filters and provenance are accessible and localized',()=>{
    'origin.framework-convention','confidence.inferred','ui.limitations'])
    assert.ok(catalog.includes(key),key);
 });
+
+test('editor-first launcher uses localized label, CSP and native focus tokens',()=>{
+ assert.match(source,/launcherHtml/);
+ assert.match(source,/Open Control Center/);
+ assert.match(source,/Abrir Control Center/);
+ assert.match(source,/vscode-button-background/);
+ assert.match(source,/focus-visible/);
+ assert.match(source,/acquireVsCodeApi/);
+});

@@ -206,3 +206,20 @@ test('closed port reports both loopback families as unobserved listeners',async(
   assert.equal(check.i18n.detail.key,'diag.portNotListeningBoth');
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('Node hyphen ranges survive discovery and yield the correct runtime verdict',async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'indizivo-hyphen-'));
+ try{
+  const major=Number(process.versions.node.split('.')[0]);
+  const range=major+' - '+major;
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({engines:{node:range}}));
+  const d=await discover(root);
+  assert.equal(d.nodeRequirement,range);
+  const session=await diagnose(root,3500);
+  const node=session.checks.find(x=>x.id==='node');
+  assert.ok(node);
+  assert.equal(node.status,'pass');
+  await fs.writeFile(path.join(root,'package.json'),JSON.stringify({engines:{node:'20; rm -rf /'}}));
+  assert.equal((await discover(root)).nodeRequirement,'[unrecognized]');
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
