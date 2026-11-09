@@ -267,7 +267,10 @@ function browserUI(TEXT:Record<'en'|'es',Record<string,string>>):void {
       (idx+(event.key==='ArrowRight'?1:tabs.length-1))%tabs.length;
     event.preventDefault();tabs[next]?.focus();tabs[next]?.click();
   });
-  window.addEventListener('message',(e:MessageEvent<{type?:string;state?:BrowserState}>)=>{
+  window.addEventListener('message',(e:MessageEvent<{type?:string;state?:BrowserState;tab?:string}>)=>{
+    if(e.data?.type==='navigate' && ['diagnostics','services','history','settings'].includes(e.data.tab||'')) {
+      document.querySelector<HTMLButtonElement>('[data-tab="'+e.data.tab+'"]')?.click();
+    }
     if (e.data && e.data.type==='state' && e.data.state) {
       const requested=pendingService;
       if(requested) {

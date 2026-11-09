@@ -1,0 +1,53 @@
+# Temporary capture workflow for the isolated 0.3.0 implementation branch.
+# Remove before merge; this cannot publish an extension.
+name: Indizivo / 0.3.0 UI Screenshot Capture
+on:
+  push:
+    branches: [feat/indizivo-0.3.0-engineering-ux]
+    paths: [.github/workflows/capture-0.3.0.yml]
+permissions:
+  contents: write
+jobs:
+  capture:
+    if: github.repository == 'Drako01/indizivo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:types
+      - name: Install screenshot capture utility
+        run: sudo apt-get update -qq && sudo apt-get install -y imagemagick
+      - name: Exercise actual VS Code Extension Host and capture synthetic fixture UI
+        env:
+          INDIZIVO_SCREENSHOT_DIR: media
+        run: xvfb-run -a -s "-screen 0 1600x960x24" npm run test:e2e
+      - name: Validate captured images
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in media/indizivo-0.3.0-diagnostics.png media/indizivo-0.3.0-services.png; do
+            test -s "$file"
+            identify -format '%wx%h %b\n' "$file"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: indizivo-0.3.0-real-ui-screenshots
+          path: media/indizivo-0.3.0-*.png
+          if-no-files-found: error
+          retention-days: 7
+      - name: Commit captured screenshots to implementation branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add media/indizivo-0.3.0-diagnostics.png media/indizivo-0.3.0-services.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(indizivo): add real VS Code 0.3.0 E2E screenshots"
+            git push origin HEAD:feat/indizivo-0.3.0-engineering-ux
+          fi
