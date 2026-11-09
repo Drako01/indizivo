@@ -1,3 +1,7 @@
+# HISTORICAL DOCUMENT — NOT CURRENT CI STATE
+
+GitHub Actions quality and publishing workflows have been active since the 0.1.x releases. The statements below describe the original staged design and **must not be used to infer the current release pipeline**. See [CURRENT_STATE.md](CURRENT_STATE.md) and active `.github/workflows/` YAML files.
+
 # Indizivo — CI / CD prepared, inactive
 
 **NO GITHUB ACTIONS WERE ENABLED. NO PUBLISHING, TAGS OR RELEASES PERFORMED.**

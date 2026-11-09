@@ -93,7 +93,7 @@ test('Marketplace-facing metadata and README do not link to the private GitHub r
    'README must display the full-color brand logo');
  assert.doesNotMatch(readme,/https:\/\/github\.com\/Drako01\/indizivo\/issues\b/,
    'Support link must resolve to the public support channel');
- for(const name of ['indizivo-diagnostics.png','indizivo-services.png']) {
+ for(const name of ['indizivo-0.3.0-diagnostics.png','indizivo-0.3.0-services.png']) {
    const image=read('media/'+name);
    assert.equal(image.subarray(0,8).toString('hex'),'89504e470d0a1a0a',
      'Approved screenshot must be a PNG: '+name);
@@ -117,5 +117,5 @@ test('manifest explicitly declares limited Workspace Trust and virtual workspace
  assert.equal(pkg.extensionKind[0],'workspace',
    'Processes and localhost must be scoped to the workspace Extension Host');
  assert.equal(pkg.version,'0.3.0','Owner-approved upgrade version');
- assert.equal(pkg.preview,undefined,'Marketplace preview flag intentionally removed in 0.2.2');
+ assert.equal(pkg.preview,undefined,'Marketplace preview flag remains absent for 0.3.0');
 });

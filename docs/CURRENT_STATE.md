@@ -1,19 +1,29 @@
 # Indizivo — Current engineering state
 
-> **Source of truth**, updated 2026-11-07. Historical PLAN.md, HANDOFF.md and RELEASE_READINESS.md contain dated, superseded statements and are not release evidence.
+**Updated:** 2026-11-09 (ART). Source of truth for release and candidate qualification.
 
-## Published releases
-- Baseline: **0.2.0** on [main @ 4d81290](https://github.com/Drako01/indizivo/commit/4d81290b28d5f2be1f3daf610833dea9e16eb0dd) ([release](https://github.com/Drako01/indizivo/releases/tag/v0.2.0)), VSIX SHA-256 `8cdafec982d019d6d5c41b562bcb4a2289918eb180d1bfec380f199f7816cec7`; [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42316225544) and [Publish](https://github.com/Drako01/indizivo/actions/runs/42316225513) PASS.
-- **0.2.1** hardens 0.2.0: IPv6 loopback port observation, npm hyphen ranges, remote-topology labelling in sessions, and a de-duplicated publish pipeline. See CHANGELOG. Its publication evidence is recorded in the checklist ledger once the pipeline completes.
-- Publisher `armotusitio`, extension ID, branding are unchanged; the Marketplace "Preview" flag was removed in 0.2.2 by owner decision (qualification gaps below remain documented).
-- Scope: Node/Go environment probes, optional Python/PHP/Java/Docker version probes, local port/process-owner observation, `.env` name presence, approved loopback HTTP, history and EN/ES interface. The code is not an OS sandbox.
+## Published production baseline
 
-## Not certified (unchanged)
-- [Manual acceptance](ENTERPRISE_AAAA_MANUAL_ACCEPTANCE.md): 35 cases pending, 0 signed. No WSL/SSH/Dev Containers matrix, no NVDA/VoiceOver evaluation, no click-through UI run on Windows/macOS, no external usability study or pentest.
-- "Enterprise AAAA / 10-10" is an internal engineering goal, not a Microsoft certification. Synthetic benchmarks are not production SLOs.
-- [PR #13](https://github.com/Drako01/indizivo/pull/13) is a planning-only PR and stays open and unmerged.
+- Latest public version: **0.2.2**, [GitHub release](https://github.com/Drako01/indizivo/releases/tag/v0.2.2).
+- Exact main commit: `43844756d602ff49bef789be3b0c8eda36456a40`.
+- Published VSIX digest: `sha256:064ff6474b90b7ab6e6519afb7d075c2e520c62b48f9c15fc018547e444a3c1a`.
+- [Quality Gate](https://github.com/Drako01/indizivo/actions/runs/42370928962) and [multi-registry publish](https://github.com/Drako01/indizivo/actions/runs/42370928948) completed successfully. [Open VSX reconciliation](https://github.com/Drako01/indizivo/actions/runs/42485203110) passed 2026-11-08.
+- No `0.3.0` tag, Marketplace version or public GitHub release is claimed.
 
-## Engineering operating contract
-- Reuse evidence only for identical code/dependency/platform scope; impact tests per change, full gates for integration and release.
-- No telemetry, mandatory accounts/AI, remote scans, project script execution, silent writes, installs or process kills.
-- Explicit loopback target approval, Workspace Trust, bounded reads and redaction remain mandatory.
+## 0.3.0 implementation (not released)
+
+- Work isolated in [Draft PR #17](https://github.com/Drako01/indizivo/pull/17), `feat/indizivo-0.3.0-engineering-ux`.
+- `0.3.0` manifest and lockfile are in sync.
+- Runtime: hyphenated Node engine constraints, atomic service-check session updates, editor-first Control Center with compact Activity Bar launcher.
+- Test evidence: initial [CI run 42621924766](https://github.com/Drako01/indizivo/actions/runs/42621924766) exposed 2 stale tests; fixed on `2f05c568...` and [CI run 42622585222](https://github.com/Drako01/indizivo/actions/runs/42622585222) passed Windows/Linux/macOS and official Linux Extension Host.
+- [E2E screenshot capture](https://github.com/Drako01/indizivo/actions/runs/42623253356): actual VS Code host + synthetic fixture; images versioned in `media/`. They demonstrate rendering, not cross-platform human acceptance.
+- Exact latest branch SHA, CI and candidate VSIX must be recaptured at PR completion. Earlier successful SHAs do not qualify later edits.
+
+## Remaining limitations / NO-GO for Enterprise claims
+
+- The active `Protect main` GitHub ruleset has review requirements but was observed **without `required_status_checks`** through the API on 2026-11-09. Classic branch-protection API returned 403. Requires authorized administrator and effective negative test before claiming protected CI merges.
+- [Manual acceptance matrix](ENTERPRISE_AAAA_MANUAL_ACCEPTANCE.md): 35 cases pending, 0 signed. WSL/SSH/Dev Containers, NVDA/VoiceOver, real OS click-through and external usability research are unqualified.
+- No telemetry, required AI, cloud backend, remote network scanning, unconsented requests, project script execution or silent remediation. Indizivo is not an OS sandbox.
+- Dependences exclusive to build/dev tooling may have moderate advisories; triage as WARN unless exploitability escalates. `npm audit --omit=dev` passed on published baseline.
+
+See [0.3.0 evidence checklist](UPGRADE_0_3_0_CHECKLIST.md). The owner controls merge and publication.

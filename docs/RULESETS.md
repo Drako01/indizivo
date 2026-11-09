@@ -93,3 +93,11 @@ Run from the repository root after the feature branch has been reviewed and merg
 The helper never updates or deletes existing rulesets and leaves mandatory CI checks disabled. Its repository target is hardcoded as \`Drako01/indizivo\`. The first real GitHub API POST changes server-side governance, so it requires explicit owner action.
 
 **Important:** requiring one approving PR review in a solo-maintainer repository may block merges unless another reviewer is available or an appropriately authorized bypass is effective. Review the bypass behavior before enabling.
+
+## 0.3.0 finding — active server policy is incomplete (2026-11-09)
+
+The GitHub API confirmed `Protect main` (ruleset ID `26636048`) is active with mandatory PR reviews, but does **not** contain `required_status_checks`. The classic branch-protection endpoint returned HTTP 403, so another protection mechanism cannot be conclusively ruled out.
+
+`config/rulesets/main-with-ci.json` is a **proposal**, now aligned to the four exact checks emitted by `verify.yml`; editing this file does not update GitHub server rules. An administrator must inspect and update the active ruleset using GitHub Settings or a correctly scoped `gh api` request, preserve existing review protections, require the current checks, then test a deliberately failing PR cannot be merged. No server-side rule change is claimed by PR #17.
+
+Do not eliminate push-main verification while this enforcement is unconfirmed; it is a defense-in-depth gate. The release workflow also verifies a newly created merge SHA independently before publishing.
