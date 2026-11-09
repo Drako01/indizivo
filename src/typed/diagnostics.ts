@@ -116,7 +116,7 @@ function safeVersionRequirement(input:unknown):string {
   if(!value)return '';
   // Unsupported declaration is not equivalent to no requirement.
   // Do not retain untrusted input verbatim in history, reports or clipboard.
-  return value.length<=80 && /^[0-9v.^~<>=*xX|\s,]{1,80}$/.test(value)
+  return value.length<=80 && /^[0-9v.^~<>=*xX|\s,-]{1,80}$/.test(value)
     ?value:'[unrecognized]';
 }
 interface InputFile {state:FileReadState;data:string}

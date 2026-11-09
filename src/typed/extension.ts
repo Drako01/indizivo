@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import {discoverProjectRoots,isInsideWorkspace} from './monorepo';
 import {diagnose, verifyServices, validateService} from './diagnostics';
 import type {DiagnosticSession, ServiceTarget} from './diagnostics';
-import {html} from './ui';
+import {html,launcherHtml} from './ui';
 import {redactSensitiveText} from './redaction';
 import {hostLabel} from './host';
 import {renderReport,renderEvidenceCopy} from './reports';
@@ -90,12 +90,12 @@ export class ControlCenter {
       try { view.postMessage(message); } catch { this.views.delete(view); }
     }
   }
-  attach(webview:vscode.Webview) {
+  attach(webview:vscode.Webview,launcher=false) {
     webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')]
     };
-    webview.html = html(webview, this.context.extensionUri, vscode);
+    webview.html = launcher ? launcherHtml(this.data.locale) : html(webview, this.context.extensionUri, vscode);
     this.views.add(webview);
     const subscription = webview.onDidReceiveMessage(async (m:unknown) => {
       try { await this.message(m); } catch (e) {
@@ -229,11 +229,11 @@ export class ControlCenter {
     if (JSON.stringify(plan)!==JSON.stringify(this.data.services)) throw new Error(this.tr('host.targetsChanged'));
     const signal=this.beginRun();
     try {
-      const result=await verifyServices(plan,this.data.timeoutMs,signal,partial=>{
-        session.serviceChecks=partial;
-        this.broadcast();
-      });
-      if (signal.aborted) throw new Error(this.tr('host.serviceCancelled'));
+      // Stage the approved probe results until the entire run succeeds.
+      // Cancelled/failed runs leave the last completed snapshot untouched.
+      const result=await verifyServices(plan,this.data.timeoutMs,signal);
+      if (signal.aborted || this.data.session!==session)
+        throw new Error(this.tr('host.serviceCancelled'));
       session.serviceChecks=result;
       session.completedAt=new Date().toISOString();
       if(result.some(finding=>finding.id==='service-budget'))session.state='partial';
@@ -367,7 +367,18 @@ export function activate(context:vscode.ExtensionContext) {
   context.subscriptions.push(vscode.window.registerWebviewViewProvider('indizivo.control',{
     resolveWebviewView(view) {
       const viewWebview=view.webview;
-      controller.attach(viewWebview);
+      controller.attach(viewWebview,true);
+      // An Activity Bar view itself must occupy the Sidebar in VS Code.
+      // Open the single full-sized editor panel; keep this view as a compact launcher.
+      const reveal=()=>{void controller.openHome().catch(e=>{
+        controller.error=errorMessage(e)||controller.tr('host.unexpected');
+        controller.broadcast();
+      });};
+      reveal();
+      if(view.onDidChangeVisibility)
+        context.subscriptions.push(view.onDidChangeVisibility(()=>{
+          if(view.visible)reveal();
+        }));
       view.onDidDispose(()=>controller.views.delete(viewWebview),null,context.subscriptions);
     }
   }));
